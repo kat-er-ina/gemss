@@ -1,29 +1,38 @@
 # Feature Selection via Bayesian Gaussian Mixture Approximation
 
-This project implements a feature selection algorithm for classification and regression problems with many features (often p ≫ n).  
+This project implements an algorithm for feature selection in regression/classification with many features (often \( p \gg n \)).  
 The algorithm finds all sparse solutions that fit the data well, using a Bayesian approach and approximating the posterior distribution with a mixture of Gaussians.
+
+---
 
 ## Key Features
 
-- **Multisolution regression:** Finds all feature subsets (sparse solutions) with residuals below a threshold.
-- **Bayesian inference:** Uses spike-and-slab prior and computes the evidence lower bound (ELBO).
-- **Gaussian mixture modeling:** Approximates the posterior with a learnable mixture model.
-- **Stochastic optimization:** Optimizes mixture parameters using PyTorch's automatic differentiation and Adam optimizer.
+- **Multisolution regression:** Finds all sparse solutions (\( ||\beta||_{l_0} \leq \delta \)) with residuals below a threshold.
+- **Easily pluggable prior:** Uses a prior class with a simple `.log_prob(z)` interface; default is spike-and-slab, but any prior class can be substituted.
+- **Bayesian inference:** Computes the evidence lower bound (ELBO) and fits a flexible posterior.
+- **Gaussian mixture modeling:** Approximates the posterior with a learnable mixture of diagonal Gaussians.
+- **Stochastic optimization:** PyTorch-based automatic differentiation and Adam optimizer for all mixture parameters.
+- **Efficient reparametrization:** Implements the correct gradient flow for mixture models with reparameterization.
 - **Visualization:** Interactive plots with Plotly and statistical plots with Seaborn.
+- **Modular structure:** All modeling, inference, and utilities are separated for clarity and extensibility.
+
+---
 
 ## Project Structure
 
 ```
 feature_selection/
-├── feature_selection/    # Core algorithm implementation
+├── feature_selection/    # Core algorithm, modeling, inference, utils, diagnostics
 ├── data/                # Example/synthetic datasets
-├── scripts/             # Entry points for running experiments
+├── scripts/             # Entry points for generating data, running experiments
 ├── tests/               # Unit tests
-├── notebooks/           # Interactive demos
+├── notebooks/           # Interactive demos and visualizations
 ├── README.md
 ├── requirements.txt
 └── setup.py
 ```
+
+---
 
 ## Getting Started
 
@@ -32,28 +41,41 @@ feature_selection/
     pip install -r requirements.txt
     ```
 
-2. **Run an experiment:**
+2. **Generate synthetic dataset:**
+    ```bash
+    python scripts/generate_artificial_dataset.py
+    ```
+
+3. **Run an experiment (fit the mixture):**
     ```bash
     python scripts/run_experiment.py
     ```
 
-3. **Plot results:**
+4. **Plot results:**
     ```bash
     python scripts/plot_results.py
     ```
 
-4. **Explore interactively:**
+5. **Explore interactively:**
     Open and run `notebooks/exploratory.ipynb` in Jupyter.
 
-## Requirements
-
-See [`requirements.txt`](requirements.txt) for details.
+---
 
 ## Usage
 
 - **Configuration:** Edit `feature_selection/config.py` for hyperparameters.
-- **Algorithm:** Core logic in `feature_selection/models.py`, `optimizer.py`, and `inference.py`.
+- **Modeling:** All priors must implement a `.log_prob(z)` method for easy swapping (see `feature_selection/models.py`).
+- **Algorithm:** Core logic in `feature_selection/models.py`, `inference.py`, and `optimizer.py`.
 - **Diagnostics:** Use `feature_selection/diagnostics.py` and plotting scripts for visual analysis.
+
+---
+
+## Requirements
+
+See [`requirements.txt`](requirements.txt) for details.  
+Main dependencies: numpy, scipy, pandas, torch, plotly, seaborn, scikit-learn, jupyter.
+
+---
 
 ## References
 
@@ -63,3 +85,5 @@ See [`requirements.txt`](requirements.txt) for details.
 - [PyTorch](https://pytorch.org/)
 - [Plotly](https://plotly.com/python/)
 - [Seaborn](https://seaborn.pydata.org/)
+
+---
