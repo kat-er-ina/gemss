@@ -1,0 +1,21 @@
+from setuptools import setup, find_packages
+
+setup(
+    name="feature_selection",
+    version="0.1.0",
+    description="Sparse feature selection via Bayesian Gaussian mixture approximation.",
+    author="Katerina Henclova",
+    author_email="katerina.henclova@datamole.ai",
+    packages=find_packages(),
+    install_requires=[
+        "numpy>=1.23.0",
+        "scipy>=1.10.0",
+        "pandas>=2.0.0,<3.0.0",
+        "torch>=2.0.0,<3.0.0",
+        "plotly>=5.15.0",
+        "seaborn>=0.12.0",
+        "scikit-learn>=1.3.0,<2.0.0",
+        "jupyter>=1.0.0,<2.0.0",
+    ],
+    python_requires=">=3.8",
+)
