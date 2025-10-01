@@ -18,10 +18,10 @@ from feature_selection.diagnostics import plot_elbo, plot_mu, plot_alpha
 # ---- Config ----
 DATA_PATH = "data/artificial_mixture_dataset.csv"
 N_COMPONENTS = 3  # Number of mixture components (solutions)
-N_ITER = 5000  # Number of optimization iterations
+N_ITER = 10000  # Number of optimization iterations
 BATCH_SIZE = 16  # Batch size for SGD
 LEARNING_RATE = 2e-3  # Adam learning rate
-
+SPARSITY = 2  # Number of nonzero entries per solution
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # ---- Load Data ----
@@ -47,6 +47,7 @@ selector = BayesianFeatureSelector(
     n_components=N_COMPONENTS,
     X=X,
     y=y,
+    sparsity=SPARSITY,
     lr=LEARNING_RATE,
     batch_size=BATCH_SIZE,
     n_iter=N_ITER,

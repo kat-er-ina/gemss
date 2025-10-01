@@ -6,15 +6,18 @@ Implements:
 - Core parameter structures
 """
 
+import itertools
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 
 class SpikeAndSlabPrior:
     """
     Implements the log-probability of the spike-and-slab prior.
     p(z) = prod_i [w_slab * N(z_i | 0, var_slab) + w_spike * N(z_i | 0, var_spike)]
     """
+
     def __init__(self, var_slab=100.0, var_spike=0.1, w_slab=0.9, w_spike=0.1):
         """
         Parameters
@@ -47,16 +50,105 @@ class SpikeAndSlabPrior:
         torch.Tensor
             Log-probability summed over features, shape (...,).
         """
-        slab = self.w_slab * torch.exp(-0.5 * (z / self.var_slab)**2) / self.var_slab
-        spike = self.w_spike * torch.exp(-0.5 * (z / self.var_spike)**2) / self.var_spike
+        slab = self.w_slab * torch.exp(-0.5 * (z / self.var_slab) ** 2) / self.var_slab
+        spike = (
+            self.w_spike * torch.exp(-0.5 * (z / self.var_spike) ** 2) / self.var_spike
+        )
         logp = torch.log(slab + spike)
         return logp.sum(dim=-1)  # sum over features
+
+
+class StructuredSpikeAndSlabPrior:
+    """
+    Structured spike-and-slab prior enforcing exactly k nonzero entries.
+    For each solution, only supports of size k are allowed.
+    """
+
+    def __init__(self, n_features, sparsity, var_slab=100.0, var_spike=0.1):
+        """
+        Parameters
+        ----------
+        n_features : int
+            Number of features.
+        sparsity : int
+            Number of nonzero entries (support size).
+        var_slab : float
+            Variance of the slab component.
+        var_spike : float
+            Variance of the spike component.
+        """
+        self.n_features = n_features
+        self.sparsity = sparsity
+        self.var_slab = var_slab
+        self.var_spike = var_spike
+
+        # For small n_features, enumerate all supports. For large, sample.
+        self._all_supports = None
+        if n_features <= 10 and sparsity <= 3:
+            self._all_supports = list(
+                itertools.combinations(range(n_features), sparsity)
+            )
+
+    def log_prob(self, z, n_support_samples=100):
+        """
+        Compute log-probability of z under the structured prior.
+        For each support S of size k, compute p(z | S), then average.
+
+        Parameters
+        ----------
+        z : torch.Tensor
+            Shape (..., n_features)
+        n_support_samples : int, optional
+            Number of supports to sample if enumeration is infeasible.
+
+        Returns
+        -------
+        torch.Tensor
+            Log-probability under the prior, shape (...,)
+        """
+        batch_shape = z.shape[:-1]
+        z_flat = z.view(-1, self.n_features)
+        logps = []
+        if self._all_supports is not None:
+            supports = self._all_supports
+        else:
+            # Sample supports
+            supports = [
+                torch.randperm(self.n_features)[: self.sparsity].tolist()
+                for _ in range(n_support_samples)
+            ]
+        for support in supports:
+            mask = torch.zeros(self.n_features, dtype=torch.bool)
+            mask[support] = True
+            # Slab for mask, spike for others
+            logp = torch.zeros(z_flat.shape[0], device=z.device)
+            # Slab part
+            logp += -0.5 * torch.sum(
+                (z_flat[:, mask] / self.var_slab) ** 2
+                + torch.log(torch.tensor(self.var_slab)),
+                dim=1,
+            )
+            # Spike part
+            logp += -0.5 * torch.sum(
+                (z_flat[:, ~mask] / self.var_spike) ** 2
+                + torch.log(torch.tensor(self.var_spike)),
+                dim=1,
+            )
+            logps.append(logp)
+        # Average over supports
+        logps = torch.stack(logps, dim=1)  # [batch, n_supports]
+        logp_avg = torch.logsumexp(logps, dim=1) - torch.log(
+            torch.tensor(len(supports), dtype=torch.float)
+        )
+        return logp_avg.view(*batch_shape)
+
 
 class GaussianMixture(nn.Module):
     """
     Implements a learnable mixture of diagonal Gaussians.
     Mixture parameters: means, diagonal variances, mixing weights.
     """
+
     def __init__(self, n_components, n_features):
         """
         Parameters
@@ -75,7 +167,7 @@ class GaussianMixture(nn.Module):
         # Variances [n_components, n_features], positive via softplus
         self._log_var = nn.Parameter(torch.zeros(n_components, n_features))
         # Mixing log-weights [n_components-1] (last alpha is 1-sum(...))
-        self._log_alpha = nn.Parameter(torch.zeros(n_components-1))
+        self._log_alpha = nn.Parameter(torch.zeros(n_components - 1))
 
     def get_variance(self):
         """
@@ -97,7 +189,9 @@ class GaussianMixture(nn.Module):
         torch.Tensor
             Tensor of shape (n_components,) with mixing weights summing to 1.
         """
-        log_alpha = torch.cat([self._log_alpha, torch.zeros(1, device=self._log_alpha.device)])
+        log_alpha = torch.cat(
+            [self._log_alpha, torch.zeros(1, device=self._log_alpha.device)]
+        )
         alpha = torch.exp(log_alpha)
         alpha = alpha / alpha.sum()
         return alpha
@@ -140,13 +234,17 @@ class GaussianMixture(nn.Module):
         torch.Tensor
             Log-probabilities of shape (batch_size,).
         """
-        mu = self.mu.unsqueeze(0)          # [1, K, D]
-        var = self.get_variance().unsqueeze(0)   # [1, K, D]
-        log_alpha = torch.cat([self._log_alpha, torch.zeros(1, device=self._log_alpha.device)])
+        mu = self.mu.unsqueeze(0)  # [1, K, D]
+        var = self.get_variance().unsqueeze(0)  # [1, K, D]
+        log_alpha = torch.cat(
+            [self._log_alpha, torch.zeros(1, device=self._log_alpha.device)]
+        )
         alpha = torch.exp(log_alpha)
         alpha = alpha / alpha.sum()
         # log N(z | mu_k, var_k), shape [batch_size, K]
-        log_prob_k = -0.5 * torch.sum(torch.log(var) + ((z.unsqueeze(1) - mu)**2) / var, dim=-1)
+        log_prob_k = -0.5 * torch.sum(
+            torch.log(var) + ((z.unsqueeze(1) - mu) ** 2) / var, dim=-1
+        )
         # log mixture: logsumexp over components
         log_mix = torch.logsumexp(torch.log(alpha) + log_prob_k, dim=-1)
         return log_mix
@@ -167,5 +265,7 @@ class GaussianMixture(nn.Module):
         """
         mu = self.mu.unsqueeze(0)
         var = self.get_variance().unsqueeze(0)
-        log_prob_k = -0.5 * torch.sum(torch.log(var) + ((z.unsqueeze(1) - mu)**2) / var, dim=-1)
+        log_prob_k = -0.5 * torch.sum(
+            torch.log(var) + ((z.unsqueeze(1) - mu) ** 2) / var, dim=-1
+        )
         return log_prob_k

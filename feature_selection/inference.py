@@ -8,15 +8,30 @@ Implements:
 
 import torch
 from torch.optim import Adam
-from .models import SpikeAndSlabPrior, GaussianMixture
+from .models import SpikeAndSlabPrior, StructuredSpikeAndSlabPrior, GaussianMixture
+
 
 class BayesianFeatureSelector:
     """
     Bayesian feature selection using variational inference and mixture of Gaussians.
     """
-    def __init__(self, n_features, n_components, X, y,
-                 var_slab=100.0, var_spike=0.1, w_slab=0.9, w_spike=0.1,
-                 lr=2e-3, batch_size=16, n_iter=10000, device="cpu"):
+
+    def __init__(
+        self,
+        n_features,
+        n_components,
+        X,
+        y,
+        sparsity,
+        var_slab=100.0,
+        var_spike=0.1,
+        w_slab=0.9,
+        w_spike=0.1,
+        lr=2e-3,
+        batch_size=16,
+        n_iter=10000,
+        device="cpu",
+    ):
         """
         Parameters
         ----------
@@ -52,7 +67,13 @@ class BayesianFeatureSelector:
         self.batch_size = batch_size
         self.n_iter = n_iter
 
-        self.prior = SpikeAndSlabPrior(var_slab, var_spike, w_slab, w_spike)
+        # self.prior = SpikeAndSlabPrior(var_slab, var_spike, w_slab, w_spike)
+        self.prior = StructuredSpikeAndSlabPrior(
+            n_features,
+            sparsity=sparsity,
+            var_slab=var_slab,
+            var_spike=var_spike,
+        )
         self.mixture = GaussianMixture(n_components, n_features).to(device)
         self.opt = Adam(self.mixture.parameters(), lr=lr)
         self.device = device
@@ -72,7 +93,7 @@ class BayesianFeatureSelector:
             Log-likelihood values for each sample, shape (batch_size,).
         """
         pred = torch.matmul(z, self.X.T)  # [batch_size, n_samples]
-        mse = ((pred - self.y.unsqueeze(0))**2).sum(dim=-1)  # sum over samples
+        mse = ((pred - self.y.unsqueeze(0)) ** 2).sum(dim=-1)  # sum over samples
         return -0.5 * mse
 
     def h(self, z):
@@ -143,8 +164,12 @@ class BayesianFeatureSelector:
             # Record statistics
             history["elbo"].append(elbo.item())
             history["mu"].append(self.mixture.mu.detach().cpu().clone().numpy())
-            history["var"].append(self.mixture.get_variance().detach().cpu().clone().numpy())
-            history["alpha"].append(self.mixture.get_alpha().detach().cpu().clone().numpy())
+            history["var"].append(
+                self.mixture.get_variance().detach().cpu().clone().numpy()
+            )
+            history["alpha"].append(
+                self.mixture.get_alpha().detach().cpu().clone().numpy()
+            )
 
             if log_callback and it % 100 == 0:
                 log_callback(it, elbo.item(), self.mixture)
