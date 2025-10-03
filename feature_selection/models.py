@@ -12,6 +12,42 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+class StudentTPrior:
+    """
+    Student-t prior for Bayesian sparse modeling.
+    """
+
+    def __init__(self, df=3.0, scale=1.0):
+        """
+        Parameters
+        ----------
+        df : float
+            Degrees of freedom (controls heaviness of tails; lower = heavier).
+        scale : float
+            Scale (analogous to standard deviation).
+        """
+        self.df = df
+        self.scale = scale
+
+    def log_prob(self, z):
+        """
+        Compute log-probability of the Student-t prior for input z.
+
+        Parameters
+        ----------
+        z : torch.Tensor
+            Input tensor of shape (..., D), where D is the number of features.
+
+        Returns
+        -------
+        torch.Tensor
+            Log-probability summed over features, shape (...,).
+        """
+        # Student-t log-density (up to constant)
+        logp = -0.5 * (self.df + 1) * torch.log(1 + (z / self.scale) ** 2 / self.df)
+        return logp.sum(dim=-1)
+
+
 class SpikeAndSlabPrior:
     """
     Implements the log-probability of the spike-and-slab prior.
