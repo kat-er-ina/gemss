@@ -6,9 +6,15 @@ Implements:
 - SGD/Adam parameter updates
 """
 
+from typing import Literal
 import torch
 from torch.optim import Adam
-from .models import SpikeAndSlabPrior, StructuredSpikeAndSlabPrior, GaussianMixture
+from .models import (
+    StudentTPrior,
+    SpikeAndSlabPrior,
+    StructuredSpikeAndSlabPrior,
+    GaussianMixture,
+)
 
 
 class BayesianFeatureSelector:
@@ -23,10 +29,13 @@ class BayesianFeatureSelector:
         X,
         y,
         sparsity,
+        prior: Literal["ss", "sss", "student"] = "sss",
         var_slab=100.0,
         var_spike=0.1,
         w_slab=0.9,
         w_spike=0.1,
+        student_df=3,
+        student_scale=1.0,
         lr=2e-3,
         batch_size=16,
         n_iter=10000,
@@ -43,14 +52,25 @@ class BayesianFeatureSelector:
             Data matrix of shape (n_samples, n_features).
         y : array-like
             Target vector of shape (n_samples,).
+        sparsity : int
+            Number of nonzero entries per solution (for structured spike-and-slab prior).
+        prior : str, optional
+            Type of prior to use ('ss', 'sss', 'student'). The shortcuts stand for:
+            'ss' = Spike-and-Slab,
+            'sss' (default) = Structured Spike-and-Slab,
+            'student' = Student-t prior.
         var_slab : float, optional
-            Variance of the slab prior (default: 100.0).
+            Variance of the slab prior (default: 100.0). Used only if prior is 'ss' or 'sss'.
         var_spike : float, optional
-            Variance of the spike prior (default: 0.1).
+            Variance of the spike prior (default: 0.1). Used only if prior is 'ss' or 'sss'.
         w_slab : float, optional
-            Weight of slab prior (default: 0.9).
+            Weight of slab prior (default: 0.9). Used only if prior is 'ss' or 'sss'.
         w_spike : float, optional
-            Weight of spike prior (default: 0.1).
+            Weight of spike prior (default: 0.1). Used only if prior is 'ss' or 'sss'.
+        student_df : float, optional
+            Degrees of freedom for Student-t prior (default: 3). Used only if prior is 'student'.
+        student_scale : float, optional
+            Scale parameter for Student-t prior (default: 1.0). Used only if prior is 'student'.
         lr : float, optional
             Learning rate for Adam optimizer (default: 2e-3).
         batch_size : int, optional
@@ -67,13 +87,18 @@ class BayesianFeatureSelector:
         self.batch_size = batch_size
         self.n_iter = n_iter
 
-        # self.prior = SpikeAndSlabPrior(var_slab, var_spike, w_slab, w_spike)
-        self.prior = StructuredSpikeAndSlabPrior(
-            n_features,
-            sparsity=sparsity,
-            var_slab=var_slab,
-            var_spike=var_spike,
-        )
+        if prior == "ss":
+            self.prior = SpikeAndSlabPrior(var_slab, var_spike, w_slab, w_spike)
+        elif prior == "sss":
+            self.prior = StructuredSpikeAndSlabPrior(
+                n_features,
+                sparsity=sparsity,
+                var_slab=var_slab,
+                var_spike=var_spike,
+            )
+        elif prior == "student":
+            self.prior = StudentTPrior(df=student_df, scale=student_scale)
+
         self.mixture = GaussianMixture(n_components, n_features).to(device)
         self.opt = Adam(self.mixture.parameters(), lr=lr)
         self.device = device
