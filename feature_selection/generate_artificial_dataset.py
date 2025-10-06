@@ -5,16 +5,21 @@ import numpy as np
 import pandas as pd
 
 
-def generate_multi_solution_binary_data(
+def generate_multi_solution_data(
     n_samples=100,
     n_features=10,
     n_solutions=3,
     sparsity=2,
+    noise_data_std=0.01,
+    binarize=True,
     binary_response_ratio=0.5,
     random_seed=42,
 ) -> tuple[pd.DataFrame, pd.Series, np.ndarray, pd.DataFrame]:
     """
-    Generate a synthetic binary classification dataset with multiple valid sparse solutions.
+    Generate a synthetic dataset with multiple valid sparse solutions. If the parameter
+    'binarize' is True, the response variable is binary (0 or 1) and the corresponding problem
+    is a binary classification problem. Otherwise, the response variable is continuous and the
+    corresponding problem is a regression problem.
     Each solution is a sparse set of features that produces the same response.
 
     Parameters
@@ -27,8 +32,13 @@ def generate_multi_solution_binary_data(
         Number of sparse solutions ("true" supports), each a sparse linear classifier.
     sparsity : int, default=2
         Number of nonzero entries (support size) per solution.
+    noise_data_std : float, default=0.01
+        Standard deviation of the Gaussian noise added to the features.
+    binarize : bool, default=True
+        If True, the response variable is binary (0 or 1).
     binary_response_ratio : float, default=0.5
-        Proportion of samples assigned label 1 (controls class balance).
+        Proportion of samples assigned label 1 (controls class balance). Used only if binarize is
+        True.
     random_seed : int, default=42
         Random seed for reproducibility.
 
@@ -46,7 +56,6 @@ def generate_multi_solution_binary_data(
     rng = np.random.default_rng(random_seed)
     uniform_interval_low = 2.0
     uniform_interval_high = 10.0
-    noise_data_std = 0.01
 
     # 1. Choose random indices for supports
     solutions = []
@@ -104,9 +113,12 @@ def generate_multi_solution_binary_data(
     X += rng.normal(0, noise_data_std, size=(n_samples, n_features))
 
     # 7. Binarize. Adjust threshold to match desired binary response ratio
-    y_prob = 1 / (1 + np.exp(-y_continuous))  # sigmoid
-    threshold = np.quantile(y_prob, 1 - binary_response_ratio)
-    y = (y_prob > threshold).astype(int)
+    if binarize:
+        y_prob = 1 / (1 + np.exp(-y_continuous))  # sigmoid
+        threshold = np.quantile(y_prob, 1 - binary_response_ratio)
+        y = (y_prob > threshold).astype(int)
+    else:
+        y = y_continuous
 
     # Convert to required format
     solutions = np.stack(solutions)
@@ -130,11 +142,13 @@ def generate_multi_solution_binary_data(
     return df, response, solutions, parameters_df
 
 
-def generate_artificial_dataset_binary(
+def generate_artificial_dataset(
     n_samples=100,
     n_features=5,
     n_solutions=3,
     sparsity=1,
+    noise_data_std=0.01,
+    binarize=True,
     binary_response_ratio=0.5,
     random_seed=42,
     save_to_csv=False,
@@ -152,8 +166,12 @@ def generate_artificial_dataset_binary(
         Number of sparse solutions ("true" supports).
     sparsity : int, default=1
         Number of nonzero entries per solution.
+    noise_data_std : float, default=0.01
+        Standard deviation of the Gaussian noise added to the features.
+    binarize : bool, default=True
+        If True, the response variable is binary (0 or 1).
     binary_response_ratio : float, default=0.5
-        Proportion of samples assigned label 1.
+        Proportion of samples assigned label 1. Used only if binarize is True.
     random_seed : int, default=42
         Random seed for reproducibility.
     save_to_csv : bool, default=False
@@ -170,11 +188,12 @@ def generate_artificial_dataset_binary(
     pd.DataFrame
         DataFrame describing the generating parameters (supports and weights).
     """
-    data, response, solutions, parameters = generate_multi_solution_binary_data(
+    data, response, solutions, parameters = generate_multi_solution_data(
         n_samples=n_samples,
         n_features=n_features,
         n_solutions=n_solutions,
         sparsity=sparsity,
+        noise_data_std=noise_data_std,
         binary_response_ratio=binary_response_ratio,
         random_seed=random_seed,
     )
@@ -182,9 +201,13 @@ def generate_artificial_dataset_binary(
     if save_to_csv:
         suffix = f"{n_samples}x{n_features}_{n_solutions}sols_{sparsity}sparse"
         data.to_csv(f"../data/artificial_dataset_{suffix}.csv")
-        response.to_csv(f"../data/artificial_binary_labels_{suffix}.csv")
         pd.DataFrame(solutions).to_csv(f"../data/artificial_solutions_{suffix}.csv")
         parameters.to_csv(f"../data/artificial_parameters_{suffix}.csv")
+
+        if binarize:
+            response.to_csv(f"../data/artificial_binary_labels_{suffix}.csv")
+        else:
+            response.to_csv(f"../data/artificial_continuous_labels_{suffix}.csv")
         print("Data and generating parameters saved to 'data/' directory.")
 
     return data, response, solutions, parameters
@@ -196,15 +219,19 @@ if __name__ == "__main__":
     NFEATURES = 60
     NSOLUTIONS = 3
     SPARSITY = 1
+    NOISE_STD = 0.01
+    BINARIZE = True
     BINARY_RESPONSE_RATIO = 0.5
     RANDOM_SEED = 42
 
     # Generate dataset
-    data, response, solutions, parameters = generate_artificial_dataset_binary(
+    data, response, solutions, parameters = generate_artificial_dataset(
         n_samples=NSAMPLES,
         n_features=NFEATURES,
         n_solutions=NSOLUTIONS,
         sparsity=SPARSITY,
+        noise_data_std=NOISE_STD,
+        binarize=BINARIZE,
         binary_response_ratio=BINARY_RESPONSE_RATIO,
         random_seed=RANDOM_SEED,
         save_to_csv=True,
