@@ -57,17 +57,17 @@ def generate_multi_solution_data(
     uniform_interval_low = 2.0
     uniform_interval_high = 10.0
 
-    # 1. Choose random indices for supports
+    # Choose random indices for supports
     solutions = []
     supports = []
     for k in range(n_solutions):
         support = rng.choice(n_features, sparsity, replace=False)
         supports.append(support)
 
-    # 2. Initialize data matrix
+    # Initialize data matrix
     X = np.zeros((n_samples, n_features))
 
-    # 3. Create first solution and corresponding data
+    # Create first solution and corresponding data
     w0 = np.zeros(n_features)
     w0[supports[0]] = rng.uniform(
         uniform_interval_low, uniform_interval_high, size=sparsity
@@ -80,7 +80,7 @@ def generate_multi_solution_data(
     # Compute response from first solution
     y_continuous = X @ w0
 
-    # 4. Create additional solutions that produce the same response
+    # Create additional solutions that produce the same response
     # as linear combinations of the first solution
     for k in range(1, n_solutions):
         # get coefficients for linear combination
@@ -104,15 +104,15 @@ def generate_multi_solution_data(
         wk[supports[k]] = np.linalg.pinv(X[:, supports[k]]) @ y_continuous
         solutions.append(wk)
 
-    # 5. Fill remaining features with noise
+    # Fill remaining features with noise
     remaining_features = set(range(n_features)) - set(np.concatenate(supports))
     for feat in remaining_features:
         X[:, feat] = rng.normal(0, noise_data_std, size=n_samples)
 
-    # 6. Add the same white noise to everything to make it non-exact
+    # Add the same white noise to everything to make it non-exact
     X += rng.normal(0, noise_data_std, size=(n_samples, n_features))
 
-    # 7. Binarize. Adjust threshold to match desired binary response ratio
+    # Binarize. Adjust threshold to match desired binary response ratio
     if binarize:
         y_prob = 1 / (1 + np.exp(-y_continuous))  # sigmoid
         threshold = np.quantile(y_prob, 1 - binary_response_ratio)
@@ -194,6 +194,7 @@ def generate_artificial_dataset(
         n_solutions=n_solutions,
         sparsity=sparsity,
         noise_data_std=noise_data_std,
+        binarize=binarize,
         binary_response_ratio=binary_response_ratio,
         random_seed=random_seed,
     )
