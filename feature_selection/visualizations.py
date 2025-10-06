@@ -1,6 +1,5 @@
 """
 Diagnostics and plotting for Bayesian feature selection.
-Supports Plotly and Seaborn visualizations.
 """
 
 from IPython.display import display, Markdown
@@ -8,8 +7,6 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
-import seaborn as sns
-import matplotlib.pyplot as plt
 
 
 def plot_elbo(history):
@@ -54,7 +51,7 @@ def plot_mu(history, component=0):
     for f in range(mu_traj.shape[1]):
         fig.add_trace(go.Scatter(y=mu_traj[:, f], mode="lines", name=f"feature_{f}"))
     fig.update_layout(
-        title=f"Mu Trajectory, Component {component}",
+        title=f"Mu trajectory, Component {component}",
         xaxis_title="Iteration",
         yaxis_title="Mu value",
     )

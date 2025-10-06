@@ -13,7 +13,7 @@ import numpy as np
 import torch
 
 from feature_selection.inference import BayesianFeatureSelector
-from feature_selection.diagnostics import plot_elbo, plot_mu, plot_alpha
+from feature_selection.visualizations import plot_elbo, plot_mu, plot_alpha
 
 # ---- Config ----
 DATA_PATH = "data/artificial_mixture_dataset.csv"
