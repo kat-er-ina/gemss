@@ -3,6 +3,7 @@ Diagnostics and plotting for Bayesian feature selection.
 """
 
 from IPython.display import display, Markdown
+from typing import List
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -124,3 +125,74 @@ def show_correlation_matrix(
         height=200 + df.shape[1] * 15 if height is None else height,
     )
     fig.show(config={"displayModeBar": False})
+
+
+def show_label_histogram(y, nbins=10):
+    """
+    Show histogram of continuous labels y using Plotly.
+    Parameters
+    ----------
+    y : array-like
+        Continuous labels.
+    nbins : int, optional
+        Number of bins for the histogram.
+    """
+    hist_data = np.histogram(y, bins=nbins)
+    fig = go.Figure(
+        data=[
+            go.Bar(
+                x=hist_data[1][:-1],
+                y=hist_data[0],
+                width=np.diff(hist_data[1]),
+                marker_color="purple",
+            )
+        ]
+    )
+    fig.update_layout(
+        title="Distribution of continuous labels",
+        xaxis_title="Value",
+        yaxis_title="Count",
+        width=450,
+        height=300,
+    )
+    fig.show()
+    return
+
+
+def show_features_in_components(
+    df_solutions: pd.DataFrame,
+    features_to_show: List[str] = None,
+):
+    """
+    Show a heatmap of which features are found in each component.
+
+    Parameters
+    ----------
+    df_solutions : pd.DataFrame
+        DataFrame where each column corresponds to a component and contains the features found.
+    features_to_show : List[str], optional
+        List of features to highlight in the heatmap. If None, only features in the provided
+        DataFrame are shown.
+    """
+    if features_to_show is None:
+        features_to_show = df_solutions.columns.tolist()
+
+    heatmap_data = pd.DataFrame(
+        0, index=df_solutions.columns, columns=sorted(features_to_show)
+    )
+    for col in df_solutions.columns:
+        for feature in df_solutions[col].dropna():
+            heatmap_data.at[col, feature] = 1
+    fig = px.imshow(
+        heatmap_data,
+        color_continuous_scale=["white", "blue"],
+        labels={"color": "Feature presence"},
+        title="Features found in each component",
+    )
+    fig.update_xaxes(side="top")
+    fig.update_layout(
+        width=200 + 30 * len(heatmap_data.columns),
+        showlegend=False,
+    )
+    fig.show()
+    return
