@@ -3,7 +3,10 @@ Diagnostics and plotting for Bayesian feature selection.
 Supports Plotly and Seaborn visualizations.
 """
 
+from IPython.display import display, Markdown
 import numpy as np
+import pandas as pd
+import plotly.express as px
 import plotly.graph_objs as go
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -51,7 +54,7 @@ def plot_mu(history, component=0):
     for f in range(mu_traj.shape[1]):
         fig.add_trace(go.Scatter(y=mu_traj[:, f], mode="lines", name=f"feature_{f}"))
     fig.update_layout(
-        title=f"Mu Trajectory, Component {component+1}",
+        title=f"Mu Trajectory, Component {component}",
         xaxis_title="Iteration",
         yaxis_title="Mu value",
     )
@@ -79,3 +82,48 @@ def plot_alpha(history):
         title="Alpha Progress", xaxis_title="Iteration", yaxis_title="Mixture Weight"
     )
     fig.show()
+
+
+def show_correlations_with_response(df, y, support_features):
+    correlation_with_response = df.corrwith(y, method="kendall").sort_values(
+        ascending=False
+    )
+
+    display(Markdown("### Features' Correlation with Binary Response"))
+    fig = px.bar(
+        correlation_with_response,
+        x=correlation_with_response.index,
+        y=correlation_with_response.values,
+        color=[
+            "blue" if f in support_features else "red"
+            for f in correlation_with_response.index
+        ],
+        title="Features' Correlation with Binary Response",
+        labels={
+            "index": "Feature",
+            "y": "Correlation",
+        },
+    )
+    fig.update_layout(width=200 + df.shape[1] * 15, height=500, showlegend=False)
+    fig.show(config={"displayModeBar": False})
+
+
+def show_correlation_matrix(
+    df: pd.DataFrame,
+    width: int | None = None,
+    height: int | None = None,
+):
+    fig = px.imshow(
+        df.corr(),
+        text_auto=".2f",
+        aspect="auto",
+        title="Feature Correlation Matrix",
+        color_continuous_scale="RdBu",
+        zmin=-1,
+        zmax=1,
+    )
+    fig.update_layout(
+        width=200 + df.shape[1] * 15 if width is None else width,
+        height=200 + df.shape[1] * 15 if height is None else height,
+    )
+    fig.show(config={"displayModeBar": False})
