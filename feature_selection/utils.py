@@ -11,10 +11,10 @@ import numpy as np
 import pandas as pd
 from typing import Literal
 from sklearn.metrics import confusion_matrix
-from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score, roc_auc_score
-from sklearn.linear_model import LogisticRegressionCV
+from sklearn.metrics import accuracy_score, roc_auc_score, mean_squared_error, r2_score
+from sklearn.linear_model import LogisticRegressionCV, RidgeCV, LassoCV, ElasticNetCV
 from plotly import graph_objects as go
 import torch
 import warnings
@@ -169,5 +169,108 @@ def solve_with_logistic_regression(
         )
     )
     fig.update_layout(title="Confusion Matrix", width=350, height=350, showlegend=False)
+    fig.show(config={"displayModeBar": False})
+    return
+
+
+def solve_with_linear_regression(
+    X: pd.DataFrame,
+    y: pd.Series | np.ndarray,
+    penalty: Literal["l1", "l2", "elasticnet"] = "l2",
+):
+    """
+    Solve a linear regression problem with the specified penalty.
+
+    Parameters
+    ----------
+    X : pd.DataFrame
+        Feature matrix.
+    y : pd.Series | np.ndarray
+        Continuous response vector.
+    penalty : str
+        Type of regularization to use ("l1", "l2", or "elasticnet").
+        Default is "l2".
+
+    Returns
+    -------
+    None
+    """
+    # Choose model based on penalty
+    if penalty == "l1":
+        model = LassoCV(cv=5, random_state=42, max_iter=2000)
+        model_name = "Lasso (L1)"
+    elif penalty == "l2":
+        model = RidgeCV(cv=5)
+        model_name = "Ridge (L2)"
+    elif penalty == "elasticnet":
+        model = ElasticNetCV(cv=5, random_state=42, max_iter=2000)
+        model_name = "ElasticNet"
+    else:
+        raise ValueError("Penalty must be 'l1', 'l2', or 'elasticnet'.")
+
+    pipeline = make_pipeline(StandardScaler(), model)
+
+    # Fit the model
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning)
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        pipeline.fit(X, y)
+
+    # Predictions and evaluation
+    y_pred = pipeline.predict(X)
+
+    display(
+        Markdown(
+            f"### Linear Regression with {model_name} Penalty - Performance on Training Set"
+        )
+    )
+    display(Markdown(f"**R² Score:** {r2_score(y, y_pred)}"))
+    display(Markdown(f"**Mean Squared Error:** {mean_squared_error(y, y_pred)}"))
+    display(Markdown("Coefficients of the regression model:"))
+
+    # Get coefficients, handle difference for RidgeCV (coef_ shape)
+    if penalty == "l2":
+        coefs = pipeline.named_steps["ridgecv"].coef_
+    elif penalty == "l1":
+        coefs = pipeline.named_steps["lassocv"].coef_
+    elif penalty == "elasticnet":
+        coefs = pipeline.named_steps["elasticnetcv"].coef_
+
+    coefficients = pd.Series(coefs, index=X.columns)
+    coefficients = coefficients[coefficients != 0].sort_values(ascending=False)
+    display(coefficients)
+
+    # Show residuals distribution using Plotly
+    # residuals = y - y_pred
+    # fig = go.Figure()
+    # fig.add_trace(go.Histogram(x=residuals, nbinsx=30, marker_color="blue"))
+    # fig.update_layout(
+    #     title="Residuals Distribution",
+    #     xaxis_title="Residual",
+    #     yaxis_title="Count",
+    #     width=400,
+    #     height=300,
+    #     showlegend=False,
+    # )
+    # fig.show(config={"displayModeBar": False})
+
+    # Illustrate predicted vs actual
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=y, y=y_pred, mode="markers", marker_color="blue"))
+    fig.add_trace(
+        go.Line(
+            x=[y.min(), y.max()],
+            y=[y.min(), y.max()],
+            line=dict(color="red", dash="dash"),
+        )
+    )
+    fig.update_layout(
+        title="Predicted vs Actual",
+        xaxis_title="Actual",
+        yaxis_title="Predicted",
+        width=400,
+        height=300,
+        showlegend=False,
+    )
     fig.show(config={"displayModeBar": False})
     return
