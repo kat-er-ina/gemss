@@ -17,6 +17,11 @@ from sklearn.metrics import accuracy_score, roc_auc_score
 from sklearn.linear_model import LogisticRegressionCV
 from plotly import graph_objects as go
 import torch
+import warnings
+from sklearn.exceptions import ConvergenceWarning
+
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
 
 def kldiv(p, q, eps=1e-10):
@@ -126,7 +131,11 @@ def solve_with_logistic_regression(
     )
 
     # Solve the full problem
-    clf.fit(X, y)
+    # Ignore warnings about convergence for this demo
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning)
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        clf.fit(X, y)
 
     # Predictions and evaluation
     y_pred = clf.predict(X)
