@@ -1,0 +1,15 @@
+{
+  "N_COMPONENTS": 6,
+  "N_ITER": 4000,
+  "IS_REGULARIZED": true,
+  "LAMBDA_JACCARD": 10.0,
+  "BATCH_SIZE": 16,
+  "LEARNING_RATE": 0.002,
+  "PRIOR_TYPE": "sss",
+  "STUDENT_DF": 1,
+  "STUDENT_SCALE": 1.0,
+  "VAR_SLAB": 100.0,
+  "VAR_SPIKE": 0.1,
+  "WEIGHT_SLAB": 0.9,
+  "WEIGHT_SPIKE": 0.1
+}

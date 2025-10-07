@@ -1,0 +1,10 @@
+{
+  "NSAMPLES": 40,
+  "NFEATURES": 80,
+  "NSOLUTIONS": 3,
+  "SPARSITY": 4,
+  "NOISE_STD": 0.01,
+  "BINARIZE": true,
+  "BINARY_RESPONSE_RATIO": 0.5,
+  "RANDOM_SEED": 42
+}

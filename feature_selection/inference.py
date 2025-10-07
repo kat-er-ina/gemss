@@ -68,13 +68,13 @@ class BayesianFeatureSelector:
         n_components,
         X,
         y,
-        sparsity,
         prior: Literal["ss", "sss", "student"] = "sss",
+        sss_sparsity=3,
         var_slab=100.0,
         var_spike=0.1,
-        w_slab=0.9,
-        w_spike=0.1,
-        student_df=3,
+        weight_slab=0.9,
+        weight_spike=0.1,
+        student_df=1,
         student_scale=1.0,
         lr=2e-3,
         batch_size=16,
@@ -94,23 +94,24 @@ class BayesianFeatureSelector:
             Data matrix of shape (n_samples, n_features).
         y : array-like
             Target vector of shape (n_samples,).
-        sparsity : int
-            Number of nonzero entries per solution (for structured spike-and-slab prior).
         prior : str, optional
             Type of prior to use ('ss', 'sss', 'student'):
             'ss' = Spike-and-Slab,
             'sss' (default) = Structured Spike-and-Slab,
             'student' = Student-t prior.
+        sss_sparsity : int, optional
+            Number of nonzero entries per solution (for structured spike-and-slab prior).
+            Default is 3.
         var_slab : float, optional
             Variance of the slab prior (default: 100.0). Used only in 'ss' and 'sss' priors.
         var_spike : float, optional
             Variance of the spike prior (default: 0.1). Used only in 'ss' and 'sss' priors.
-        w_slab : float, optional
+        weight_slab : float, optional
             Weight of slab prior (default: 0.9). Used only in 'ss' prior.
-        w_spike : float, optional
+        weight_spike : float, optional
             Weight of spike prior (default: 0.1). Used only in 'ss' prior.
         student_df : float, optional
-            Degrees of freedom for Student-t prior (default: 3). Used only in 'student' prior.
+            Degrees of freedom for Student-t prior (default: 1). Used only in 'student' prior.
         student_scale : float, optional
             Scale parameter for Student-t prior (default: 1.0). Used only in 'student' prior.
         lr : float, optional
@@ -130,11 +131,13 @@ class BayesianFeatureSelector:
         self.n_iter = n_iter
 
         if prior == "ss":
-            self.prior = SpikeAndSlabPrior(var_slab, var_spike, w_slab, w_spike)
+            self.prior = SpikeAndSlabPrior(
+                var_slab, var_spike, weight_slab, weight_spike
+            )
         elif prior == "sss":
             self.prior = StructuredSpikeAndSlabPrior(
                 n_features,
-                sparsity=sparsity,
+                sparsity=sss_sparsity,
                 var_slab=var_slab,
                 var_spike=var_spike,
             )
