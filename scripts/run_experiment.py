@@ -13,16 +13,31 @@ Saves:
 - A text file summarizing the experiment parameters, discovered features, solutions, and final parameters
   in a "results" folder in the parent directory.
 
+Supports:
+- Optional --output argument to specify the output filename.
 """
 
 import os
 import pandas as pd
 from pathlib import Path
+import argparse
 
 import feature_selection.config as C
 from feature_selection.generate_artificial_dataset import generate_artificial_dataset
 from feature_selection.inference import BayesianFeatureSelector
 from feature_selection.result_postprocessing import recover_solutions
+
+# ---- Argument parsing ----
+parser = argparse.ArgumentParser(
+    description="Run Bayesian Sparse Feature Selection experiment."
+)
+parser.add_argument(
+    "--output",
+    type=str,
+    default=None,
+    help="Custom filename for output summary (should end with .txt)",
+)
+args = parser.parse_args()
 
 # ---- Generate Artificial Dataset ----
 print("Generating dataset with:")
@@ -125,9 +140,18 @@ for component, df in full_nonzero_solutions.items():
 
 # ---- Write output ----
 timestamp = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
-parent_dir = Path(os.path.dirname(os.getcwd()))
-output_path = parent_dir / "results" / f"experiment_output_{timestamp}.txt"
-os.makedirs(parent_dir / "results", exist_ok=True)
+
+if args.output:
+    # Use custom output path
+    output_path = args.output
+    output_dir = Path(output_path).parent
+    os.makedirs(output_dir, exist_ok=True)
+else:
+    # Default output path in results/ directory in parent folder of this script
+    parent_dir = Path(os.path.dirname(os.getcwd()))
+    os.makedirs(parent_dir / "results", exist_ok=True)
+    output_path = parent_dir / "results" / f"experiment_output_{timestamp}.txt"
+
 with open(output_path, "w") as f:
     f.write("\n".join(lines))
 
