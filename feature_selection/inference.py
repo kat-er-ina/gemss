@@ -22,14 +22,16 @@ optimize(...)          : Runs the main optimization loop.
 """
 
 from typing import Literal, Dict, List
+from IPython.display import display, Markdown
 import torch
 from torch.optim import Adam
-from .models import (
+from feature_selection.models import (
     StudentTPrior,
     SpikeAndSlabPrior,
     StructuredSpikeAndSlabPrior,
     GaussianMixture,
 )
+from feature_selection.utils import print_optimization_setting
 
 
 class BayesianFeatureSelector:
@@ -250,9 +252,9 @@ class BayesianFeatureSelector:
     def optimize(
         self,
         log_callback=None,
-        regularized=False,
-        lambda_jaccard=0.5,
-        threshold=1e-3,
+        regularize=False,
+        lambda_jaccard=1.0,
+        regularization_threshold=1e-3,
     ) -> Dict[str, List[float]]:
         """
         Main optimization loop for variational inference.
@@ -261,13 +263,13 @@ class BayesianFeatureSelector:
         ----------
         log_callback : callable, optional
             Function to call for logging every 100 iterations.
-        regularized : bool, optional
+        regularize : bool, optional
             If True, use elbo_regularized during optimization (default: False) by penalizing overlap
             between solutions.
         lambda_jaccard : float, optional
-            Regularization strength for penalty in the ELBO computation (default: 0.5). Higher values
-            encourage more diverse solutions (lesser overlap). Used only if regularized=True.
-        threshold : float, optional
+            Regularization strength for penalty in the ELBO computation (default: 1.0). Higher values
+            encourage more diverse solutions (lesser overlap). Used only if regularize=True.
+        regularization_threshold : float, optional
             Nonzero threshold for support computation (default: 1e-3).
 
         Returns
@@ -279,15 +281,26 @@ class BayesianFeatureSelector:
             - 'var': list of mixture variances per iteration
             - 'alpha': list of mixture weights per iteration
         """
+        print_optimization_setting(
+            n_components=self.n_components,
+            sparsity=self.prior.sparsity,
+            regularize=regularize,
+            lambda_jaccard=lambda_jaccard,
+            regularization_threshold=regularization_threshold,
+            n_iterations=self.n_iter,
+        )
+
         history = {"elbo": [], "mu": [], "var": [], "alpha": []}
         for it in range(self.n_iter):
             # Sample z ~ q(z)
             z, comp_idx = self.mixture.sample(self.batch_size)
             z = z.requires_grad_()  # Ensure gradients for z
 
-            if regularized:
+            if regularize:
                 elbo = self.elbo_regularized(
-                    z, lambda_jaccard=lambda_jaccard, threshold=threshold
+                    z,
+                    lambda_jaccard=lambda_jaccard,
+                    threshold=regularization_threshold,
                 )
             else:
                 elbo = self.elbo(z)
@@ -308,4 +321,5 @@ class BayesianFeatureSelector:
 
             if log_callback and it % 100 == 0:
                 log_callback(it, elbo.item(), self.mixture)
+        display(Markdown("Optimization complete."))
         return history
