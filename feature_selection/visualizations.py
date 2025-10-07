@@ -3,7 +3,7 @@ Diagnostics and plotting for Bayesian feature selection.
 """
 
 from IPython.display import display, Markdown
-from typing import List
+from typing import List, Dict
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -28,7 +28,7 @@ def plot_elbo(history):
     fig.update_layout(
         title="ELBO Progress", xaxis_title="Iteration", yaxis_title="ELBO"
     )
-    fig.show()
+    fig.show(config={"displayModeBar": False})
 
 
 def plot_mu(history, component=0):
@@ -56,7 +56,7 @@ def plot_mu(history, component=0):
         xaxis_title="Iteration",
         yaxis_title="Mu value",
     )
-    fig.show()
+    fig.show(config={"displayModeBar": False})
 
 
 def plot_alpha(history):
@@ -79,7 +79,7 @@ def plot_alpha(history):
     fig.update_layout(
         title="Alpha Progress", xaxis_title="Iteration", yaxis_title="Mixture Weight"
     )
-    fig.show()
+    fig.show(config={"displayModeBar": False})
 
 
 def show_correlations_with_response(df, y, support_features):
@@ -155,12 +155,12 @@ def show_label_histogram(y, nbins=10):
         width=450,
         height=300,
     )
-    fig.show()
+    fig.show(config={"displayModeBar": False})
     return
 
 
 def show_features_in_components(
-    df_solutions: pd.DataFrame,
+    solutions: Dict[str, List[str]],
     features_to_show: List[str] = None,
 ):
     """
@@ -168,12 +168,15 @@ def show_features_in_components(
 
     Parameters
     ----------
-    df_solutions : pd.DataFrame
-        DataFrame where each column corresponds to a component and contains the features found.
+    df_solutions : Dict[str, List[str]]
+        Dictionary where each key is a component name and each value is a list of features
+        in that component.
     features_to_show : List[str], optional
         List of features to highlight in the heatmap. If None, only features in the provided
         DataFrame are shown.
     """
+    df_solutions = pd.DataFrame.from_dict(solutions, orient="index").T
+
     if features_to_show is None:
         features_to_show = df_solutions.columns.tolist()
 
@@ -194,5 +197,123 @@ def show_features_in_components(
         width=200 + 30 * len(heatmap_data.columns),
         showlegend=False,
     )
-    fig.show()
+    fig.show(config={"displayModeBar": False})
     return
+
+
+def compare_parameters(parameters, final_mu):
+    """
+    Compare learned mixture means and weights to true generating parameters.
+
+    Parameters
+    ----------
+    parameters : dict
+        Dictionary containing true generating parameters with the key
+        'full_weights' (list of lists of full weight vectors for each true solution).
+    final_mu : np.ndarray
+        Learned mixture means, shape (n_components, n_features).
+
+    Returns
+    -------
+    None
+    """
+    fig = go.Figure()
+    colors = px.colors.qualitative.Plotly
+
+    # Add traces for learned mixture means for each component
+    n_features = len(final_mu[0])
+    n_components = len(final_mu)
+    for k in range(n_components):
+        # Learned means
+        color = colors[k % len(colors)]
+        fig.add_trace(
+            go.Scatter(
+                x=np.arange(n_features),
+                y=final_mu[k],
+                mode="markers",
+                name=f"Learned μ {k}",
+                marker=dict(size=8, symbol="circle", color=color),
+                showlegend=True,
+            )
+        )
+
+    # Add traces for true (generating) solutions
+    n_solutions = len(parameters["full_weights"])
+    for k in range(n_solutions):
+        # True means
+        color = colors[k % len(colors)]
+        fig.add_trace(
+            go.Scatter(
+                x=np.arange(n_features),
+                y=parameters["full_weights"][k],
+                mode="markers",
+                name=f"True μ {k}",
+                marker=dict(size=8, symbol="x", color=color),
+                showlegend=True,
+            )
+        )
+
+    # Update layout
+    fig.update_layout(
+        title="Comparison: Learned vs True Mixture Means",
+        xaxis_title="Feature Index",
+        yaxis_title="Mean Value",
+        width=800,
+        height=500,
+        template="plotly_white",
+    )
+
+    # Update x-axis to show integer ticks
+    fig.update_xaxes(dtick=1)
+
+    fig.show(config={"displayModeBar": False})
+    return
+
+
+def show_confusion_matrix(confusion_matrix: np.ndarray):
+    """
+    Show confusion matrix using Plotly.
+
+    Parameters
+    ----------
+    confusion_matrix : array-like, shape (2, 2)
+        Confusion matrix to display.
+
+    Returns
+    -------
+    None
+    """
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=confusion_matrix,
+            x=["Predicted 0", "Predicted 1"],
+            y=["Actual 0", "Actual 1"],
+            colorscale="Blues",
+            text=confusion_matrix,
+            texttemplate="%{text}",
+        )
+    )
+    fig.update_layout(title="Confusion Matrix", width=350, height=350, showlegend=False)
+    fig.show(config={"displayModeBar": False})
+    return
+
+
+def show_predicted_vs_actual_response(y, y_pred):
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=y, y=y_pred, mode="markers", marker_color="blue"))
+    fig.add_trace(
+        go.Scatter.line(
+            x=[y.min(), y.max()],
+            y=[y.min(), y.max()],
+            line=dict(color="red", dash="dash"),
+        )
+    )
+    fig.update_layout(
+        title="Predicted vs Actual",
+        xaxis_title="Actual",
+        yaxis_title="Predicted",
+        width=400,
+        height=300,
+        showlegend=False,
+    )
+    fig.show(config={"displayModeBar": False})
