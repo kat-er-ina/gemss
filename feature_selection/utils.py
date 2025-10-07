@@ -7,7 +7,7 @@ Includes:
 """
 
 from IPython.display import display, Markdown
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 import numpy as np
 import pandas as pd
 from typing import Literal
@@ -92,6 +92,7 @@ def print_optimization_setting(
     lambda_jaccard,
     regularization_threshold,
     n_iterations,
+    algo_settings: Dict[str, any],
 ) -> None:
     """
     Print the optimization settings for the Bayesian Feature Selector.
@@ -112,8 +113,8 @@ def print_optimization_setting(
         Number of optimization iterations.
     """
     display(Markdown(f"#### Running Bayesian Feature Selector:"))
-    display(Markdown(f"- searching for {n_components} solutions"))
-    display(Markdown(f"- of desired sparsity: {sparsity}"))
+    display(Markdown(f"- desired number of solutions: {n_components}"))
+    display(Markdown(f"- desired sparsity: {sparsity}"))
     display(Markdown(f"- number of iterations: {n_iterations}"))
 
     if regularize:
@@ -122,6 +123,33 @@ def print_optimization_setting(
         display(Markdown(f" - threshold for support: {regularization_threshold}"))
     else:
         display(Markdown("- no regularization"))
+
+    display(Markdown("##### Algorithm settings:"))
+
+    prior_name = algo_settings.get("prior_name", "N/A")
+    algo_settings_to_display = {"prior name": prior_name}
+    if prior_name in [
+        "SpikeAndSlabPrior",
+        "StructuredSpikeAndSlabPrior",
+    ]:
+        algo_settings_to_display.update(
+            {
+                "var_slab": algo_settings.get("var_slab", "N/A"),
+                "var_spike": algo_settings.get("var_spike", "N/A"),
+                "weight_slab": algo_settings.get("weight_slab", "N/A"),
+                "weight_spike": algo_settings.get("weight_spike", "N/A"),
+            }
+        )
+    elif prior_name == "StudentTPrior":
+        algo_settings_to_display.update(
+            {
+                "student_df": algo_settings.get("student_df", "N/A"),
+                "student_scale": algo_settings.get("student_scale", "N/A"),
+            }
+        )
+
+    for key, value in algo_settings_to_display.items():
+        display(Markdown(f" - {key.lower()}: {value}"))
 
     return
 
@@ -151,7 +179,8 @@ def recover_solutions(
     search_history,
     desired_sparsity: int,
     min_mu_threshold: float = 0.25,
-) -> Tuple[Dict[str, List[str]], Dict[str, np.ndarray]]:
+    verbose: bool = True,
+) -> Tuple[Dict[str, List[str]], Dict[str, np.ndarray], Dict[str, pd.DataFrame]]:
     """
     Recover solutions from the optimization history by identifying features that
     have significant mean values (mu) in the final iterations.
@@ -163,14 +192,18 @@ def recover_solutions(
         The number of most important features to identify for each component.
     min_mu_threshold: float
         The threshold for considering a feature as important based on its mu value.
+    verbose: bool, optional
+        Whether to print detailed information about the recovered solutions. Default is True.
 
     Returns:
     -------
-    Tuple[Dict[str, List[str]], Dict[str, np.ndarray]]
+    Tuple[Dict[str, List[str]], Dict[str, np.ndarray], Dict[str, pd.DataFrame]]
         A tuple containing:
         - A dictionary mapping each component (solution) to its identified features.
         - A dictionary with the final parameters (mu, var, alpha) for each component
         at the iteration where the features were selected.
+        - A dictionary mapping each component to a DataFrame of all features that
+        exceeded the min_mu_threshold in the last iterations, along with their mu values.
     """
     n_components = len(search_history["mu"][0])
     n_features = len(search_history["mu"][0][0])
@@ -182,6 +215,7 @@ def recover_solutions(
     final_iteration = np.zeros((n_components), dtype=int)
 
     # A dictionary to store the solutions found for each component
+    full_nonzero_solutions = {}
     solutions = {}
 
     # 'desired_sparsity' = the number of most important features we are interested in
@@ -208,13 +242,13 @@ def recover_solutions(
                 if abs(mu_traj[j]) > min_mu_threshold
             ]
             i += 1
-
-        display(Markdown(f"## Component {k}:"))
-        display(
-            Markdown(
-                f"- Last {n_last_nonzeros}+ features with absolute value greater than {min_mu_threshold}:"
+        if verbose:
+            display(Markdown(f"## Component {k}:"))
+            display(
+                Markdown(
+                    f"- Last {n_last_nonzeros}+ features with absolute value greater than {min_mu_threshold}:"
+                )
             )
-        )
         # Organize these features by their absolute mu values
         top_features = pd.DataFrame(
             {
@@ -223,8 +257,12 @@ def recover_solutions(
             }
         )
         top_features["absolute_mu"] = np.abs(top_features["Mu value"])
-        top_features = top_features.sort_values(by="absolute_mu", ascending=False)
-        display(top_features[["Feature", "Mu value"]])
+        top_features = top_features.sort_values(by="absolute_mu", ascending=False).drop(
+            columns=["absolute_mu"]
+        )
+        full_nonzero_solutions[f"component_{k}"] = top_features
+        if verbose:
+            display(top_features[["Feature", "Mu value"]])
 
         # Take the top 'desired_sparsity' features according to their absolute mu values
         # and discard the rest
@@ -246,7 +284,7 @@ def recover_solutions(
         "final var": final_var,
         "final alpha": final_alpha,
     }
-    return (solutions, final_parameters)
+    return (solutions, final_parameters, full_nonzero_solutions)
 
 
 def solve_with_logistic_regression(

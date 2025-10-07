@@ -258,6 +258,7 @@ class BayesianFeatureSelector:
         regularize=False,
         lambda_jaccard=1.0,
         regularization_threshold=1e-3,
+        verbose=True,
     ) -> Dict[str, List[float]]:
         """
         Main optimization loop for variational inference.
@@ -274,6 +275,8 @@ class BayesianFeatureSelector:
             encourage more diverse solutions (lesser overlap). Used only if regularize=True.
         regularization_threshold : float, optional
             Nonzero threshold for support computation (default: 1e-3).
+        verbose : bool, optional
+            If True, print optimization settings and progress (default: True).
 
         Returns
         -------
@@ -284,14 +287,24 @@ class BayesianFeatureSelector:
             - 'var': list of mixture variances per iteration
             - 'alpha': list of mixture weights per iteration
         """
-        print_optimization_setting(
-            n_components=self.n_components,
-            sparsity=self.prior.sparsity,
-            regularize=regularize,
-            lambda_jaccard=lambda_jaccard,
-            regularization_threshold=regularization_threshold,
-            n_iterations=self.n_iter,
-        )
+        if verbose:
+            print_optimization_setting(
+                n_components=self.n_components,
+                sparsity=self.prior.sparsity,
+                regularize=regularize,
+                lambda_jaccard=lambda_jaccard,
+                regularization_threshold=regularization_threshold,
+                n_iterations=self.n_iter,
+                algo_settings={
+                    "prior_name": type(self.prior).__name__,
+                    "var_slab": getattr(self.prior, "var_slab", None),
+                    "var_spike": getattr(self.prior, "var_spike", None),
+                    "weight_slab": getattr(self.prior, "weight_slab", None),
+                    "weight_spike": getattr(self.prior, "weight_spike", None),
+                    "student_df": getattr(self.prior, "df", None),
+                    "student_scale": getattr(self.prior, "scale", None),
+                },
+            )
 
         history = {"elbo": [], "mu": [], "var": [], "alpha": []}
         for it in range(self.n_iter):
@@ -324,5 +337,6 @@ class BayesianFeatureSelector:
 
             if log_callback and it % 100 == 0:
                 log_callback(it, elbo.item(), self.mixture)
-        display(Markdown("Optimization complete."))
+        if verbose:
+            display(Markdown("Optimization complete."))
         return history
