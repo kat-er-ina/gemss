@@ -2,8 +2,12 @@
 Run Bayesian Sparse Feature Selection as a script, closely matching the demo notebook.
 
 Assumes:
-- generated_dataset_parameters.json and algorithm_settings.json exist in the parent directory
+- following parameter files exist in the parent directory:
+    - generated_dataset_parameters.json
+    - algorithm_settings.json
+    - solution_postprocessing_settings.json
 - feature_selection package is installed and available
+- feature_selection.config is properly set up
 
 Saves:
 - A text file summarizing the experiment parameters, discovered features, solutions, and final parameters
@@ -12,15 +16,13 @@ Saves:
 """
 
 import os
-import json
 import pandas as pd
-import numpy as np
 from pathlib import Path
 
 import feature_selection.config as C
 from feature_selection.generate_artificial_dataset import generate_artificial_dataset
 from feature_selection.inference import BayesianFeatureSelector
-from feature_selection.utils import recover_solutions
+from feature_selection.result_postprocessing import recover_solutions
 
 # ---- Generate Artificial Dataset ----
 print("Generating dataset with:")
