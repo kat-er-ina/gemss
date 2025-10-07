@@ -17,63 +17,28 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 
+import feature_selection.config as C
 from feature_selection.generate_artificial_dataset import generate_artificial_dataset
 from feature_selection.inference import BayesianFeatureSelector
 from feature_selection.utils import recover_solutions
 
-# ---- Load parameters and settings ----
-parent_dir = Path(os.path.dirname(os.getcwd()))
-
-with open(parent_dir / "generated_dataset_parameters.json", "r") as f:
-    dataset_params = json.load(f)
-
-with open(parent_dir / "algorithm_settings.json", "r") as f:
-    algo_settings = json.load(f)
-
-# Dataset parameters
-NSAMPLES = dataset_params["NSAMPLES"]
-NFEATURES = dataset_params["NFEATURES"]
-NSOLUTIONS = dataset_params["NSOLUTIONS"]
-SPARSITY = dataset_params["SPARSITY"]
-NOISE_STD = dataset_params["NOISE_STD"]
-BINARIZE = dataset_params["BINARIZE"]
-BINARY_RESPONSE_RATIO = dataset_params["BINARY_RESPONSE_RATIO"]
-RANDOM_SEED = dataset_params["RANDOM_SEED"]
-
-# Algorithm settings
-# Heuristic: double the number of generating solutions for number of components
-# N_COMPONENTS = 2 * NSOLUTIONS
-N_COMPONENTS = algo_settings["N_COMPONENTS"]
-N_ITER = algo_settings["N_ITER"]
-PRIOR_TYPE = algo_settings["PRIOR_TYPE"]
-STUDENT_DF = algo_settings["STUDENT_DF"]
-STUDENT_SCALE = algo_settings["STUDENT_SCALE"]
-VAR_SLAB = algo_settings["VAR_SLAB"]
-VAR_SPIKE = algo_settings["VAR_SPIKE"]
-WEIGHT_SLAB = algo_settings["WEIGHT_SLAB"]
-WEIGHT_SPIKE = algo_settings["WEIGHT_SPIKE"]
-IS_REGULARIZED = algo_settings["IS_REGULARIZED"]
-LAMBDA_JACCARD = algo_settings["LAMBDA_JACCARD"]
-BATCH_SIZE = algo_settings["BATCH_SIZE"]
-LEARNING_RATE = algo_settings["LEARNING_RATE"]
-# Minimum mu threshold for feature selection in recover_solutions
-MIN_MU_THRESHOLD = algo_settings["MIN_MU_THRESHOLD"]
-
 # ---- Generate Artificial Dataset ----
 print("Generating dataset with:")
-print(f" - {NSAMPLES} samples,")
-print(f" - {NFEATURES} features,")
-print(f" - {NSOLUTIONS} original solutions, each with {SPARSITY} supporting vectors.")
+print(f" - {C.NSAMPLES} samples,")
+print(f" - {C.NFEATURES} features,")
+print(
+    f" - {C.NSOLUTIONS} original solutions, each with {C.SPARSITY} supporting vectors."
+)
 
 df, y, generating_solutions, parameters = generate_artificial_dataset(
-    n_samples=NSAMPLES,
-    n_features=NFEATURES,
-    n_solutions=NSOLUTIONS,
-    sparsity=SPARSITY,
-    noise_data_std=NOISE_STD,
-    binarize=BINARIZE,
-    binary_response_ratio=BINARY_RESPONSE_RATIO,
-    random_seed=RANDOM_SEED,
+    n_samples=C.NSAMPLES,
+    n_features=C.NFEATURES,
+    n_solutions=C.NSOLUTIONS,
+    sparsity=C.SPARSITY,
+    noise_data_std=C.NOISE_STD,
+    binarize=C.BINARIZE,
+    binary_response_ratio=C.BINARY_RESPONSE_RATIO,
+    random_seed=C.RANDOM_SEED,
     save_to_csv=False,
     print_data_overview=False,
 )
@@ -85,34 +50,34 @@ true_support_features = [f"feature_{i}" for i in set(support_indices)]
 print("\nRunning Bayesian Feature Selector...")
 
 selector = BayesianFeatureSelector(
-    n_features=NFEATURES,
-    n_components=N_COMPONENTS,
+    n_features=C.NFEATURES,
+    n_components=C.N_COMPONENTS,
     X=df.values,
     y=y,
-    prior=PRIOR_TYPE,
-    sss_sparsity=SPARSITY,
-    var_slab=VAR_SLAB,
-    var_spike=VAR_SPIKE,
-    weight_slab=WEIGHT_SLAB,
-    weight_spike=WEIGHT_SPIKE,
-    student_df=STUDENT_DF,
-    student_scale=STUDENT_SCALE,
-    lr=LEARNING_RATE,
-    batch_size=BATCH_SIZE,
-    n_iter=N_ITER,
+    prior=C.PRIOR_TYPE,
+    sss_sparsity=C.SPARSITY,
+    var_slab=C.VAR_SLAB,
+    var_spike=C.VAR_SPIKE,
+    weight_slab=C.WEIGHT_SLAB,
+    weight_spike=C.WEIGHT_SPIKE,
+    student_df=C.STUDENT_DF,
+    student_scale=C.STUDENT_SCALE,
+    lr=C.LEARNING_RATE,
+    batch_size=C.BATCH_SIZE,
+    n_iter=C.N_ITER,
 )
 
 history = selector.optimize(
-    regularize=IS_REGULARIZED,
-    lambda_jaccard=LAMBDA_JACCARD,
+    regularize=C.IS_REGULARIZED,
+    lambda_jaccard=C.LAMBDA_JACCARD,
     verbose=False,
 )
 print("Optimization finished.")
 
 solutions, final_parameters, full_nonzero_solutions = recover_solutions(
     search_history=history,
-    desired_sparsity=SPARSITY,
-    min_mu_threshold=MIN_MU_THRESHOLD,
+    desired_sparsity=C.SPARSITY,
+    min_mu_threshold=C.MIN_MU_THRESHOLD,
     verbose=False,
 )
 
@@ -125,11 +90,8 @@ print("Writing results...")
 lines = []
 lines.append("# Bayesian Sparse Feature Selection Experiment\n")
 lines.append("## Parameters and Settings\n")
-lines.append("### Dataset Parameters:")
-for k, v in dataset_params.items():
-    lines.append(f"- {k}: {v}")
-lines.append("\n### Algorithm Settings:")
-for k, v in algo_settings.items():
+params = C.as_dict()
+for k, v in params.items():
     lines.append(f"- {k}: {v}")
 
 lines.append("\n## Summary of discovered features:\n")
@@ -150,7 +112,7 @@ lines.append("\n## Full solutions\n")
 lines.append(
     " - all features with mu greater than the minimal threshold in last iterations"
 )
-lines.append(f" - minimal mu threshold: {MIN_MU_THRESHOLD}")
+lines.append(f" - minimal mu threshold: {C.MIN_MU_THRESHOLD}")
 for component, df in full_nonzero_solutions.items():
     lines.append(f"\n### {component.upper()} ({df.shape[0]} features):\n")
     for i, row in df.iterrows():
@@ -159,8 +121,8 @@ for component, df in full_nonzero_solutions.items():
 
 # ---- Write output ----
 timestamp = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
+parent_dir = Path(os.path.dirname(os.getcwd()))
 output_path = parent_dir / "results" / f"experiment_output_{timestamp}.txt"
-# create results directory if it doesn't exist
 os.makedirs(parent_dir / "results", exist_ok=True)
 with open(output_path, "w") as f:
     f.write("\n".join(lines))
