@@ -104,7 +104,7 @@ lines.append(f"{sorted(missing_features)}\n")
 lines.append(f" - {len(extra_features)} extra features found (not in true support):")
 lines.append(f"{sorted(extra_features)}")
 
-lines.append("\n## Solutions (top features for each component)\n")
+lines.append(f"\n## Solutions found (top {C.SPARSITY} features for each component)\n")
 solutions_df = pd.DataFrame.from_dict(solutions, orient="index").T
 lines.append(solutions_df.to_string())
 

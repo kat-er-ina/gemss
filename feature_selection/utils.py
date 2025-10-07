@@ -87,12 +87,11 @@ def batch_data(X, y, batch_size):
 
 def print_optimization_setting(
     n_components,
-    sparsity,
     regularize,
     lambda_jaccard,
     regularization_threshold,
     n_iterations,
-    algo_settings: Dict[str, any],
+    prior_settings: Dict[str, any],
 ) -> None:
     """
     Print the optimization settings for the Bayesian Feature Selector.
@@ -100,9 +99,7 @@ def print_optimization_setting(
     Parameters
     ----------
     n_components : int
-        Number of mixture components (desiredsolutions).
-    sparsity : int
-        Desired sparsity level (number of features to select).
+        Number of mixture components (desired solutions).
     regularize : bool
         Whether regularization is applied.
     lambda_jaccard : float
@@ -111,10 +108,11 @@ def print_optimization_setting(
         Threshold for support computation.
     n_iterations : int
         Number of optimization iterations.
+    prior_settings : Dict[str, any]
+        Dictionary containing prior settings such as prior name and parameters.
     """
     display(Markdown(f"#### Running Bayesian Feature Selector:"))
     display(Markdown(f"- desired number of solutions: {n_components}"))
-    display(Markdown(f"- desired sparsity: {sparsity}"))
     display(Markdown(f"- number of iterations: {n_iterations}"))
 
     if regularize:
@@ -126,29 +124,30 @@ def print_optimization_setting(
 
     display(Markdown("##### Algorithm settings:"))
 
-    prior_name = algo_settings.get("prior_name", "N/A")
-    algo_settings_to_display = {"prior name": prior_name}
+    prior_name = prior_settings.get("prior_name", "N/A")
+    prior_settings_to_display = {"prior name": prior_name}
     if prior_name in [
         "SpikeAndSlabPrior",
         "StructuredSpikeAndSlabPrior",
     ]:
-        algo_settings_to_display.update(
+        prior_settings_to_display.update(
             {
-                "var_slab": algo_settings.get("var_slab", "N/A"),
-                "var_spike": algo_settings.get("var_spike", "N/A"),
-                "weight_slab": algo_settings.get("weight_slab", "N/A"),
-                "weight_spike": algo_settings.get("weight_spike", "N/A"),
+                "prior_sparsity": prior_settings.get("prior_sparsity", "N/A"),
+                "var_slab": prior_settings.get("var_slab", "N/A"),
+                "var_spike": prior_settings.get("var_spike", "N/A"),
+                "weight_slab": prior_settings.get("weight_slab", "N/A"),
+                "weight_spike": prior_settings.get("weight_spike", "N/A"),
             }
         )
     elif prior_name == "StudentTPrior":
-        algo_settings_to_display.update(
+        prior_settings_to_display.update(
             {
-                "student_df": algo_settings.get("student_df", "N/A"),
-                "student_scale": algo_settings.get("student_scale", "N/A"),
+                "student_df": prior_settings.get("student_df", "N/A"),
+                "student_scale": prior_settings.get("student_scale", "N/A"),
             }
         )
 
-    for key, value in algo_settings_to_display.items():
+    for key, value in prior_settings_to_display.items():
         display(Markdown(f" - {key.lower()}: {value}"))
 
     return
@@ -342,7 +341,7 @@ def solve_with_logistic_regression(
     # Print results
     display(
         Markdown(
-            f"### Logistic regression with {penalty.upper()} penalty - Performance on training set"
+            f"### Logistic regression with {penalty.upper()} penalty - performance on training set"
         )
     )
     display(Markdown(f"**Accuracy:** {accuracy_score(y, y_pred)}"))
@@ -420,7 +419,7 @@ def solve_with_linear_regression(
 
     display(
         Markdown(
-            f"### Linear Regression with {model_name} Penalty - Performance on Training Set"
+            f"### Linear regression with {model_name} penalty - performance on training set"
         )
     )
     display(Markdown(f"**R² Score:** {r2_score(y, y_pred)}"))
@@ -536,7 +535,7 @@ def show_algorithm_progress(history: Dict[str, np.ndarray]) -> None:
         It is assumed that 'mu' has shape [n_iter, n_components, n_features].
         It is the output of the `optimize` method of `BayesianFeatureSelector`.
     """
-    display(Markdown(f"## Algorithm progress: {len(history['elbo'])} iterations"))
+    display(Markdown(f"### Algorithm progress:"))
     n_components = len(history["mu"][0])
 
     # Plot ELBO progress

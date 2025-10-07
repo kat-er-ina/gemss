@@ -290,13 +290,13 @@ class BayesianFeatureSelector:
         if verbose:
             print_optimization_setting(
                 n_components=self.n_components,
-                sparsity=self.prior.sparsity,
                 regularize=regularize,
                 lambda_jaccard=lambda_jaccard,
                 regularization_threshold=regularization_threshold,
                 n_iterations=self.n_iter,
-                algo_settings={
+                prior_settings={
                     "prior_name": type(self.prior).__name__,
+                    "prior_sparsity": getattr(self.prior, "sparsity", None),
                     "var_slab": getattr(self.prior, "var_slab", None),
                     "var_spike": getattr(self.prior, "var_spike", None),
                     "weight_slab": getattr(self.prior, "weight_slab", None),
