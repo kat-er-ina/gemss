@@ -25,6 +25,8 @@ ALGORITHM SETTINGS (from algorithm_settings.json)
 - N_COMPONENTS: Number of mixture components in the variational posterior (typically >= 2 * NSOLUTIONS).
 - N_ITER: Number of optimization iterations.
 - PRIOR_TYPE: Prior type; 'ss' = spike-and-slab, 'sss' = structured spike-and-slab, 'student' = Student-t.
+- PRIOR_SPARSITY: Prior expected number of nonzero features per component (used if PRIOR_TYPE='sss').
+                  Should be ideally equaly to true sparsity.
 - STUDENT_DF: Degrees of freedom for Student-t prior (used if PRIOR_TYPE='student').
 - STUDENT_SCALE: Scale for Student-t prior (used if PRIOR_TYPE='student').
 - VAR_SLAB: Variance of the 'slab' in spike-and-slab/structured spike-and-slab prior.
@@ -35,7 +37,14 @@ ALGORITHM SETTINGS (from algorithm_settings.json)
 - LAMBDA_JACCARD: Regularization strength for the Jaccard similarity penalty.
 - BATCH_SIZE: Mini-batch size for stochastic optimization.
 - LEARNING_RATE: Learning rate for the Adam optimizer.
+
+----------------------------------------------------------------------------------------
+ALGORITHM SETTINGS (from solution_postprocessing_settings.json)
+----------------------------------------------------------------------------------------
+- DESIRED_SPARSITY: Desired number of nonzero features in the recovered solutions.
+                    Only this number of features with highest |mu| are selected per solution.
 - MIN_MU_THRESHOLD: Minimum absolute mu value for feature selection in recovered solutions.
+                    Only features with |mu| above this threshold are considered nonzero.
 
 Usage:
     import feature_selection.config as config
@@ -52,6 +61,7 @@ from pathlib import Path
 parent_dir = Path(__file__).parent.parent
 dataset_json = parent_dir / "generated_dataset_parameters.json"
 algo_json = parent_dir / "algorithm_settings.json"
+postprocessing_json = parent_dir / "solution_postprocessing_settings.json"
 
 # Load dataset parameters
 try:
@@ -70,6 +80,20 @@ except FileNotFoundError:
     raise FileNotFoundError(f"Algorithm settings file not found: {algo_json}")
 except json.JSONDecodeError as e:
     raise ValueError(f"Invalid JSON in algorithm settings file {algo_json}: {e}")
+
+# Load postprocessing settings
+try:
+    with open(postprocessing_json, "r") as f:
+        _postproc_settings = json.load(f)
+except FileNotFoundError:
+    raise FileNotFoundError(
+        f"Postprocessing settings file not found: {postprocessing_json}"
+    )
+except json.JSONDecodeError as e:
+    raise ValueError(
+        f"Invalid JSON in postprocessing settings file {postprocessing_json}: {e}"
+    )
+
 
 # ------------------ DATASET GENERATION PARAMETERS ------------------
 NSAMPLES = _dataset_params["NSAMPLES"]
@@ -96,6 +120,7 @@ BINARY_RESPONSE_RATIO = _dataset_params["BINARY_RESPONSE_RATIO"]
 RANDOM_SEED = _dataset_params["RANDOM_SEED"]
 """Random seed for reproducibility."""
 
+
 # ------------------ ALGORITHM SETTINGS ------------------
 N_COMPONENTS = _algo_settings["N_COMPONENTS"]
 """Number of mixture components in the variational posterior (typically >= 2 * NSOLUTIONS)."""
@@ -105,6 +130,10 @@ N_ITER = _algo_settings["N_ITER"]
 
 PRIOR_TYPE = _algo_settings["PRIOR_TYPE"]
 """Prior type; 'ss' = spike-and-slab, 'sss' = structured spike-and-slab, 'student' = Student-t."""
+
+PRIOR_SPARSITY = _algo_settings.get("PRIOR_SPARSITY", None)
+"""Prior expected number of nonzero features per component (used if PRIOR_TYPE='sss').
+Should be ideally equal to true sparsity."""
 
 STUDENT_DF = _algo_settings["STUDENT_DF"]
 """Degrees of freedom for Student-t prior (used if PRIOR_TYPE='student')."""
@@ -136,8 +165,28 @@ BATCH_SIZE = _algo_settings["BATCH_SIZE"]
 LEARNING_RATE = _algo_settings["LEARNING_RATE"]
 """Learning rate for the Adam optimizer."""
 
-MIN_MU_THRESHOLD = _algo_settings["MIN_MU_THRESHOLD"]
-"""Minimum absolute mu value for feature selection in recovered solutions."""
+# ------------------ POSTPROCESSING SETTINGS ------------------
+DESIRED_SPARSITY = _postproc_settings["DESIRED_SPARSITY"]
+"""Desired number of nonzero features in the recovered solutions.
+Only this number of features with highest |mu| are selected per final solution.
+Should be ideally equal to true sparsity."""
+
+MIN_MU_THRESHOLD = _postproc_settings["MIN_MU_THRESHOLD"]
+"""Only features with |mu| above this minimal threshold are considered nonzero
+and are included in the 'full' solutions."""
+
+
+def check_sparsities():
+    """
+    Print the sparsity settings for verification. Ideally, all three sparsities are equal.
+    In practice, the desired sparsity might be set slightly higher to cover all true features.
+    The prior sparsity is only used if PRIOR_TYPE='sss' but it is not a hard constraint.
+    """
+    print("Sparsity settings:")
+    print(f" - True sparsity: {SPARSITY}")
+    print(f" - Prior sparsity: {PRIOR_SPARSITY}")
+    print(f" - Desired sparsity: {DESIRED_SPARSITY}")
+    return
 
 
 def as_dict():
@@ -145,6 +194,10 @@ def as_dict():
     Return all config variables as a dictionary (for logging or debugging).
     """
     out = {}
-    for k in list(_dataset_params.keys()) + list(_algo_settings.keys()):
+    for k in (
+        list(_dataset_params.keys())
+        + list(_algo_settings.keys())
+        + list(_postproc_settings.keys())
+    ):
         out[k] = globals()[k]
     return out

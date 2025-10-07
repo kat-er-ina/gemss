@@ -55,7 +55,7 @@ selector = BayesianFeatureSelector(
     X=df.values,
     y=y,
     prior=C.PRIOR_TYPE,
-    sss_sparsity=C.SPARSITY,
+    sss_sparsity=C.PRIOR_SPARSITY,
     var_slab=C.VAR_SLAB,
     var_spike=C.VAR_SPIKE,
     weight_slab=C.WEIGHT_SLAB,
@@ -76,7 +76,7 @@ print("Optimization finished.")
 
 solutions, final_parameters, full_nonzero_solutions = recover_solutions(
     search_history=history,
-    desired_sparsity=C.SPARSITY,
+    desired_sparsity=C.DESIRED_SPARSITY,
     min_mu_threshold=C.MIN_MU_THRESHOLD,
     verbose=False,
 )
@@ -104,7 +104,9 @@ lines.append(f"{sorted(missing_features)}\n")
 lines.append(f" - {len(extra_features)} extra features found (not in true support):")
 lines.append(f"{sorted(extra_features)}")
 
-lines.append(f"\n## Solutions found (top {C.SPARSITY} features for each component)\n")
+lines.append(
+    f"\n## Solutions found (top {C.DESIRED_SPARSITY} features for each component)\n"
+)
 solutions_df = pd.DataFrame.from_dict(solutions, orient="index").T
 lines.append(solutions_df.to_string())
 
