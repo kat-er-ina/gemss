@@ -15,28 +15,44 @@ DATASET GENERATION PARAMETERS (from generated_dataset_parameters.json)
 - NSOLUTIONS: Number of distinct sparse solutions ("true" supports).
 - SPARSITY: Number of nonzero features per solution (support size).
 - NOISE_STD: Standard deviation of noise added to the data.
-- BINARIZE: Whether to binarize the response variable (True = classification, False = regression).
-- BINARY_RESPONSE_RATIO: Proportion of samples assigned label 1 (controls class balance for classification).
+- BINARIZE: Whether to binarize the response variable
+            (True => classification problem, False => regression problem).
+- BINARY_RESPONSE_RATIO: Proportion of samples assigned label 1
+                         (controls class balance for classification).
 - RANDOM_SEED: Random seed for reproducibility.
 
 ----------------------------------------------------------------------------------------
 ALGORITHM SETTINGS (from algorithm_settings.json)
 ----------------------------------------------------------------------------------------
-- N_COMPONENTS: Number of mixture components in the variational posterior (typically >= 2 * NSOLUTIONS).
+- N_COMPONENTS:Number of mixture components in the variational posterior (typically >= 2 * NSOLUTIONS).
 - N_ITER: Number of optimization iterations.
-- PRIOR_TYPE: Prior type; 'ss' = spike-and-slab, 'sss' = structured spike-and-slab, 'student' = Student-t.
-- PRIOR_SPARSITY: Prior expected number of nonzero features per component (used if PRIOR_TYPE='sss').
+- PRIOR_TYPE: Prior type;
+                'ss' = spike-and-slab,
+                'sss' = structured spike-and-slab,
+                'student' = Student-t.
+- PRIOR_SPARSITY: Prior expected number of nonzero features per component
                   Should be ideally equaly to true sparsity.
-- STUDENT_DF: Degrees of freedom for Student-t prior (used if PRIOR_TYPE='student').
-- STUDENT_SCALE: Scale for Student-t prior (used if PRIOR_TYPE='student').
+                  Used only if PRIOR_TYPE='sss'.
+- STUDENT_DF: Degrees of freedom for Student-t prior. Used only if PRIOR_TYPE='student'.
+- STUDENT_SCALE: Scale for Student-t prior. Used only if PRIOR_TYPE='student'.
 - VAR_SLAB: Variance of the 'slab' in spike-and-slab/structured spike-and-slab prior.
+            Increasing VAR_SLAB makes the slab more diffuse, allowing larger coefficients.
 - VAR_SPIKE: Variance of the 'spike' in spike-and-slab/structured spike-and-slab prior.
+             Decreasing VAR_SPIKE makes the spike more concentrated around zero,
+             promoting stronger sparsity.
 - WEIGHT_SLAB: Weight of the 'slab' in spike-and-slab prior.
+              Increasing WEIGHT_SLAB makes the slab more influential in the Spike-and-Slab
+              mixture compared to the spike.
 - WEIGHT_SPIKE: Weight of the 'spike' in spike-and-slab prior.
+                Increasing WEIGHT_SPIKE makes the spike more influential in the Spike-and-Slab
+                mixture compared to the slab.
 - IS_REGULARIZED: Whether to use Jaccard similarity penalty for component diversity.
 - LAMBDA_JACCARD: Regularization strength for the Jaccard similarity penalty.
+                  Increasing LAMBDA_JACCARD encourages more diverse (less overlapping) supports.
 - BATCH_SIZE: Mini-batch size for stochastic optimization.
+              Larger batches give more stable gradients.
 - LEARNING_RATE: Learning rate for the Adam optimizer.
+                 Smaller values lead to more stable but slower convergence.
 
 ----------------------------------------------------------------------------------------
 ALGORITHM SETTINGS (from solution_postprocessing_settings.json)
