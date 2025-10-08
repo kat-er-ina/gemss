@@ -418,3 +418,50 @@ def show_predicted_vs_actual_response(
     )
     fig.show(config={"displayModeBar": False})
     return
+
+
+def show_final_alphas(
+    history: Dict[str, List[Any]],
+    show_bar_plot: bool = True,
+    show_pie_chart: bool = True,
+) -> None:
+    """
+    Show final mixture weights as bar plot and/or pie chart using Plotly.
+
+    Parameters
+    ----------
+    history : Dict[str, List[Any]]
+        Dictionary containing 'alpha' key with weights per iteration.
+    show_bar_plot : bool, optional
+        Whether to show the bar plot. Default is True.
+    show_pie_chart : bool, optional
+        Whether to show the pie chart. Default is True.
+
+    Returns
+    -------
+    None
+    """
+    alphas = history["alpha"]
+    final_alphas = alphas[:][-1]
+    display(Markdown("## Final mixture weights"))
+
+    if show_bar_plot:
+        px.bar(
+            x=[f"Component {i}" for i in range(len(final_alphas))],
+            y=final_alphas,
+            labels={"x": "Component", "y": "Weight"},
+            title="Absolute weights of candidate solutions <br>in the final mixture",
+            width=500,
+            height=400,
+        ).show(config={"displayModeBar": False})
+
+    # create a pie chart
+    if show_pie_chart:
+        px.pie(
+            names=[f"Component {i}" for i in range(len(final_alphas))],
+            values=final_alphas,
+            title="Relative weights of candidate solutions <br>in the final mixture",
+            width=500,
+            height=400,
+        ).show(config={"displayModeBar": False})
+    return
