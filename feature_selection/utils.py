@@ -32,30 +32,11 @@ warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
 
-# def kldiv(p, q, eps=1e-10):
-#     """
-#     Compute KL divergence between two discrete probability distributions.
-
-#     Parameters
-#     ----------
-#     p : np.ndarray
-#         Array of probabilities (ground truth).
-#     q : np.ndarray
-#         Array of probabilities (approximation).
-#     eps : float, optional
-#         Small value to avoid log(0), default is 1e-10.
-
-#     Returns
-#     -------
-#     float
-#         KL divergence value.
-#     """
-#     p = np.clip(p, eps, 1)
-#     q = np.clip(q, eps, 1)
-#     return np.sum(p * (np.log(p) - np.log(q)))
-
-
-def batch_data(X, y, batch_size):
+def batch_data(
+    X: np.ndarray,
+    y: np.ndarray,
+    batch_size: int,
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Randomly sample a batch of data.
 
@@ -81,11 +62,11 @@ def batch_data(X, y, batch_size):
 
 
 def print_optimization_setting(
-    n_components,
-    regularize,
-    lambda_jaccard,
-    regularization_threshold,
-    n_iterations,
+    n_components: int,
+    regularize: bool,
+    lambda_jaccard: float,
+    regularization_threshold: float,
+    n_iterations: int,
     prior_settings: Dict[str, Any],
 ) -> None:
     """
@@ -105,6 +86,10 @@ def print_optimization_setting(
         Number of optimization iterations.
     prior_settings : Dict[str, Any]
         Dictionary containing prior settings such as prior name and parameters.
+
+    Returns
+    -------
+    None
     """
     display(Markdown(f"#### Running Bayesian Feature Selector:"))
     display(Markdown(f"- desired number of solutions: {n_components}"))
@@ -152,7 +137,10 @@ def print_optimization_setting(
     return
 
 
-def save_history(history, fname):
+def save_history(
+    history: Dict[str, Any],
+    fname: str,
+) -> None:
     """
     Save optimization history to a file using pickle.
 
@@ -178,7 +166,7 @@ def solve_with_logistic_regression(
     y: pd.Series | np.ndarray,
     penalty: Literal["l1", "l2", "elasticnet"] = "l2",
     show_cm_figure: bool = True,
-):
+) -> None:
     """
     Solve a logistic regression problem with the specified penalty.
 
@@ -258,7 +246,7 @@ def solve_with_linear_regression(
     y: pd.Series | np.ndarray,
     penalty: Literal["l1", "l2", "elasticnet"] = "l2",
     illustrate_predicted_vs_actual: bool = False,
-):
+) -> None:
     """
     Solve a linear regression problem with the specified penalty.
 

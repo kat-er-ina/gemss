@@ -3,20 +3,22 @@ Diagnostics and plotting for Bayesian feature selection.
 """
 
 from IPython.display import display, Markdown
-from typing import List, Dict
+from typing import Any, List, Dict
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
 
 
-def plot_elbo(history):
+def plot_elbo(
+    history: Dict[str, List[float]],
+) -> None:
     """
     Plot ELBO progress over optimization iterations (Plotly).
 
     Parameters
     ----------
-    history : dict
+    history : Dict[str, List[float]]
         Dictionary containing 'elbo' key with ELBO values per iteration.
 
     Returns
@@ -29,18 +31,26 @@ def plot_elbo(history):
         title="ELBO Progress", xaxis_title="Iteration", yaxis_title="ELBO"
     )
     fig.show(config={"displayModeBar": False})
+    return
 
 
-def plot_mu(history, component=0):
+def plot_mu(
+    history: Dict[str, np.ndarray],
+    component: int = 0,
+    original_feature_names_mapping: Dict[str, str] = None,
+) -> None:
     """
     Plot trajectory of mixture means for a given component (Plotly).
 
     Parameters
     ----------
-    history : dict
+    history : Dict[str, np.ndarray]
         Dictionary containing 'mu' key with mean values per iteration.
     component : int, optional
         Index of mixture component to plot.
+    original_feature_names_mapping : Dict[str, str], optional
+        A mapping from internal feature names (e.g., 'feature_0') to original feature names.
+        If provided, the plots will use the original feature names.
 
     Returns
     -------
@@ -50,22 +60,31 @@ def plot_mu(history, component=0):
     mu_traj = arr[:, component, :]
     fig = go.Figure()
     for f in range(mu_traj.shape[1]):
-        fig.add_trace(go.Scatter(y=mu_traj[:, f], mode="lines", name=f"feature_{f}"))
+        fig.add_trace(
+            go.Scatter(
+                y=mu_traj[:, f],
+                mode="lines",
+                name=original_feature_names_mapping.get(f"feature_{f}", f"feature_{f}"),
+            )
+        )
     fig.update_layout(
         title=f"Mu trajectory, Component {component}",
         xaxis_title="Iteration",
         yaxis_title="Mu value",
     )
     fig.show(config={"displayModeBar": False})
+    return
 
 
-def plot_alpha(history):
+def plot_alpha(
+    history: Dict[str, np.ndarray],
+) -> None:
     """
     Plot mixture weights (alpha) progress over iterations (Plotly).
 
     Parameters
     ----------
-    history : dict
+    history : Dict[str, np.ndarray]
         Dictionary containing 'alpha' key with weights per iteration.
 
     Returns
@@ -75,14 +94,43 @@ def plot_alpha(history):
     arr = np.array(history["alpha"])  # shape [n_iter, n_components]
     fig = go.Figure()
     for k in range(arr.shape[1]):
-        fig.add_trace(go.Scatter(y=arr[:, k], mode="lines", name=f"alpha_{k}"))
+        fig.add_trace(
+            go.Scatter(
+                y=arr[:, k],
+                mode="lines",
+                name=f"alpha_{k}",
+            ),
+        )
     fig.update_layout(
-        title="Alpha Progress", xaxis_title="Iteration", yaxis_title="Mixture Weight"
+        title="Alpha Progress",
+        xaxis_title="Iteration",
+        yaxis_title="Mixture Weight",
     )
     fig.show(config={"displayModeBar": False})
+    return
 
 
-def show_correlations_with_response(df, y, support_features):
+def show_correlations_with_response(
+    df: pd.DataFrame,
+    y: pd.Series,
+    support_features: List[str],
+) -> None:
+    """
+    Show bar plot of features' correlation with binary response.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing feature data.
+    y : pd.Series
+        Binary response variable.
+    support_features : List[str]
+        List of features to highlight in the plot.
+
+    Returns
+    -------
+    None
+    """
     correlation_with_response = df.corrwith(y, method="kendall").sort_values(
         ascending=False
     )
@@ -104,13 +152,30 @@ def show_correlations_with_response(df, y, support_features):
     )
     fig.update_layout(width=200 + df.shape[1] * 15, height=500, showlegend=False)
     fig.show(config={"displayModeBar": False})
+    return
 
 
 def show_correlation_matrix(
     df: pd.DataFrame,
     width: int | None = None,
     height: int | None = None,
-):
+) -> None:
+    """
+    Show correlation matrix heatmap.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing feature data.
+    width : int, optional
+        Width of the plot.
+    height : int, optional
+        Height of the plot.
+
+    Returns
+    -------
+    None
+    """
     fig = px.imshow(
         df.corr(),
         text_auto=".2f",
@@ -125,9 +190,13 @@ def show_correlation_matrix(
         height=200 + df.shape[1] * 15 if height is None else height,
     )
     fig.show(config={"displayModeBar": False})
+    return
 
 
-def show_label_histogram(y, nbins=10):
+def show_label_histogram(
+    y: np.ndarray,
+    nbins=10,
+) -> None:
     """
     Show histogram of continuous labels y using Plotly.
     Parameters
@@ -136,6 +205,10 @@ def show_label_histogram(y, nbins=10):
         Continuous labels.
     nbins : int, optional
         Number of bins for the histogram.
+
+    Returns
+    -------
+    None
     """
     hist_data = np.histogram(y, bins=nbins)
     fig = go.Figure(
@@ -144,9 +217,10 @@ def show_label_histogram(y, nbins=10):
                 x=hist_data[1][:-1],
                 y=hist_data[0],
                 width=np.diff(hist_data[1]),
-                marker_color="purple",
+                marker_color="blue",
             )
-        ]
+        ],
+        text_auto=True,
     )
     fig.update_layout(
         title="Distribution of continuous labels",
@@ -162,7 +236,7 @@ def show_label_histogram(y, nbins=10):
 def show_features_in_components(
     solutions: Dict[str, List[str]],
     features_to_show: List[str] = None,
-):
+) -> None:
     """
     Show a heatmap of which features are found in each component.
 
@@ -174,6 +248,10 @@ def show_features_in_components(
     features_to_show : List[str], optional
         List of features to highlight in the heatmap. If None, only features in the provided
         DataFrame are shown.
+
+    Returns
+    -------
+    None
     """
     df_solutions = pd.DataFrame.from_dict(solutions, orient="index").T
 
@@ -201,13 +279,16 @@ def show_features_in_components(
     return
 
 
-def compare_parameters(parameters, final_mu):
+def compare_parameters(
+    parameters: Dict[str, Any],
+    final_mu: np.ndarray,
+) -> None:
     """
     Compare learned mixture means and weights to true generating parameters.
 
     Parameters
     ----------
-    parameters : dict
+    parameters : Dict[str, Any]
         Dictionary containing true generating parameters with the key
         'full_weights' (list of lists of full weight vectors for each true solution).
     final_mu : np.ndarray
@@ -270,7 +351,9 @@ def compare_parameters(parameters, final_mu):
     return
 
 
-def show_confusion_matrix(confusion_matrix: np.ndarray):
+def show_confusion_matrix(
+    confusion_matrix: np.ndarray,
+) -> None:
     """
     Show confusion matrix using Plotly.
 
@@ -298,7 +381,24 @@ def show_confusion_matrix(confusion_matrix: np.ndarray):
     return
 
 
-def show_predicted_vs_actual_response(y, y_pred):
+def show_predicted_vs_actual_response(
+    y: np.ndarray,
+    y_pred: np.ndarray,
+) -> None:
+    """
+    Show scatter plot of predicted vs actual response using Plotly.
+
+    Parameters
+    ----------
+    y : np.ndarray
+        Actual response values.
+    y_pred : np.ndarray
+        Predicted response values.
+
+    Returns
+    -------
+    None
+    """
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=y, y=y_pred, mode="markers", marker_color="blue"))
     fig.add_trace(
@@ -317,3 +417,4 @@ def show_predicted_vs_actual_response(y, y_pred):
         showlegend=False,
     )
     fig.show(config={"displayModeBar": False})
+    return
