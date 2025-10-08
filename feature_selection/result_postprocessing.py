@@ -19,7 +19,12 @@ def recover_solutions(
     desired_sparsity: int,
     min_mu_threshold: float = 0.25,
     verbose: bool = True,
-) -> Tuple[Dict[str, List[str]], Dict[str, np.ndarray], Dict[str, pd.DataFrame]]:
+    original_feature_names_mapping: Dict[str, str] = None,
+) -> Tuple[
+    Dict[str, List[str]],
+    Dict[str, np.ndarray],
+    Dict[str, pd.DataFrame],
+]:
     """
     Recover solutions from the optimization history by identifying features that
     have significant mean values (mu) in the final iterations.
@@ -33,6 +38,9 @@ def recover_solutions(
         The threshold for considering a feature as important based on its mu value.
     verbose: bool, optional
         Whether to print detailed information about the recovered solutions. Default is True.
+    original_feature_names_mapping: Dict[str, str], optional
+        A mapping from internal feature names (e.g., 'feature_0') to original feature names.
+        If provided, the recovered features will be displayed using the original names.
 
     Returns:
     -------
@@ -89,7 +97,7 @@ def recover_solutions(
         # Organize these features by their absolute mu values
         top_features = pd.DataFrame(
             {
-                "Feature": features,
+                "Feature": [original_feature_names_mapping[f] for f in features],
                 "Mu value": [mu_traj[int(f.split("_")[1])] for f in features],
             }
         )
@@ -121,7 +129,11 @@ def recover_solutions(
         "final var": final_var,
         "final alpha": final_alpha,
     }
-    return (solutions, final_parameters, full_nonzero_solutions)
+    return (
+        solutions,
+        final_parameters,
+        full_nonzero_solutions,
+    )
 
 
 def show_algorithm_progress(
@@ -129,6 +141,7 @@ def show_algorithm_progress(
     plot_elbo_progress: bool = True,
     plot_mu_progress: bool = True,
     plot_alpha_progress: bool = True,
+    original_feature_names_mapping: Dict[str, str] = None,
 ) -> None:
     """
     Show the progress of the algorithm by plotting the evolution of
@@ -147,6 +160,13 @@ def show_algorithm_progress(
         Whether to plot the mixture means (mu) trajectory. Default is True.
     plot_alpha_progress : bool, optional
         Whether to plot the mixture weights (alpha) progress. Default is True. Default is True.
+    original_feature_names_mapping: Dict[str, str], optional
+        A mapping from internal feature names (e.g., 'feature_0') to original feature names.
+        If provided, the plots will use the original feature names where applicable.
+
+    Returns
+    -------
+    None
     """
     display(Markdown(f"### Algorithm progress:"))
     n_components = len(history["mu"][0])
@@ -158,7 +178,11 @@ def show_algorithm_progress(
     # Plot mixture means trajectory for each component
     if plot_mu_progress:
         for k in range(n_components):
-            plot_mu(history, component=k)
+            plot_mu(
+                history,
+                component=k,
+                original_feature_names_mapping=original_feature_names_mapping,
+            )
 
     # Plot mixture weights (alpha)
     if plot_alpha_progress:
@@ -171,7 +195,7 @@ def show_regression_results_for_solutions(
     df: pd.DataFrame,
     y: pd.Series | np.ndarray,
     penalty: Literal["l1", "l2", "elasticnet"] = "l1",
-):
+) -> None:
     """
     Show regression results for each solution using the identified features.
 
@@ -186,6 +210,10 @@ def show_regression_results_for_solutions(
     penalty : str, optional
         Type of regularization to use ("l1", "l2", or "elasticnet").
         Default is "l1".
+
+    Returns
+    -------
+    None
     """
     is_binary = set(np.unique(y)) <= {0, 1}
 
@@ -217,6 +245,10 @@ def display_features_overview(
         List of true support features.
     n_total_features : int
         Total number of features in the dataset.
+
+    Returns
+    -------
+    None
     """
     missing_features = set(true_support_features) - features_found
     extra_features = features_found - set(true_support_features)
