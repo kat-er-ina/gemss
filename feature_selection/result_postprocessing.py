@@ -14,6 +14,40 @@ from feature_selection.utils import (
 )
 
 
+def get_long_solutions_df(
+    full_nonzero_solutions: Dict[str, Dict[str, Any]],
+) -> pd.DataFrame:
+    """
+    Convert the full nonzero solutions dictionary into a long-format DataFrame.
+
+    Parameters
+    ----------
+    full_nonzero_solutions : Dict[str, Dict[str, Any]]
+        Dictionary mapping each component (solution) to a DataFrame of all features
+        that exceeded the min_mu_threshold in the last iterations, along with their mu values.
+
+    Returns
+    -------
+    pd.DataFrame
+        A long-format DataFrame where each column corresponds to a component and contains
+        all the features that were considered nonzero for that component, ordered by the absolute
+        value of their mu values.
+    """
+    max_len = max(
+        [
+            len(full_solution["Feature"])
+            for _, full_solution in full_nonzero_solutions.items()
+        ]
+    )
+    df_full_solutions = pd.DataFrame(index=range(max_len))
+
+    for component, full_solution in full_nonzero_solutions.items():
+        df_full_solutions[component] = pd.Series(full_solution["Feature"]).reset_index(
+            drop=True
+        )
+    return df_full_solutions
+
+
 def recover_solutions(
     search_history: Dict[str, List],
     desired_sparsity: int,
