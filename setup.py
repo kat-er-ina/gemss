@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="feature_selection",
+    name="gemss",
     version="0.1.0",
     description="Sparse feature selection via Bayesian Gaussian mixture approximation.",
     author="Katerina Henclova",

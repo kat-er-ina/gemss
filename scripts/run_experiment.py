@@ -6,8 +6,8 @@ Assumes:
     - generated_dataset_parameters.json
     - algorithm_settings.json
     - solution_postprocessing_settings.json
-- feature_selection package is installed and available
-- feature_selection.config is properly set up
+- gemss package is installed and available
+- gemss.config is properly set up
 
 Saves:
 - A text file summarizing the experiment parameters, discovered features, solutions, and final parameters
@@ -22,10 +22,10 @@ import pandas as pd
 from pathlib import Path
 import argparse
 
-import feature_selection.config as C
-from feature_selection.generate_artificial_dataset import generate_artificial_dataset
-from feature_selection.inference import BayesianFeatureSelector
-from feature_selection.result_postprocessing import recover_solutions
+import gemss.config as C
+from gemss.generate_artificial_dataset import generate_artificial_dataset
+from gemss.inference import BayesianFeatureSelector
+from gemss.result_postprocessing import recover_solutions
 
 # ---- Argument parsing ----
 parser = argparse.ArgumentParser(

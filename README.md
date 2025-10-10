@@ -1,6 +1,6 @@
-# Bayesian Sparse Feature Selection
+# GEMSS: Gaussian Ensemble for Multiple Sparse Solutions
 
-This repository implements Bayesian sparse feature selection using variational inference with mixture models. The main objective is to recover all sparse feature subsets (supports) that explain the response in high-dimensional regression or classification tasks.
+This repository implements Bayesian sparse feature selection using variational inference with Gaussian mixture models. The main objective is to recover all sparse feature subsets (supports) that explain the response in high-dimensional regression or classification tasks.
 
 ---
 
@@ -27,7 +27,7 @@ Traditional feature selection methods typically identify only a single solution 
 ## Repository Structure
 
 ```
-feature_selection/                      # Core package: models, inference, config, data generation, result postprocessing
+gemss/                      # Core package: models, inference, config, data generation, result postprocessing
   config.py                             # Loads config from 3 JSONs and exposes as Python variables
   generate_artificial_dataset.py        # Synthetic dataset generator
   inference.py                          # Main variational inference logic
@@ -57,7 +57,7 @@ README.md
 
 ## Configuration Files
 
-The workflow uses **three** JSON configuration files (always expected in the parent directory of the repo root):
+The demo workflow uses 3 JSON configuration files (always expected in the parent directory of the repo root):
 
 1. **generated_dataset_parameters.json**  
    Dataset generation parameters (number of samples, features, supports, sparsity, noise, class balance, random seed, etc.)
@@ -68,7 +68,9 @@ The workflow uses **three** JSON configuration files (always expected in the par
 3. **solution_postprocessing_settings.json**  
    Parameters for solution extraction/postprocessing (e.g., thresholds, filtering, merging, and other post-hoc analysis options).
 
-The config module (`feature_selection/config.py`) loads all three JSON files and exposes every parameter as a Python variable for use throughout the codebase.
+The config module (`gemss/config.py`) loads all three JSON files and exposes every parameter as a Python variable for use throughout the codebase.
+
+Alternatively, the constants can be defined and passed directly.
 
 ---
 
@@ -88,11 +90,12 @@ The config module (`feature_selection/config.py`) loads all three JSON files and
 
 ## Usage
 
-### Single Experiment
+### A Single Demo Experiment
 
 1. **Configure parameters:**
    - Edit `generated_dataset_parameters.json`, `algorithm_settings.json`, and `solution_postprocessing_settings.json` manually,
-     **or** let the sweep script generate them.
+     **or** let the sweep script generate them
+     **or** define them manually in your own notebook.
 
 2. **Run the experiment:**
    ```bash
@@ -139,10 +142,10 @@ All configuration is handled via the three JSON files in the parent directory:
 - `algorithm_settings.json`
 - `solution_postprocessing_settings.json`
 
-The module `feature_selection/config.py` loads all three and exposes every parameter as a Python variable:
+The module `gemss/config.py` loads all three and exposes every parameter as a Python variable:
 
 ```python
-import feature_selection.config as C
+import gemss.config as C
 print(C.NSAMPLES, C.N_COMPONENTS, C.PRIOR_TYPE)
 print(C.MIN_MU_THRESHOLD, C.POSTPROCESSING_THRESHOLD)  # Example: postprocessing params
 ```
@@ -166,10 +169,10 @@ The sweep script (`run_sweep.ps1`) will automatically generate and overwrite the
 
 ## Customization & Extending
 
-- **Add new priors:** Implement your prior in `feature_selection/models.py` and update inference logic.
-- **Add diagnostics:** Extend `feature_selection/result_postprocessing.py` or the notebook.
+- **Add new priors:** Implement your prior in `gemss/models.py` and update inference logic.
+- **Add diagnostics:** Extend `gemss/result_postprocessing.py` or the notebook.
 - **Change or add sweeps:** Edit `run_sweep.ps1` for custom batch runs.
-- **Add solution postprocessing logic:** Edit `feature_selection/result_postprocessing.py` and/or update the postprocessing JSON.
+- **Add solution postprocessing logic:** Edit `gemss/result_postprocessing.py` and/or update the postprocessing JSON.
 
 ---
 

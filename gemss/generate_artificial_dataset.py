@@ -3,7 +3,7 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 
-from feature_selection.visualizations import (
+from gemss.visualizations import (
     show_correlations_with_response,
     show_correlation_matrix,
     show_label_histogram,

@@ -25,13 +25,13 @@ from typing import Literal, Dict, List
 from IPython.display import display, Markdown
 import torch
 from torch.optim import Adam
-from feature_selection.models import (
+from gemss.models import (
     StudentTPrior,
     SpikeAndSlabPrior,
     StructuredSpikeAndSlabPrior,
     GaussianMixture,
 )
-from feature_selection.utils import print_optimization_setting
+from gemss.utils import print_optimization_setting
 
 
 class BayesianFeatureSelector:

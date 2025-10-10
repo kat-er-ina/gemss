@@ -63,7 +63,7 @@ ALGORITHM SETTINGS (from solution_postprocessing_settings.json)
                     Only features with |mu| above this threshold are considered nonzero.
 
 Usage:
-    import feature_selection.config as config
+    import gemss.config as config
     # Then access, e.g., config.NSAMPLES, config.N_COMPONENTS, etc.
 
 JSON files must be in the parent directory of the repo root (../).
