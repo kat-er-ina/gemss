@@ -234,6 +234,7 @@ def show_regression_results_for_solutions(
     df: pd.DataFrame,
     y: pd.Series | np.ndarray,
     penalty: Literal["l1", "l2", "elasticnet"] = "l1",
+    verbose: bool = True,
 ) -> None:
     """
     Show regression results for each solution using the identified features.
@@ -249,6 +250,9 @@ def show_regression_results_for_solutions(
     penalty : str, optional
         Type of regularization to use ("l1", "l2", or "elasticnet").
         Default is "l1".
+    verbose : bool, optional
+        Whether to print detailed regression metrics and coefficients
+        for each component. Default is True.
 
     Returns
     -------
@@ -256,14 +260,33 @@ def show_regression_results_for_solutions(
     """
     is_binary = set(np.unique(y)) <= {0, 1}
 
+    stats = {}
     for component, features in solutions.items():
-        display(Markdown(f"## Features of **{component}**"))
+        if verbose:
+            display(Markdown(f"## Features of **{component}**"))
 
         if is_binary:
-            solve_with_logistic_regression(X=df[features], y=y, penalty=penalty)
+            stats[component] = solve_with_logistic_regression(
+                X=df[features],
+                y=y,
+                penalty=penalty,
+                verbose=verbose,
+            )
         else:
-            solve_with_linear_regression(X=df[features], y=y, penalty=penalty)
-        display(Markdown("------------------"))
+            stats[component] = solve_with_linear_regression(
+                X=df[features],
+                y=y,
+                penalty=penalty,
+                verbose=verbose,
+            )
+        if verbose:
+            display(Markdown("------------------"))
+
+    display(Markdown(f"## Regression metrics overview"))
+    # print the stats as data frame
+    # each entry is a column in the data frame
+    metrics_df = pd.DataFrame.from_dict(stats, orient="index")
+    display(metrics_df)
 
     return
 
