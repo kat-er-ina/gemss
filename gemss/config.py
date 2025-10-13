@@ -33,6 +33,9 @@ ALGORITHM SETTINGS (from algorithm_settings.json)
 - PRIOR_SPARSITY: Prior expected number of nonzero features per component
                   Should be ideally equaly to true sparsity.
                   Used only if PRIOR_TYPE='sss'.
+- SAMPLE_MORE_PRIORS_COEFF: Coefficient to increase the number of sampled supports
+                            when generating data with SSS prior. Higher values lead to better
+                            recovery of true supports, but increase computation costs.
 - STUDENT_DF: Degrees of freedom for Student-t prior. Used only if PRIOR_TYPE='student'.
 - STUDENT_SCALE: Scale for Student-t prior. Used only if PRIOR_TYPE='student'.
 - VAR_SLAB: Variance of the 'slab' in spike-and-slab/structured spike-and-slab prior.
@@ -55,7 +58,7 @@ ALGORITHM SETTINGS (from algorithm_settings.json)
                  Smaller values lead to more stable but slower convergence.
 
 ----------------------------------------------------------------------------------------
-ALGORITHM SETTINGS (from solution_postprocessing_settings.json)
+SETTINGS FOR SOLUTION RETRIEVAL (from solution_postprocessing_settings.json)
 ----------------------------------------------------------------------------------------
 - DESIRED_SPARSITY: Desired number of nonzero features in the recovered solutions.
                     Only this number of features with highest |mu| are selected per solution.
@@ -150,6 +153,10 @@ PRIOR_TYPE = _algo_settings["PRIOR_TYPE"]
 PRIOR_SPARSITY = _algo_settings.get("PRIOR_SPARSITY", None)
 """Prior expected number of nonzero features per component (used if PRIOR_TYPE='sss').
 Should be ideally equal to true sparsity."""
+
+SAMPLE_MORE_PRIORS_COEFF = _algo_settings.get("SAMPLE_MORE_PRIORS_COEFF", 1.0)
+"""Coefficient to increase the number of sampled supports when generating data with SSS prior.
+Higher values lead to better recovery of true supports, but increase computation costs."""
 
 STUDENT_DF = _algo_settings["STUDENT_DF"]
 """Degrees of freedom for Student-t prior (used if PRIOR_TYPE='student')."""

@@ -191,7 +191,9 @@ def show_overview_of_generated_data(
     show_correlations_with_response(df, y, support_features)
 
     # Display the correlation matrix of the features
-    show_correlation_matrix(df)
+    if n_features <= 100:
+        display(Markdown("- **Correlation matrix of features:**"))
+        show_correlation_matrix(df)
     return
 
 

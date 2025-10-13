@@ -64,22 +64,23 @@ class BayesianFeatureSelector:
 
     def __init__(
         self,
-        n_features,
-        n_components,
+        n_features: int,
+        n_components: int,
         X,
         y,
         prior: Literal["ss", "sss", "student"] = "sss",
-        sss_sparsity=3,
-        var_slab=100.0,
-        var_spike=0.1,
-        weight_slab=0.9,
-        weight_spike=0.1,
-        student_df=1,
-        student_scale=1.0,
-        lr=2e-3,
-        batch_size=16,
-        n_iter=10000,
-        device="cpu",
+        sss_sparsity: int = 3,
+        sample_more_priors_coeff: float = 1.0,
+        var_slab: float = 100.0,
+        var_spike: float = 0.1,
+        weight_slab: float = 0.9,
+        weight_spike: float = 0.1,
+        student_df: int = 1,
+        student_scale: float = 1.0,
+        lr: float = 2e-3,
+        batch_size: int = 16,
+        n_iter: int = 5000,
+        device: Literal["cpu", "cuda"] = "cpu",
     ):
         """
         Initialize the BayesianFeatureSelector.
@@ -102,6 +103,10 @@ class BayesianFeatureSelector:
         sss_sparsity : int, optional
             Number of nonzero entries per solution (for structured spike-and-slab prior).
             Default is 3.
+        sample_more_priors_coeff : float, optional
+            Coefficient to scale the number of supports sampled in the structured spike-and-slab prior.
+            A higher value increases the number of supports sampled, potentially improving
+            approximation at the cost of computation. Default is 1.0.
         var_slab : float, optional
             Variance of the slab prior (default: 100.0). Used only in 'ss' and 'sss' priors.
         var_spike : float, optional
@@ -119,8 +124,8 @@ class BayesianFeatureSelector:
         batch_size : int, optional
             Batch size for optimization (default: 16).
         n_iter : int, optional
-            Number of optimization iterations (default: 10000).
-        device : str, optional
+            Number of optimization iterations (default: 5000).
+        device : Literal["cpu", "cuda"], optional
             Device to run computation on ('cpu' or 'cuda', default: 'cpu').
         """
         self.n_features = n_features
@@ -138,6 +143,7 @@ class BayesianFeatureSelector:
             self.prior = StructuredSpikeAndSlabPrior(
                 n_features,
                 sparsity=sss_sparsity,
+                sample_more_priors_coeff=sample_more_priors_coeff,
                 var_slab=var_slab,
                 var_spike=var_spike,
             )
@@ -166,7 +172,10 @@ class BayesianFeatureSelector:
         mse = ((pred - self.y.unsqueeze(0)) ** 2).sum(dim=-1)  # sum over samples
         return -0.5 * mse
 
-    def h(self, z) -> torch.Tensor:
+    def h(
+        self,
+        z: torch.Tensor,
+    ) -> torch.Tensor:
         """
         Compute the variational objective h(z).
 
@@ -185,7 +194,10 @@ class BayesianFeatureSelector:
         logq = self.mixture.log_prob(z)
         return logp - logq
 
-    def elbo(self, z) -> torch.Tensor:
+    def elbo(
+        self,
+        z: torch.Tensor,
+    ) -> torch.Tensor:
         """
         Compute the standard evidence lower bound (ELBO).
 
@@ -203,9 +215,9 @@ class BayesianFeatureSelector:
 
     def elbo_regularized(
         self,
-        z,
-        lambda_jaccard=0.5,
-        threshold=1e-3,
+        z: torch.Tensor,
+        lambda_jaccard: float = 10.0,
+        threshold: float = 1e-3,
     ) -> torch.Tensor:
         """
         Compute ELBO with regularization using average Jaccard similarity between supports.
@@ -214,10 +226,12 @@ class BayesianFeatureSelector:
         ----------
         z : torch.Tensor
             Batch of parameter samples, shape (batch_size, n_features).
-        lambda_jaccard : float
+        lambda_jaccard : float, optional
             Strength of regularization penalty (penalizes overlap between supports).
-        threshold : float
+            Default is 10.0.
+        threshold : float, optional
             Threshold for considering a feature active (nonzero).
+            Default is 1e-3.
 
         Returns
         -------
@@ -254,11 +268,11 @@ class BayesianFeatureSelector:
 
     def optimize(
         self,
-        log_callback=None,
-        regularize=False,
-        lambda_jaccard=1.0,
-        regularization_threshold=1e-3,
-        verbose=True,
+        log_callback: callable = None,
+        regularize: bool = False,
+        lambda_jaccard: float = 10.0,
+        regularization_threshold: float = 1e-3,
+        verbose: bool = True,
     ) -> Dict[str, List[float]]:
         """
         Main optimization loop for variational inference.
@@ -271,7 +285,7 @@ class BayesianFeatureSelector:
             If True, use elbo_regularized during optimization (default: False) by penalizing overlap
             between solutions.
         lambda_jaccard : float, optional
-            Regularization strength for penalty in the ELBO computation (default: 1.0). Higher values
+            Regularization strength for penalty in the ELBO computation (default: 10.0). Higher values
             encourage more diverse solutions (lesser overlap). Used only if regularize=True.
         regularization_threshold : float, optional
             Nonzero threshold for support computation (default: 1e-3).

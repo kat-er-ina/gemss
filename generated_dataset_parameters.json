@@ -1,6 +1,6 @@
 {
   "NSAMPLES": 40,
-  "NFEATURES": 80,
+  "NFEATURES": 600,
   "NSOLUTIONS": 3,
   "SPARSITY": 4,
   "NOISE_STD": 0.01,

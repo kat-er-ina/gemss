@@ -73,6 +73,7 @@ selector = BayesianFeatureSelector(
     y=y,
     prior=C.PRIOR_TYPE,
     sss_sparsity=C.PRIOR_SPARSITY,
+    sample_more_priors_coeff=C.SAMPLE_MORE_PRIORS_COEFF,
     var_slab=C.VAR_SLAB,
     var_spike=C.VAR_SPIKE,
     weight_slab=C.WEIGHT_SLAB,

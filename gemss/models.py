@@ -6,6 +6,7 @@ Implements:
 - Core parameter structures
 """
 
+import numpy as np
 import itertools
 import torch
 import torch.nn as nn
@@ -100,7 +101,14 @@ class StructuredSpikeAndSlabPrior:
     For each solution, only supports of size k are allowed.
     """
 
-    def __init__(self, n_features, sparsity, var_slab=100.0, var_spike=0.1):
+    def __init__(
+        self,
+        n_features,
+        sparsity,
+        sample_more_priors_coeff=1.0,
+        var_slab=100.0,
+        var_spike=0.1,
+    ):
         """
         Parameters
         ----------
@@ -108,6 +116,9 @@ class StructuredSpikeAndSlabPrior:
             Number of features.
         sparsity : int
             Number of nonzero entries (support size).
+        sample_more_priors_coeff : float, optional
+            Coefficient to scale number of sampled supports if enumeration is infeasible.
+            Default is 1.0 (no scaling).
         var_slab : float
             Variance of the slab component.
         var_spike : float
@@ -117,6 +128,7 @@ class StructuredSpikeAndSlabPrior:
         self.sparsity = sparsity
         self.var_slab = var_slab
         self.var_spike = var_spike
+        self.sample_more_priors_coeff = sample_more_priors_coeff
 
         # For small n_features, enumerate all supports. For large, sample.
         self._all_supports = None
@@ -129,13 +141,15 @@ class StructuredSpikeAndSlabPrior:
         """
         Compute log-probability of z under the structured prior.
         For each support S of size k, compute p(z | S), then average.
+        The default number of supports to sample is 100 if enumeration is infeasible.
+        The chosen number of supports is scaled by sample_more_priors_coeff.
 
         Parameters
         ----------
         z : torch.Tensor
             Shape (..., n_features)
         n_support_samples : int, optional
-            Number of supports to sample if enumeration is infeasible.
+            Number of supports to sample if enumeration is infeasible. Default is 100.
 
         Returns
         -------
@@ -148,6 +162,10 @@ class StructuredSpikeAndSlabPrior:
         if self._all_supports is not None:
             supports = self._all_supports
         else:
+            if self.sample_more_priors_coeff:
+                n_support_samples = np.round(
+                    n_support_samples * self.sample_more_priors_coeff
+                ).astype(int)
             # Sample supports
             supports = [
                 torch.randperm(self.n_features)[: self.sparsity].tolist()
