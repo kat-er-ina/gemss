@@ -64,7 +64,11 @@ def plot_mu(
             go.Scatter(
                 y=mu_traj[:, f],
                 mode="lines",
-                name=original_feature_names_mapping.get(f"feature_{f}", f"feature_{f}"),
+                name=(
+                    original_feature_names_mapping.get(f"feature_{f}", f"feature_{f}")
+                    if original_feature_names_mapping is not None
+                    else f"feature_{f}"
+                ),
             )
         )
     fig.update_layout(
@@ -259,7 +263,9 @@ def show_features_in_components(
         features_to_show = df_solutions.columns.tolist()
 
     heatmap_data = pd.DataFrame(
-        0, index=df_solutions.columns, columns=sorted(features_to_show)
+        0,
+        index=df_solutions.columns,
+        columns=sorted(features_to_show),
     )
     for col in df_solutions.columns:
         for feature in df_solutions[col].dropna():
@@ -272,7 +278,7 @@ def show_features_in_components(
     )
     fig.update_xaxes(side="top")
     fig.update_layout(
-        width=200 + 30 * len(heatmap_data.columns),
+        width=200 + 40 * len(heatmap_data.columns),
         showlegend=False,
     )
     fig.show(config={"displayModeBar": False})

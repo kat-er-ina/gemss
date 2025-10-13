@@ -33,6 +33,7 @@ def get_long_solutions_df(
         all the features that were considered nonzero for that component, ordered by the absolute
         value of their mu values.
     """
+    display(Markdown("## Full long solutions"))
     max_len = max(
         [
             len(full_solution["Feature"])
@@ -129,9 +130,13 @@ def recover_solutions(
                 )
             )
         # Organize these features by their absolute mu values
+        if original_feature_names_mapping is not None:
+            feature_names = [original_feature_names_mapping[f] for f in features]
+        else:
+            feature_names = features
         top_features = pd.DataFrame(
             {
-                "Feature": [original_feature_names_mapping[f] for f in features],
+                "Feature": feature_names,
                 "Mu value": [mu_traj[int(f.split("_")[1])] for f in features],
             }
         )
