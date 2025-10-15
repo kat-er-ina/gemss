@@ -3,7 +3,7 @@ This module provides functions to recover, display and analyze solutions
 from the optimization history of the Bayesian feature selection algorithm.
 """
 
-from typing import Dict, List, Tuple, Literal, Any
+from typing import Dict, List, Tuple, Literal, Any, Optional, Union
 import numpy as np
 import pandas as pd
 from IPython.display import display, Markdown
@@ -15,23 +15,28 @@ from gemss.utils import (
 
 
 def get_long_solutions_df(
-    full_nonzero_solutions: Dict[str, Dict[str, Any]],
+    full_nonzero_solutions: Dict[str, pd.DataFrame],
 ) -> pd.DataFrame:
     """
     Convert the full nonzero solutions dictionary into a long-format DataFrame.
 
     Parameters
     ----------
-    full_nonzero_solutions : Dict[str, Dict[str, Any]]
-        Dictionary mapping each component (solution) to a DataFrame of all features
-        that exceeded the min_mu_threshold in the last iterations, along with their mu values.
+    full_nonzero_solutions : Dict[str, pd.DataFrame]
+        Dictionary mapping each component (solution) to a DataFrame containing
+        features that exceeded the min_mu_threshold in the last iterations,
+        with columns ['Feature', 'Mu value'].
 
     Returns
     -------
     pd.DataFrame
         A long-format DataFrame where each column corresponds to a component and contains
         all the features that were considered nonzero for that component, ordered by the absolute
-        value of their mu values.
+        value of their mu values. Missing values are filled with NaN.
+
+    Notes
+    -----
+    This function displays a markdown header "## Full long solutions" as a side effect.
     """
     display(Markdown("## Full long solutions"))
     max_len = max(
@@ -50,43 +55,69 @@ def get_long_solutions_df(
 
 
 def recover_solutions(
-    search_history: Dict[str, List],
+    search_history: Dict[str, List[Any]],
     desired_sparsity: int,
     min_mu_threshold: float = 0.25,
     verbose: bool = True,
-    original_feature_names_mapping: Dict[str, str] = None,
+    original_feature_names_mapping: Optional[Dict[str, str]] = None,
 ) -> Tuple[
     Dict[str, List[str]],
-    Dict[str, np.ndarray],
+    Dict[str, Union[np.ndarray, int]],
     Dict[str, pd.DataFrame],
 ]:
     """
     Recover solutions from the optimization history by identifying features that
     have significant mean values (mu) in the final iterations.
 
-    Parameters:
-    search_history: Dict[str, List]
+    Parameters
+    ----------
+    search_history : Dict[str, List[Any]]
         The history of the optimization process containing 'mu', 'var', and 'alpha'.
-    desired_sparsity: int
+        Expected keys: 'mu', 'var', 'alpha' with values as lists of arrays.
+        'mu' should have shape [n_iterations, n_components, n_features].
+    desired_sparsity : int
         The number of most important features to identify for each component.
-    min_mu_threshold: float
-        The threshold for considering a feature as important based on its mu value.
-    verbose: bool, optional
+        Must be positive.
+    min_mu_threshold : float, optional
+        The threshold for considering a feature as important based on its absolute mu value.
+        Default is 0.25.
+    verbose : bool, optional
         Whether to print detailed information about the recovered solutions. Default is True.
-    original_feature_names_mapping: Dict[str, str], optional
+    original_feature_names_mapping : Optional[Dict[str, str]], optional
         A mapping from internal feature names (e.g., 'feature_0') to original feature names.
         If provided, the recovered features will be displayed using the original names.
+        Default is None.
 
-    Returns:
+    Returns
     -------
-    Tuple[Dict[str, List[str]], Dict[str, np.ndarray], Dict[str, pd.DataFrame]]
+    Tuple[Dict[str, List[str]], Dict[str, Union[np.ndarray, int]], Dict[str, pd.DataFrame]]
         A tuple containing:
-        - A dictionary mapping each component (solution) to its identified features.
-        - A dictionary with the final parameters (mu, var, alpha) for each component
-        at the iteration where the features were selected.
-        - A dictionary mapping each component to a DataFrame of all features that
-        exceeded the min_mu_threshold in the last iterations, along with their mu values.
+        - solutions: Dictionary mapping each component (solution) to its identified features.
+        - final_parameters: Dictionary with keys 'final iteration', 'final mu', 'final var', 'final alpha'
+          containing the final parameters for each component at the iteration where features were selected.
+        - full_nonzero_solutions: Dictionary mapping each component to a DataFrame of all features
+          that exceeded the min_mu_threshold, with columns ['Feature', 'Mu value'].
+
+    Raises
+    ------
+    ValueError
+        If desired_sparsity is not positive.
+    KeyError
+        If search_history is missing required keys ('mu', 'var', 'alpha').
+
+    Notes
+    -----
+    This function displays markdown output as a side effect when verbose=True.
     """
+    # Input validation
+    if desired_sparsity <= 0:
+        raise ValueError("desired_sparsity must be positive")
+
+    required_keys = {"mu", "var", "alpha"}
+    if not required_keys.issubset(search_history.keys()):
+        missing_keys = required_keys - set(search_history.keys())
+        raise KeyError(f"search_history missing required keys: {missing_keys}")
+
     n_components = len(search_history["mu"][0])
     n_features = len(search_history["mu"][0][0])
 
@@ -176,11 +207,11 @@ def recover_solutions(
 
 
 def show_algorithm_progress(
-    history: Dict[str, np.ndarray],
+    history: Dict[str, List[Any]],
     plot_elbo_progress: bool = True,
     plot_mu_progress: bool = True,
     plot_alpha_progress: bool = True,
-    original_feature_names_mapping: Dict[str, str] = None,
+    original_feature_names_mapping: Optional[Dict[str, str]] = None,
 ) -> None:
     """
     Show the progress of the algorithm by plotting the evolution of
@@ -188,24 +219,30 @@ def show_algorithm_progress(
 
     Parameters
     ----------
-    history : Dict[str, np.ndarray]
+    history : Dict[str, List[Any]]
         Dictionary containing optimization history with keys 'elbo', 'mu', and 'alpha'
-        (fewer if they are not required to be plotted).
-        It is assumed that 'mu' has shape [n_iter, n_components, n_features].
-        It is the output of the `optimize` method of `BayesianFeatureSelector`.
+        (fewer keys allowed if corresponding plots are disabled).
+        'mu' should have shape [n_iterations, n_components, n_features].
+        This is the output of the `optimize` method of `BayesianFeatureSelector`.
     plot_elbo_progress : bool, optional
         Whether to plot the ELBO progress. Default is True.
     plot_mu_progress : bool, optional
         Whether to plot the mixture means (mu) trajectory. Default is True.
     plot_alpha_progress : bool, optional
-        Whether to plot the mixture weights (alpha) progress. Default is True. Default is True.
-    original_feature_names_mapping: Dict[str, str], optional
+        Whether to plot the mixture weights (alpha) progress. Default is True.
+    original_feature_names_mapping : Optional[Dict[str, str]], optional
         A mapping from internal feature names (e.g., 'feature_0') to original feature names.
         If provided, the plots will use the original feature names where applicable.
+        Default is None.
 
     Returns
     -------
     None
+
+    Notes
+    -----
+    This function displays markdown output and plots as side effects.
+    The function requires the corresponding keys in history for each plot type requested.
     """
     display(Markdown(f"### Algorithm progress:"))
     n_components = len(history["mu"][0])
@@ -232,7 +269,7 @@ def show_algorithm_progress(
 def show_regression_results_for_solutions(
     solutions: Dict[str, List[str]],
     df: pd.DataFrame,
-    y: pd.Series | np.ndarray,
+    y: Union[pd.Series, np.ndarray],
     penalty: Literal["l1", "l2", "elasticnet"] = "l1",
     verbose: bool = True,
 ) -> None:
@@ -243,13 +280,14 @@ def show_regression_results_for_solutions(
     ----------
     solutions : Dict[str, List[str]]
         Dictionary mapping each component (solution) to its identified features.
+        Feature names should correspond to column names in df.
     df : pd.DataFrame
-        Feature matrix.
-    y : pd.Series | np.ndarray
-        Response vector (binary for classification, continuous for regression).
-    penalty : str, optional
-        Type of regularization to use ("l1", "l2", or "elasticnet").
-        Default is "l1".
+        Feature matrix with features as columns.
+    y : Union[pd.Series, np.ndarray]
+        Response vector. Binary values {0, 1} for classification,
+        continuous values for regression.
+    penalty : Literal["l1", "l2", "elasticnet"], optional
+        Type of regularization to use. Default is "l1".
     verbose : bool, optional
         Whether to print detailed regression metrics and coefficients
         for each component. Default is True.
@@ -257,6 +295,11 @@ def show_regression_results_for_solutions(
     Returns
     -------
     None
+
+    Notes
+    -----
+    This function displays markdown output and regression metrics as side effects.
+    Automatically detects binary classification vs regression based on unique values in y.
     """
     is_binary = set(np.unique(y)) <= {0, 1}
 
@@ -292,7 +335,7 @@ def show_regression_results_for_solutions(
 
 
 def display_features_overview(
-    features_found: List[str],
+    features_found: Union[List[str], set],
     true_support_features: List[str],
     n_total_features: int,
 ) -> None:
@@ -301,17 +344,25 @@ def display_features_overview(
 
     Parameters
     ----------
-    features_found : List[str]
-        List of features found by the model.
+    features_found : Union[List[str], set]
+        Collection of features found by the model.
     true_support_features : List[str]
-        List of true support features.
+        List of true support features (ground truth).
     n_total_features : int
-        Total number of features in the dataset.
+        Total number of features in the dataset. Must be positive.
 
     Returns
     -------
     None
+
+    Notes
+    -----
+    This function displays markdown output as a side effect.
+    Shows statistics about missing features, extra features, and coverage percentages.
     """
+    # Convert to set for set operations
+    features_found = set(features_found)
+
     missing_features = set(true_support_features) - features_found
     extra_features = features_found - set(true_support_features)
 
