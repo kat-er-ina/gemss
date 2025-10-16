@@ -35,16 +35,21 @@ $RANDOM_SEED = 42
 # --- Paths (adjusted for scripts folder location) ---
 $SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $ROOT_DIR = Split-Path -Parent $SCRIPT_DIR
-$GEN_JSON = Join-Path $ROOT_DIR "generated_dataset_parameters.json"
-$ALG_JSON = Join-Path $ROOT_DIR "algorithm_settings.json"
-$POST_JSON = Join-Path $ROOT_DIR "solution_postprocessing_settings.json"
+$CONFIG_DIR = Join-Path $ROOT_DIR "gemss\config"
+$GEN_JSON = Join-Path $CONFIG_DIR "generated_dataset_parameters.json"
+$ALG_JSON = Join-Path $CONFIG_DIR "algorithm_settings.json"
+$POST_JSON = Join-Path $CONFIG_DIR "solution_postprocessing_settings.json"
 $RUN_SCRIPT = Join-Path $SCRIPT_DIR "run_experiment.py"
 
-# --- Ensure results directory exists ---
+# --- Ensure config and results directories exist ---
+if (-not (Test-Path $CONFIG_DIR)) {
+    New-Item -ItemType Directory -Path $CONFIG_DIR | Out-Null
+}
 $resultsDir = Join-Path $ROOT_DIR "results"
 if (-not (Test-Path $resultsDir)) {
     New-Item -ItemType Directory -Path $resultsDir | Out-Null
 }
+Write-Host "Configuration files will be created in: $CONFIG_DIR"
 Write-Host "Results will be saved in: $resultsDir"
 
 foreach ($combo in $combinations) {

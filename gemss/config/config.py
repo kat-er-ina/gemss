@@ -69,7 +69,7 @@ Usage:
     import gemss.config as config
     # Then access, e.g., config.NSAMPLES, config.N_COMPONENTS, etc.
 
-JSON files must be in the parent directory of the repo root (../).
+JSON files must be in the same directory as this config module.
 """
 
 import json
@@ -79,11 +79,11 @@ from typing import Dict, Any, Literal
 from IPython.display import display, Markdown
 
 
-# Locate config JSONs in the parent directory (../)
-parent_dir = Path(__file__).parent.parent
-dataset_json = parent_dir / "generated_dataset_parameters.json"
-algo_json = parent_dir / "algorithm_settings.json"
-postprocessing_json = parent_dir / "solution_postprocessing_settings.json"
+# Locate config JSONs in the same directory as this module
+config_dir = Path(__file__).parent
+dataset_json = config_dir / "generated_dataset_parameters.json"
+algo_json = config_dir / "algorithm_settings.json"
+postprocessing_json = config_dir / "solution_postprocessing_settings.json"
 
 # Load dataset parameters
 try:
