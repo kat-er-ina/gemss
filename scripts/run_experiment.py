@@ -1,9 +1,9 @@
 """
-Run Bayesian Sparse Feature Selection as a script, closely matching the demo notebook.
+Run GEMSS (Gaussian Ensemble for Multiple Sparse Solutions) as a script.
 
 This script provides a complete experiment pipeline including:
 - Dataset generation with configurable parameters
-- Bayesian feature selection optimization
+- GEMSS optimization for sparse feature selection
 - Solution recovery and analysis
 - Performance diagnostics
 - Comprehensive result reporting
@@ -32,7 +32,7 @@ from gemss.performance_tests import run_performance_diagnostics
 def parse_arguments() -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Run Bayesian Sparse Feature Selection experiment."
+        description="Run GEMSS experiment for sparse feature selection."
     )
     parser.add_argument(
         "--output",
@@ -81,21 +81,21 @@ def generate_dataset() -> Tuple[pd.DataFrame, Any, Dict, Dict, List[str]]:
 
 def run_feature_selection(df: pd.DataFrame, y: Any) -> Tuple[Any, List[Dict], Any]:
     """
-    Run Bayesian feature selection optimization.
-
+    Run GEMSS optimization for sparse feature selection.
+    
     Parameters
     ----------
     df : pd.DataFrame
         Feature matrix
     y : array-like
         Target variable
-
+        
     Returns
     -------
     tuple
         Trained selector, optimization history, solutions
     """
-    print("\nRunning Bayesian Feature Selector...")
+    print("\nRunning GEMSS...")
 
     selector = BayesianFeatureSelector(
         n_features=C.NFEATURES,
@@ -187,7 +187,7 @@ def run_diagnostics(history: List[Dict]) -> Optional[List[Dict]]:
 
 def format_parameters_section() -> List[str]:
     """Format the parameters section for output."""
-    lines = ["# Bayesian Sparse Feature Selection Experiment\n"]
+    lines = ["# GEMSS Experiment Results\n"]
     lines.append("## Parameters and Settings\n")
     params = C.as_dict()
     for k, v in params.items():
