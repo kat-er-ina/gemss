@@ -4,6 +4,11 @@ Configuration loader for GEMSS (Gaussian Ensemble for Multiple Sparse Solutions)
 This module provides efficient loading and management of experiment parameters
 from JSON configuration files co-located with this module.
 
+Parameter Categories:
+- Artificial Dataset: Parameters for synthetic data generation (development/demo only)
+- Algorithm: Core algorithm parameters (used for both synthetic and real data)
+- Postprocessing: Solution recovery and analysis parameters
+
 Features:
 - Lazy loading with caching
 - Comprehensive parameter validation
@@ -13,7 +18,8 @@ Features:
 
 Usage:
     import gemss.config as config
-    # Access parameters: config.NSAMPLES, config.N_COMPONENTS, etc.
+    # Core algorithm: config.N_COMPONENTS, config.PRIOR_TYPE, etc.
+    # Artificial data: config.NSAMPLES, config.NFEATURES, etc. (demo only)
     # Display configuration: config.display_current_config(config.as_dict())
 """
 
@@ -31,7 +37,7 @@ class ConfigurationManager:
     """
 
     # Parameter category definitions
-    DATASET_PARAMS = {
+    ARTIFICIAL_DATASET_PARAMS = {
         "NSAMPLES",
         "NFEATURES",
         "NSOLUTIONS",
@@ -64,15 +70,15 @@ class ConfigurationManager:
 
     # Parameter descriptions for display
     PARAM_DESCRIPTIONS = {
-        # Dataset generation
+        # Artificial dataset generation (development/demo only)
         "NSAMPLES": "Number of samples (rows) in the synthetic dataset",
-        "NFEATURES": "Number of features (columns) in the dataset",
+        "NFEATURES": "Number of features (columns) in the synthetic dataset",
         "NSOLUTIONS": "Number of distinct sparse solutions ('true' supports)",
         "SPARSITY": "Number of nonzero features per solution (support size)",
-        "NOISE_STD": "Standard deviation of noise added to the data",
-        "BINARIZE": "Whether to binarize the response variable",
-        "BINARY_RESPONSE_RATIO": "Proportion of samples assigned label 1",
-        "RANDOM_SEED": "Random seed for reproducibility",
+        "NOISE_STD": "Standard deviation of noise added to synthetic data",
+        "BINARIZE": "Whether to binarize the synthetic response variable",
+        "BINARY_RESPONSE_RATIO": "Proportion of synthetic samples assigned label 1",
+        "RANDOM_SEED": "Random seed for synthetic data reproducibility",
         # Algorithm settings
         "N_COMPONENTS": "Number of mixture components in variational posterior",
         "N_ITER": "Number of optimization iterations",
@@ -110,44 +116,48 @@ class ConfigurationManager:
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON in {file_path}: {e}")
 
-    def get_dataset_params(self) -> Dict[str, Any]:
-        """Get dataset generation parameters."""
-        return self._load_json_file(CONFIG_FILES["DATASET"])
+    @lru_cache(maxsize=None)
+    def get_artificial_dataset_params(self) -> Dict[str, Any]:
+        """Get artificial dataset generation parameters (for development/demo only)."""
+        params = self._load_json_file(CONFIG_FILES["DATASET"])
+        # Only keep relevant keys
+        return {k: params[k] for k in self.ARTIFICIAL_DATASET_PARAMS if k in params}
 
+    @lru_cache(maxsize=None)
     def get_algorithm_params(self) -> Dict[str, Any]:
         """Get algorithm parameters."""
-        return self._load_json_file(CONFIG_FILES["ALGORITHM"])
+        params = self._load_json_file(CONFIG_FILES["ALGORITHM"])
+        return {k: params[k] for k in self.ALGORITHM_PARAMS if k in params}
 
+    @lru_cache(maxsize=None)
     def get_postprocessing_params(self) -> Dict[str, Any]:
         """Get postprocessing parameters."""
-        return self._load_json_file(CONFIG_FILES["POSTPROCESSING"])
+        params = self._load_json_file(CONFIG_FILES["POSTPROCESSING"])
+        return {k: params[k] for k in self.POSTPROCESSING_PARAMS if k in params}
 
+    @lru_cache(maxsize=1)
     def get_all_params(self) -> Dict[str, Any]:
         """Get all parameters in a single dictionary."""
-        if "all_params" not in self._cache:
-            all_params = {}
-            all_params.update(self.get_dataset_params())
-            all_params.update(self.get_algorithm_params())
-            all_params.update(self.get_postprocessing_params())
-            self._cache["all_params"] = all_params
-        return self._cache["all_params"]
+        all_params = {}
+        all_params.update(self.get_artificial_dataset_params())
+        all_params.update(self.get_algorithm_params())
+        all_params.update(self.get_postprocessing_params())
+        return all_params
 
     def get_params_by_category(self, category: str) -> Dict[str, Any]:
-        """Get parameters filtered by category."""
-        all_params = self.get_all_params()
-
-        if category == "dataset":
-            return {k: v for k, v in all_params.items() if k in self.DATASET_PARAMS}
+        """Get parameters filtered by category (efficient, uses cached dicts)."""
+        if category in ("artificial_dataset", "dataset"):
+            return self.get_artificial_dataset_params()
         elif category == "algorithm":
-            return {k: v for k, v in all_params.items() if k in self.ALGORITHM_PARAMS}
+            return self.get_algorithm_params()
         elif category == "postprocessing":
-            return {
-                k: v for k, v in all_params.items() if k in self.POSTPROCESSING_PARAMS
-            }
+            return self.get_postprocessing_params()
         elif category == "all":
-            return all_params
+            return self.get_all_params()
         else:
-            raise ValueError(f"Unknown category: {category}")
+            raise ValueError(
+                f"Unknown category: {category}. Valid categories: 'artificial_dataset', 'algorithm', 'postprocessing', 'all'"
+            )
 
 
 # Global configuration manager instance
@@ -156,7 +166,7 @@ _config_manager = ConfigurationManager()
 # Load all parameters at module level for backward compatibility
 _all_params = _config_manager.get_all_params()
 
-# Dataset parameters
+# Artificial dataset parameters (for synthetic data generation - development/demo only)
 NSAMPLES = _all_params["NSAMPLES"]
 NFEATURES = _all_params["NFEATURES"]
 NSOLUTIONS = _all_params["NSOLUTIONS"]
@@ -188,10 +198,18 @@ DESIRED_SPARSITY = _all_params["DESIRED_SPARSITY"]
 MIN_MU_THRESHOLD = _all_params["MIN_MU_THRESHOLD"]
 
 
-def check_sparsities() -> None:
-    """Print sparsity settings for verification."""
+def check_sparsities(artificial_dataset: bool = True) -> None:
+    """
+    Print sparsity settings for verification.
+    Parameters
+    ----------
+    artificial_dataset : bool
+        Whether to include artificial dataset sparsity settings.
+        Applicable only if synthetic data is used.
+    """
     print("Sparsity settings:")
-    print(f" - True sparsity: {SPARSITY}")
+    if artificial_dataset:
+        print(f" - True sparsity of artificial dataset: {SPARSITY}")
     print(f" - Prior sparsity: {PRIOR_SPARSITY}")
     print(f" - Desired sparsity: {DESIRED_SPARSITY}")
 
@@ -201,6 +219,23 @@ def as_dict() -> Dict[str, Any]:
     return _config_manager.get_all_params().copy()
 
 
+def get_core_algorithm_params() -> Dict[str, Any]:
+    """
+    Get core algorithm parameters only (excludes artificial dataset parameters).
+
+    This function returns parameters needed for the algorithm to work with
+    real user datasets. Use this when you don't need synthetic data generation.
+
+    Returns
+    -------
+    Dict[str, Any]
+        Dictionary containing algorithm and postprocessing parameters only
+    """
+    algorithm_params = _config_manager.get_params_by_category("algorithm")
+    postprocessing_params = _config_manager.get_params_by_category("postprocessing")
+    return {**algorithm_params, **postprocessing_params}
+
+
 def get_params_by_category(category: str) -> Dict[str, Any]:
     """
     Get parameters filtered by category.
@@ -208,7 +243,8 @@ def get_params_by_category(category: str) -> Dict[str, Any]:
     Parameters
     ----------
     category : str
-        Category name: 'dataset', 'algorithm', 'postprocessing', or 'all'
+        Category name: 'artificial_dataset' (or 'dataset' for compatibility),
+        'algorithm', 'postprocessing', or 'all'
 
     Returns
     -------
@@ -220,7 +256,12 @@ def get_params_by_category(category: str) -> Dict[str, Any]:
 
 def display_current_config(
     constants: Optional[Dict[str, Any]] = None,
-    constant_type: Literal["algorithm", "postprocessing", "dataset", "all"] = "all",
+    constant_type: Literal[
+        "algorithm",
+        "postprocessing",
+        "dataset",
+        "all",
+    ] = "all",
 ) -> None:
     """
     Display configuration parameters in a formatted table.
@@ -241,16 +282,28 @@ def display_current_config(
     if constants is None:
         constants = as_dict()
 
-    # Map legacy category names
-    category_map = {"artificial_data": "dataset", "algorithm_and_postprocessing": "all"}
-    category = category_map.get(constant_type, constant_type)
-
-    if category != "all":
-        filtered_constants = get_params_by_category(category)
-        # Filter constants to only include requested parameters
+    # Map legacy category names and handle special cases
+    if constant_type in ("artificial_data", "dataset"):
+        category = "artificial_dataset"
+    elif constant_type == "algorithm_and_postprocessing":
+        # Special case: combine algorithm and postprocessing parameters
+        algo_params = get_params_by_category("algorithm")
+        post_params = get_params_by_category("postprocessing")
+        filtered_constants = {**algo_params, **post_params}
         constants = {k: v for k, v in constants.items() if k in filtered_constants}
+        section_title = "algorithm and postprocessing parameters"
+    else:
+        category = constant_type
 
-    section_title = f"{category} parameters" if category != "all" else "all parameters"
+    if constant_type != "algorithm_and_postprocessing":
+        if category != "all":
+            filtered_constants = get_params_by_category(category)
+            constants = {k: v for k, v in constants.items() if k in filtered_constants}
+        section_title = (
+            f"{category.replace('_', ' ')} parameters"
+            if category != "all"
+            else "all parameters"
+        )
 
     display(Markdown(f"## Current configuration: {section_title}"))
 
@@ -266,7 +319,7 @@ def display_current_config(
 
     for param_name in sorted(constants.keys()):
         param_value = constants[param_name]
-        description = _config_manager.PARAM_DESCRIPTIONS.get(
+        description = ConfigurationManager.PARAM_DESCRIPTIONS.get(
             param_name, "Configuration parameter"
         )
 
