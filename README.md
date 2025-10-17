@@ -42,10 +42,10 @@ gemss/                      # Core package
     performance_tests.py    # Performance diagnostics and testing
     recommendations.py      # Parameter recommendation system
     recommendation_messages.py # Recommendation message templates
+    result_postprocessing.py              # Solution extraction and diagnostics
   generate_artificial_dataset.py        # Synthetic dataset generator
   inference.py                          # Main variational inference logic (BayesianFeatureSelector)
   models.py                             # Prior distributions and model components
-  result_postprocessing.py              # Solution extraction and diagnostics
   utils.py                              # Utility functions
   visualizations.py                     # Plotting and visualization functions
 
@@ -170,8 +170,48 @@ The configuration system (`gemss.config`) provides:
 
 ## Performance Diagnostics & Recommendations
 
-The system includes automated performance analysis to assess the algorithmic sensibility of discovered solutions and to aid with hyperparameter tuning.
-Currently, the tests and recommendations are work in progress.
+The system provides comprehensive tools for analyzing optimization results and extracting meaningful solutions from the GEMSS feature selection algorithm. The basic functionalities are available through the result postprocessing module:
+
+```python
+from gemss.result_postprocessing import (
+    recover_solutions,
+    show_algorithm_progress, 
+    show_regression_results_for_solutions,
+    display_features_overview,
+    get_long_solutions_df
+)
+```
+
+### Core Analysis Functions
+
+**Solution Recovery:**
+- `recover_solutions()` - Extracts sparse feature sets from optimization history based on significance thresholds
+- Identifies features with high mean values (mu) in final iterations
+- Returns both compact solutions (top features) and comprehensive feature rankings
+- Supports custom sparsity targets and importance thresholds
+
+**Algorithm Progress Visualization:**
+- `show_algorithm_progress()` - Comprehensive optimization monitoring with interactive plots
+- ELBO convergence tracking to assess optimization quality
+- Mixture component means (mu) evolution over iterations  
+- Mixture weights (alpha) progression showing component importance
+- Support for original feature name mapping for interpretability
+
+**Predictive Performance Assessment:**
+- `show_regression_results_for_solutions()` - Validates discovered solutions using supervised learning
+- Automatic detection of binary classification vs regression tasks
+- Support for L1 (Lasso), L2 (Ridge), and ElasticNet penalties
+- Component-wise performance metrics and coefficient analysis
+- Comprehensive results overview across all discovered solutions
+
+**Solution Comparison and Evaluation:**
+- `display_features_overview()` - Ground truth comparison (for synthetic data)
+- Missing vs extra features analysis with coverage statistics
+- `get_long_solutions_df()` - Structured solution comparison in tabular format
+
+### Advanced Diagnostics (Work in Progress)
+
+The system also includes automated performance analysis to assess the algorithmic sensibility of discovered solutions and to aid with hyperparameter tuning:
 
 ```python
 from gemss.diagnostics.performance_tests import run_performance_diagnostics
@@ -180,12 +220,12 @@ from gemss.diagnostics.recommendations import display_recommendations
 # Run diagnostics on optimization history
 diagnostics = run_performance_diagnostics(history, desired_sparsity=C.DESIRED_SPARSITY)
 
-# Get intelligent parameter recommendations based on the diagnostics
+# Get intelligent parameter recommendations based on the diagnostics  
 display_recommendations(diagnostics=diagnostics, constants=C.as_dict())
 ```
 
 **Available tests:**
-- Top feature ordering consistency
+- Top feature ordering consistency to assess convergence
 - Sparsity gap analysis (work in progress)
 
 ---
@@ -229,7 +269,7 @@ The sweep scripts automatically update the JSON configuration files:
 
 ## Output
 
-- Results are saved in the `results/` directory as text files.
+- Results of the script-based runs are saved in the `scipts/results/` directory as text files.
 - Filenames include timestamps and all key parameter values.
 - Each file contains:
   - All run parameters
