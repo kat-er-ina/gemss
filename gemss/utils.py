@@ -8,43 +8,10 @@ Includes:
 """
 
 from IPython.display import display, Markdown
-from typing import Any, Dict, List, Tuple
-import numpy as np
-import pandas as pd
-from typing import Literal
+from typing import Any, Dict
 
 
-
-def batch_data(
-    X: np.ndarray,
-    y: np.ndarray,
-    batch_size: int,
-) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Randomly sample a batch of data.
-
-    Parameters
-    ----------
-    X : np.ndarray
-        Data matrix of shape (n_samples, n_features).
-    y : np.ndarray
-        Target vector of shape (n_samples,).
-    batch_size : int
-        Number of samples to select.
-
-    Returns
-    -------
-    X_batch : np.ndarray
-        Batch of data features.
-    y_batch : np.ndarray
-        Batch of data targets.
-    """
-    n = X.shape[0]
-    idx = np.random.choice(n, batch_size, replace=False)
-    return X[idx], y[idx]
-
-
-def print_optimization_setting(
+def print_nice_optimization_settings(
     n_components: int,
     regularize: bool,
     lambda_jaccard: float,
@@ -118,30 +85,3 @@ def print_optimization_setting(
         display(Markdown(f" - {key.lower()}: {value}"))
 
     return
-
-
-def save_history(
-    history: Dict[str, Any],
-    fname: str,
-) -> None:
-    """
-    Save optimization history to a file using pickle.
-
-    Parameters
-    ----------
-    history : dict
-        Dictionary containing optimization history.
-    fname : str
-        Output file path.
-
-    Returns
-    -------
-    None
-    """
-    import pickle
-
-    with open(fname, "wb") as f:
-        pickle.dump(history, f)
-
-
-

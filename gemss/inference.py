@@ -31,7 +31,7 @@ from gemss.models import (
     StructuredSpikeAndSlabPrior,
     GaussianMixture,
 )
-from gemss.utils import print_optimization_setting
+from gemss.utils import print_nice_optimization_settings
 
 
 class BayesianFeatureSelector:
@@ -302,7 +302,7 @@ class BayesianFeatureSelector:
             - 'alpha': list of mixture weights per iteration
         """
         if verbose:
-            print_optimization_setting(
+            print_nice_optimization_settings(
                 n_components=self.n_components,
                 regularize=regularize,
                 lambda_jaccard=lambda_jaccard,
