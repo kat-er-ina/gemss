@@ -14,3 +14,4 @@ from .performance_tests import *
 from .recommendations import *
 from .recommendation_messages import *
 from .result_postprocessing import *
+from .simple_regressions import *

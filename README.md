@@ -41,8 +41,9 @@ gemss/                      # Core package
   diagnostics/              # Diagnostics and testing package
     performance_tests.py    # Performance diagnostics and testing
     recommendations.py      # Parameter recommendation system
-    recommendation_messages.py # Recommendation message templates
-    result_postprocessing.py              # Solution extraction and diagnostics
+    recommendation_messages.py  # Recommendation message templates
+    result_postprocessing.py    # Solution extraction and diagnostics
+    simple_regressions.py       # Simple regression solvers (logistic, linear)
   generate_artificial_dataset.py        # Synthetic dataset generator
   inference.py                          # Main variational inference logic (BayesianFeatureSelector)
   models.py                             # Prior distributions and model components
@@ -203,6 +204,7 @@ from gemss.result_postprocessing import (
 - Support for L1 (Lasso), L2 (Ridge), and ElasticNet penalties
 - Component-wise performance metrics and coefficient analysis
 - Comprehensive results overview across all discovered solutions
+- Powered by `gemss.diagnostics.simple_regressions` module for logistic and linear regression utilities
 
 **Solution Comparison and Evaluation:**
 - `display_features_overview()` - Ground truth comparison (for synthetic data)
