@@ -2,16 +2,17 @@
 
 # --- Define your combinations below ---
 # Each line in $combinations:
-#   NSAMPLES, NFEATURES, NSOLUTIONS, SPARSITY, NOISE_STD, N_COMPONENTS
+#   N_SAMPLES, N_FEATURES, N_GENERATING_SOLUTIONS, SPARSITY, NOISE_STD, N_CANDIDATE_SOLUTIONS
 $combinations = @(
-    "30,60,3,2,0.01,6"
-    "30,60,3,2,0.1,6"
-    "40,400,3,4,0.01,6"
-    "40,400,3,4,0.01,10"
-    "50,600,3,4,0.1,6"
-    "50,200,3,5,0.01,6"
-    "50,200,3,5,0.01,12"
-    "50,200,3,5,0.1,12"
+    "30,60,3,2,0.5,6"
+    # "30,60,3,2,0.01,6"
+    # "30,60,3,2,0.1,6"
+    # "40,400,3,4,0.01,6"
+    # "40,400,3,4,0.01,10"
+    # "50,600,3,4,0.1,6"
+    # "50,200,3,5,0.01,6"
+    # "50,200,3,5,0.01,12"
+    # "50,200,3,5,0.1,12"
 )
 
 # --- Fixed parameters for the algorithm ---
@@ -30,37 +31,50 @@ $LEARNING_RATE = 0.002
 $MIN_MU_THRESHOLD = 0.25
 $BINARIZE = $true
 $BINARY_RESPONSE_RATIO = 0.5
-$RANDOM_SEED = 42
 
-# --- Paths (adjusted for scripts folder location) ---
-$SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Definition
-$ROOT_DIR = Split-Path -Parent $SCRIPT_DIR
-$CONFIG_DIR = Join-Path $ROOT_DIR "gemss\config"
-$GEN_JSON = Join-Path $CONFIG_DIR "generated_dataset_parameters.json"
-$ALG_JSON = Join-Path $CONFIG_DIR "algorithm_settings.json"
-$POST_JSON = Join-Path $CONFIG_DIR "solution_postprocessing_settings.json"
-$RUN_SCRIPT = Join-Path $SCRIPT_DIR "run_experiment.py"
+# Seed for generating the artificial dataset
+$DATASET_SEED = 42
 
-# --- Ensure config and results directories exist ---
-if (-not (Test-Path $CONFIG_DIR)) {
-    New-Item -ItemType Directory -Path $CONFIG_DIR | Out-Null
-}
-$resultsDir = Join-Path $ROOT_DIR "results"
+# --- Get paths from Python constants ---
+$pythonCmd = @"
+import sys
+import os
+sys.path.insert(0, '..')
+from gemss.config.constants import CONFIG_FILES
+from pathlib import Path
+# Get the parent directory of the current working directory (scripts -> root)
+config_dir = Path(os.getcwd()).parent / 'gemss' / 'config'
+str_data = 'ARTIFICIAL_DATASET'
+str_algo = 'ALGORITHM'
+str_post = 'POSTPROCESSING'
+print(config_dir / CONFIG_FILES[str_data])
+print(config_dir / CONFIG_FILES[str_algo])
+print(config_dir / CONFIG_FILES[str_post])
+"@
+$paths = python -c $pythonCmd
+$pathArray = $paths.Split("`n")
+$GEN_JSON = $pathArray[0].Trim()
+$ALG_JSON = $pathArray[1].Trim()
+$POST_JSON = $pathArray[2].Trim()
+$RUN_SCRIPT = "run_experiment.py"
+
+# --- Ensure results directory exists ---
+$currentDir = Get-Location
+$resultsDir = Join-Path $currentDir "results"
 if (-not (Test-Path $resultsDir)) {
     New-Item -ItemType Directory -Path $resultsDir | Out-Null
 }
-Write-Host "Configuration files will be created in: $CONFIG_DIR"
 Write-Host "Results will be saved in: $resultsDir"
 
 foreach ($combo in $combinations) {
     if ([string]::IsNullOrWhiteSpace($combo)) { continue }
     $parts = $combo.Split(",")
-    $NSAMPLES = $parts[0]
-    $NFEATURES = $parts[1]
-    $NSOLUTIONS = $parts[2]
+    $N_SAMPLES = $parts[0]
+    $N_FEATURES = $parts[1]
+    $N_GENERATING_SOLUTIONS = $parts[2]
     $SPARSITY = $parts[3]
     $NOISE_STD = $parts[4]
-    $N_COMPONENTS = $parts[5]
+    $N_CANDIDATE_SOLUTIONS = $parts[5]
 
     # DESIRED_SPARSITY and PRIOR_SPARSITY always equal SPARSITY
     $DESIRED_SPARSITY = $SPARSITY
@@ -68,20 +82,20 @@ foreach ($combo in $combinations) {
 
     # Write generated_dataset_parameters.json
     $genJsonContent = @{
-        "NSAMPLES" = [int]$NSAMPLES
-        "NFEATURES" = [int]$NFEATURES
-        "NSOLUTIONS" = [int]$NSOLUTIONS
+        "N_SAMPLES" = [int]$N_SAMPLES
+        "N_FEATURES" = [int]$N_FEATURES
+        "N_GENERATING_SOLUTIONS" = [int]$N_GENERATING_SOLUTIONS
         "SPARSITY" = [int]$SPARSITY
         "NOISE_STD" = [double]$NOISE_STD
         "BINARIZE" = [bool]$BINARIZE
         "BINARY_RESPONSE_RATIO" = [double]$BINARY_RESPONSE_RATIO
-        "RANDOM_SEED" = [int]$RANDOM_SEED
+        "DATASET_SEED" = [int]$DATASET_SEED
     } | ConvertTo-Json -Depth 2
     Set-Content -Path $GEN_JSON -Value $genJsonContent
 
     # Write algorithm_settings.json
     $algJsonContent = @{
-        "N_COMPONENTS" = [int]$N_COMPONENTS
+        "N_CANDIDATE_SOLUTIONS" = [int]$N_CANDIDATE_SOLUTIONS
         "N_ITER" = [int]$N_ITER
         "PRIOR_TYPE" = $PRIOR_TYPE
         "STUDENT_DF" = [int]$STUDENT_DF
@@ -107,28 +121,22 @@ foreach ($combo in $combinations) {
 
     Write-Host "====================================================================================="
     Write-Host "Running experiment with:"
-    Write-Host "NSAMPLES=$NSAMPLES, NFEATURES=$NFEATURES, NSOLUTIONS=$NSOLUTIONS, SPARSITY=$SPARSITY, NOISE_STD=$NOISE_STD, N_COMPONENTS=$N_COMPONENTS"
+    Write-Host "N_SAMPLES=$N_SAMPLES, N_FEATURES=$N_FEATURES, N_GENERATING_SOLUTIONS=$N_GENERATING_SOLUTIONS, SPARSITY=$SPARSITY, NOISE_STD=$NOISE_STD, N_CANDIDATE_SOLUTIONS=$N_CANDIDATE_SOLUTIONS"
     Write-Host "====================================================================================="
 
     # Compose output file name with param settings and timestamp:
     $timestamp = (Get-Date -Format "yyyyMMdd_HHmm")
     $combo_named = @(
-        "NSAMPLES=$NSAMPLES"
-        "NFEATURES=$NFEATURES"
-        "NSOLUTIONS=$NSOLUTIONS"
+        "N_SAMPLES=$N_SAMPLES"
+        "N_FEATURES=$N_FEATURES"
+        "N_GENERATING_SOLUTIONS=$N_GENERATING_SOLUTIONS"
         "SPARSITY=$SPARSITY"
         "NOISE_STD=$NOISE_STD"
-        "N_COMPONENTS=$N_COMPONENTS"
+        "N_CANDIDATE_SOLUTIONS=$N_CANDIDATE_SOLUTIONS"
     ) -join "_"
     $output_file = "${resultsDir}\experiment_output_${timestamp}_${combo_named}.txt"
 
-    # Change to root directory before running the experiment
-    Push-Location $ROOT_DIR
-    try {
-        python $RUN_SCRIPT --output $output_file
-    } finally {
-        Pop-Location
-    }
+    python $RUN_SCRIPT --output $output_file
 }
 Write-Host "====================================================================================="
 Write-Host "All predefined experiments finished. Check the results/ directory for outputs."

@@ -395,7 +395,7 @@ def display_parameter_adjustment_summary() -> None:
             f"| `VAR_SPIKE` | False positives | Poor separation gap between selected and not-selected features | {var_spike_range} |\n"
             f"| `LAMBDA_JACCARD` | Greater diversity wanted: the individual solutions contain too many similar features. | Interested in solutions with overlapping feature sets. | {lambda_jaccard_range} |\n"
             "| `DESIRED_SPARSITY` | Too restrictive | The progress of mu values indicates that fewer features remain non-negligible | Dataset-dependent |"
-            "|`N_COMPONENTS`| Current set of solutions does not contain enough combinations despite proper Jaccard regularization and desired sparsity settings. | Solutions overlap siginificantly and uselessly. Some component weights (alphas) might be negligible too. | Dataset-dependent. Advisable to be at least double the expected `true` number of solutions. |"
+            "|`N_CANDIDATE_SOLUTIONS`| Current set of solutions does not contain enough combinations despite proper Jaccard regularization and desired sparsity settings. | Solutions overlap siginificantly and uselessly. Some component weights (alphas) might be negligible too. | Dataset-dependent. Advisable to be at least double the expected `true` number of solutions. |"
         )
     )
 

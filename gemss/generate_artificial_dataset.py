@@ -279,24 +279,24 @@ def generate_artificial_dataset(
 
 if __name__ == "__main__":
     # Example parameters
-    NSAMPLES = 20
-    NFEATURES = 60
-    NSOLUTIONS = 3
+    N_SAMPLES = 20
+    N_FEATURES = 60
+    N_GENERATING_SOLUTIONS = 3
     SPARSITY = 1
     NOISE_STD = 0.01
     BINARIZE = True
     BINARY_RESPONSE_RATIO = 0.5
-    RANDOM_SEED = 42
+    DATASET_SEED = 42
 
     # Generate dataset
     data, response, solutions, parameters = generate_artificial_dataset(
-        n_samples=NSAMPLES,
-        n_features=NFEATURES,
-        n_solutions=NSOLUTIONS,
+        n_samples=N_SAMPLES,
+        n_features=N_FEATURES,
+        n_solutions=N_GENERATING_SOLUTIONS,
         sparsity=SPARSITY,
         noise_data_std=NOISE_STD,
         binarize=BINARIZE,
         binary_response_ratio=BINARY_RESPONSE_RATIO,
-        random_seed=RANDOM_SEED,
+        random_seed=DATASET_SEED,
         save_to_csv=True,
     )

@@ -1,10 +1,10 @@
 {
-  "NSAMPLES": 40,
-  "NFEATURES": 600,
-  "NSOLUTIONS": 3,
-  "SPARSITY": 4,
-  "NOISE_STD": 0.01,
-  "BINARIZE": true,
-  "BINARY_RESPONSE_RATIO": 0.5,
-  "RANDOM_SEED": 42
+    "N_FEATURES":  60,
+    "N_SAMPLES":  30,
+    "NOISE_STD":  0.5,
+    "N_GENERATING_SOLUTIONS":  3,
+    "DATASET_SEED":  42,
+    "BINARIZE":  true,
+    "SPARSITY":  2,
+    "BINARY_RESPONSE_RATIO":  0.5
 }

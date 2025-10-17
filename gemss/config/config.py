@@ -18,8 +18,9 @@ Features:
 
 Usage:
     import gemss.config as config
-    # Core algorithm: config.N_COMPONENTS, config.PRIOR_TYPE, etc.
-    # Artificial data: config.NSAMPLES, config.NFEATURES, etc. (demo only)
+    # Core algorithm: config.N_CANDIDATE_SOLUTIONS, config.PRIOR_TYPE, etc.
+        # Access parameters: config.N_SAMPLES, config.N_CANDIDATE_SOLUTIONS, etc.
+    # Artificial data: config.N_SAMPLES, config.N_FEATURES, etc. (demo only)
     # Display configuration: config.display_current_config(config.as_dict())
 """
 
@@ -38,18 +39,18 @@ class ConfigurationManager:
 
     # Parameter category definitions
     ARTIFICIAL_DATASET_PARAMS = {
-        "NSAMPLES",
-        "NFEATURES",
-        "NSOLUTIONS",
+        "N_SAMPLES",
+        "N_FEATURES",
+        "N_GENERATING_SOLUTIONS",
         "SPARSITY",
         "NOISE_STD",
         "BINARIZE",
         "BINARY_RESPONSE_RATIO",
-        "RANDOM_SEED",
+        "DATASET_SEED",
     }
 
     ALGORITHM_PARAMS = {
-        "N_COMPONENTS",
+        "N_CANDIDATE_SOLUTIONS",
         "N_ITER",
         "PRIOR_TYPE",
         "PRIOR_SPARSITY",
@@ -71,16 +72,16 @@ class ConfigurationManager:
     # Parameter descriptions for display
     PARAM_DESCRIPTIONS = {
         # Artificial dataset generation (development/demo only)
-        "NSAMPLES": "Number of samples (rows) in the synthetic dataset",
-        "NFEATURES": "Number of features (columns) in the synthetic dataset",
-        "NSOLUTIONS": "Number of distinct sparse solutions ('true' supports)",
+        "N_SAMPLES": "Number of samples (rows) in the synthetic dataset",
+        "N_FEATURES": "Number of features (columns) in the synthetic dataset",
+        "N_GENERATING_SOLUTIONS": "Number of distinct sparse solutions ('true' supports)",
         "SPARSITY": "Number of nonzero features per solution (support size)",
         "NOISE_STD": "Standard deviation of noise added to synthetic data",
         "BINARIZE": "Whether to binarize the synthetic response variable",
         "BINARY_RESPONSE_RATIO": "Proportion of synthetic samples assigned label 1",
-        "RANDOM_SEED": "Random seed for synthetic data reproducibility",
+        "DATASET_SEED": "Random seed for synthetic data reproducibility",
         # Algorithm settings
-        "N_COMPONENTS": "Number of mixture components in variational posterior",
+        "N_CANDIDATE_SOLUTIONS": "Number of mixture components in variational posterior",
         "N_ITER": "Number of optimization iterations",
         "PRIOR_TYPE": "Prior type ('ss', 'sss', or 'student')",
         "PRIOR_SPARSITY": "Prior expected number of nonzero features per component",
@@ -119,7 +120,7 @@ class ConfigurationManager:
     @lru_cache(maxsize=None)
     def get_artificial_dataset_params(self) -> Dict[str, Any]:
         """Get artificial dataset generation parameters (for development/demo only)."""
-        params = self._load_json_file(CONFIG_FILES["DATASET"])
+        params = self._load_json_file(CONFIG_FILES["ARTIFICIAL_DATASET"])
         # Only keep relevant keys
         return {k: params[k] for k in self.ARTIFICIAL_DATASET_PARAMS if k in params}
 
@@ -167,17 +168,17 @@ _config_manager = ConfigurationManager()
 _all_params = _config_manager.get_all_params()
 
 # Artificial dataset parameters (for synthetic data generation - development/demo only)
-NSAMPLES = _all_params["NSAMPLES"]
-NFEATURES = _all_params["NFEATURES"]
-NSOLUTIONS = _all_params["NSOLUTIONS"]
+N_SAMPLES = _all_params["N_SAMPLES"]
+N_FEATURES = _all_params["N_FEATURES"]
+N_GENERATING_SOLUTIONS = _all_params["N_GENERATING_SOLUTIONS"]
 SPARSITY = _all_params["SPARSITY"]
 NOISE_STD = _all_params["NOISE_STD"]
 BINARIZE = _all_params["BINARIZE"]
 BINARY_RESPONSE_RATIO = _all_params["BINARY_RESPONSE_RATIO"]
-RANDOM_SEED = _all_params["RANDOM_SEED"]
+DATASET_SEED = _all_params["DATASET_SEED"]
 
 # Algorithm parameters
-N_COMPONENTS = _all_params["N_COMPONENTS"]
+N_CANDIDATE_SOLUTIONS = _all_params["N_CANDIDATE_SOLUTIONS"]
 N_ITER = _all_params["N_ITER"]
 PRIOR_TYPE = _all_params["PRIOR_TYPE"]
 PRIOR_SPARSITY = _all_params.get("PRIOR_SPARSITY")

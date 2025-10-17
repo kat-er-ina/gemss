@@ -146,7 +146,7 @@ The module `gemss/config.py` loads all three and exposes every parameter as a Py
 
 ```python
 import gemss.config as C
-print(C.NSAMPLES, C.N_COMPONENTS, C.PRIOR_TYPE)
+print(C.N_SAMPLES, C.N_CANDIDATE_SOLUTIONS, C.PRIOR_TYPE)
 print(C.MIN_MU_THRESHOLD, C.POSTPROCESSING_THRESHOLD)  # Example: postprocessing params
 ```
 

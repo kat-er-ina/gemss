@@ -54,21 +54,21 @@ def generate_dataset() -> Tuple[pd.DataFrame, Any, Dict, Dict, List[str]]:
         parameters dict, and true support feature names
     """
     print("Generating dataset with:")
-    print(f" - {C.NSAMPLES} samples")
-    print(f" - {C.NFEATURES} features")
+    print(f" - {C.N_SAMPLES} samples")
+    print(f" - {C.N_FEATURES} features")
     print(
-        f" - {C.NSOLUTIONS} original solutions, each with {C.SPARSITY} supporting vectors"
+        f" - {C.N_GENERATING_SOLUTIONS} original solutions, each with {C.SPARSITY} supporting vectors"
     )
 
     df, y, generating_solutions, parameters = generate_artificial_dataset(
-        n_samples=C.NSAMPLES,
-        n_features=C.NFEATURES,
-        n_solutions=C.NSOLUTIONS,
+        n_samples=C.N_SAMPLES,
+        n_features=C.N_FEATURES,
+        n_solutions=C.N_GENERATING_SOLUTIONS,
         sparsity=C.SPARSITY,
         noise_data_std=C.NOISE_STD,
         binarize=C.BINARIZE,
         binary_response_ratio=C.BINARY_RESPONSE_RATIO,
-        random_seed=C.RANDOM_SEED,
+        random_seed=C.DATASET_SEED,
         save_to_csv=False,
         print_data_overview=False,
     )
@@ -82,14 +82,14 @@ def generate_dataset() -> Tuple[pd.DataFrame, Any, Dict, Dict, List[str]]:
 def run_feature_selection(df: pd.DataFrame, y: Any) -> Tuple[Any, List[Dict], Any]:
     """
     Run GEMSS optimization for sparse feature selection.
-    
+
     Parameters
     ----------
     df : pd.DataFrame
         Feature matrix
     y : array-like
         Target variable
-        
+
     Returns
     -------
     tuple
@@ -98,8 +98,8 @@ def run_feature_selection(df: pd.DataFrame, y: Any) -> Tuple[Any, List[Dict], An
     print("\nRunning GEMSS...")
 
     selector = BayesianFeatureSelector(
-        n_features=C.NFEATURES,
-        n_components=C.N_COMPONENTS,
+        n_features=C.N_FEATURES,
+        n_components=C.N_CANDIDATE_SOLUTIONS,
         X=df.values,
         y=y,
         prior=C.PRIOR_TYPE,
