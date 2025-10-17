@@ -14,40 +14,51 @@ Traditional feature selection methods typically identify only a single solution 
 
 ## Features
 
-- **Multiple sparse solutions:** Identifies all distinct sparse supports that explain the data.
-- **Flexible priors:** Includes spike-and-slab, structured spike-and-slab (SSS), and Student-t priors.
-- **Variational inference:** Approximates the posterior with a mixture of diagonal Gaussians.
-- **Diversity regularization:** Jaccard penalty to encourage component diversity.
-- **Synthetic data generation:** Easily generate datasets with known supports.
-- **Batch/script support:** Run headless experiments or parameter sweeps.
-- **Rich output:** Summaries, solution tables, and diagnostics are saved as `.txt` files.
+- **Multiple sparse solutions:** Identifies all distinct sparse supports that explain the data
+- **Flexible priors:** Spike-and-slab, structured spike-and-slab (SSS), and Student-t priors
+- **Variational inference:** Efficient optimization with PyTorch backend
+- **Diversity regularization:** Jaccard penalty to encourage component diversity
+- **Dual-purpose design:** Works with both synthetic data (development) and real datasets (production)
+- **Performance diagnostics:** Automated optimization analysis and parameter recommendations
+- **Recommendation system:** Intelligent suggestions for parameter adjustment
+- **Rich visualization:** Interactive plots for optimization history and results
+- **Modular configuration:** Clean separation of artificial dataset, algorithm, and postprocessing parameters
+- **Batch processing:** Parameter sweep scripts for systematic experimentation
+- **Comprehensive output:** Detailed summaries, diagnostics, and solution tables
 
 ---
 
 ## Repository Structure
 
 ```
-gemss/                      # Core package: models, inference, config, data generation, result postprocessing
-  config.py                             # Loads config from 3 JSONs and exposes as Python variables
+gemss/                      # Core package
+  config/                   # Configuration package
+    config.py               # Configuration manager and parameter loading
+    constants.py            # Project constants and file paths
+    algorithm_settings.json # Algorithm configuration
+    generated_dataset_parameters.json  # Synthetic dataset configuration
+    solution_postprocessing_settings.json  # Postprocessing configuration
   generate_artificial_dataset.py        # Synthetic dataset generator
-  inference.py                          # Main variational inference logic
+  inference.py                          # Main variational inference logic (BayesianFeatureSelector)
+  models.py                             # Prior distributions and model components
   result_postprocessing.py              # Solution extraction and diagnostics
+  recommendations.py                    # Parameter recommendation system
+  recommendation_messages.py            # Recommendation message templates
+  performance_tests.py                  # Performance diagnostics and testing
+  utils.py                              # Utility functions
+  visualizations.py                     # Plotting and visualization functions
 
 notebooks/
-  demo.ipynb                            # Interactive demo notebook
+  demo.ipynb                            # Interactive demo with synthetic data
+  explore_unknown_dataset.ipynb        # Example with real user dataset
 
 scripts/
-  run_experiment.py                     # Run a single experiment (headless, summary output)
-  generate_artificial_dataset.py        # Generate new datasets
+  run_experiment.py                     # Run single experiment (headless)
+  run_sweep.ps1                         # PowerShell sweep script for batch experiments
 
 results/                                # Experiment output summaries (created automatically)
 
-generated_dataset_parameters.json       # Dataset config (overwritten by sweep scripts)
-algorithm_settings.json                 # Algorithm config (overwritten by sweep scripts)
-solution_postprocessing_settings.json   # Solution extraction/postprocessing config (overwritten by sweep scripts or edited manually)
-
-run_sweep.ps1                           # PowerShell sweep script for batch experiments (Windows)
-
+run_sweep.ps1                           # PowerShell sweep script (from root directory)
 requirements.txt
 setup.py
 README.md
@@ -57,20 +68,35 @@ README.md
 
 ## Configuration Files
 
-The demo workflow uses 3 JSON configuration files (always expected in the parent directory of the repo root):
+The project uses a modular configuration system with 3 JSON files located in `gemss/config/`:
 
 1. **generated_dataset_parameters.json**  
-   Dataset generation parameters (number of samples, features, supports, sparsity, noise, class balance, random seed, etc.)
+   Artificial dataset generation parameters (for development/demo only):
+   - `N_SAMPLES`: Number of samples (rows)
+   - `N_FEATURES`: Number of features (columns) 
+   - `N_GENERATING_SOLUTIONS`: Number of distinct sparse solutions that were explicitely constructed during data generation.
+   - `SPARSITY`: Support size (nonzero features per solution)
+   - `NOISE_STD`: Noise level
+   - `BINARIZE`: Whether the response vector should be continuous or binary.
+   - `BINARY_RESPONSE_RATIO`: The required ratio of binary classes, if a binary classification problem is required by `BINARIZE`.
+   - `DATASET_SEED`: The random seed used to generate the artificial data.
 
 2. **algorithm_settings.json**  
-   Algorithm and inference parameters (number of mixture components, prior type, variances, regularization, optimization settings, etc.)
+   Core algorithm parameters (used for both synthetic and real data):
+   - `N_CANDIDATE_SOLUTIONS`: Number of candidate solutions (Gaussian mixture components) to search for.
+   - `PRIOR_TYPE`: Choice of the sparsifying prior distribution ('ss', 'sss', 'student').
+   - `N_ITER`: Numbe of optimization iterations, `LEARNING_RATE`, regularization, etc.
 
 3. **solution_postprocessing_settings.json**  
-   Parameters for solution extraction/postprocessing (e.g., thresholds, filtering, merging, and other post-hoc analysis options).
+   Solution extraction and analysis parameters:
+   - `DESIRED_SPARSITY`: Target number of features in final solution
+   - `MIN_MU_THRESHOLD`: Feature importance threshold, etc.
 
-The config module (`gemss/config.py`) loads all three JSON files and exposes every parameter as a Python variable for use throughout the codebase.
-
-Alternatively, the constants can be defined and passed directly.
+The configuration system (`gemss.config`) provides:
+- **Lazy loading** with caching for efficiency
+- **Parameter categorization** (artificial dataset, algorithm, postprocessing)
+- **Rich display functions** for notebooks
+- **Validation and error handling**
 
 ---
 
@@ -126,32 +152,77 @@ Alternatively, the constants can be defined and passed directly.
 
 ### Interactive Exploration
 
-- **Notebook Demo:**
-   ```bash
-   jupyter notebook notebooks/demo.ipynb
-   ```
-   - Walks through data generation, fitting, and diagnostics interactively.
+- **Demo Notebook (`demo.ipynb`):**
+  ```bash
+  jupyter notebook notebooks/demo.ipynb
+  ```
+  - Complete walkthrough with synthetic data
+  - Data generation, model fitting, and diagnostics
+  - Performance testing and recommendations
+
+- **Real Data Notebook (`explore_unknown_dataset.ipynb`):**
+  - Example workflow for user datasets
+  - Parameter tuning for real-world problems
+  - Best practices for unknown data exploration
 
 ---
 
-## Working with Configuration in Code
+## Performance Diagnostics & Recommendations
 
-All configuration is handled via the three JSON files in the parent directory:
+The system includes automated performance analysis to assess the algorithmic sensibility of discovered solutions and to aid with hyperparameter tuning.
+Currently, the tests and recommendations are work in progress.
 
-- `generated_dataset_parameters.json`
-- `algorithm_settings.json`
-- `solution_postprocessing_settings.json`
+```python
+from gemss.performance_tests import run_performance_diagnostics
+from gemss.recommendations import display_recommendations
 
-The module `gemss/config.py` loads all three and exposes every parameter as a Python variable:
+# Run diagnostics on optimization history
+diagnostics = run_performance_diagnostics(history, desired_sparsity=C.DESIRED_SPARSITY)
+
+# Get intelligent parameter recommendations based on the diagnostics
+display_recommendations(diagnostics=diagnostics, constants=C.as_dict())
+```
+
+**Available tests:**
+- Top feature ordering consistency
+- Sparsity gap analysis (work in progress)
+
+---
+
+## Working with Configuration
+
+All configuration is centralized in the `gemss/config/` package:
+
+```
+gemss/config/
+├── config.py                              # Main configuration manager
+├── constants.py                           # Project constants and file paths
+├── generated_dataset_parameters.json     # Artificial dataset parameters
+├── algorithm_settings.json               # Core algorithm parameters  
+└── solution_postprocessing_settings.json # Postprocessing parameters
+```
+
+The configuration package (`gemss.config`) loads all three files and exposes parameters as Python variables:
 
 ```python
 import gemss.config as C
 print(C.N_SAMPLES, C.N_CANDIDATE_SOLUTIONS, C.PRIOR_TYPE)
-print(C.MIN_MU_THRESHOLD, C.POSTPROCESSING_THRESHOLD)  # Example: postprocessing params
+print(C.MIN_MU_THRESHOLD, C.DESIRED_SPARSITY)  # Postprocessing params
+
+# Access by category
+dataset_params = C.get_params_by_category('artificial_dataset')
+algorithm_params = C.get_params_by_category('algorithm') 
+core_params = C.get_core_algorithm_params()  # Excludes synthetic data params
+
+# Display in notebooks
+C.display_current_config(constants=C.as_dict(), constant_type='algorithm')
 ```
 
 **Parameter sweeps:**  
-The sweep script (`run_sweep.ps1`) will automatically generate and overwrite these files for each run.
+The sweep scripts automatically update the JSON configuration files:
+- Use `run_sweep.ps1` (root) or `scripts/run_sweep.ps1`
+- Scripts dynamically resolve file paths using `constants.py`
+- Each run overwrites config files with new parameter combinations
 
 ---
 
@@ -169,10 +240,13 @@ The sweep script (`run_sweep.ps1`) will automatically generate and overwrite the
 
 ## Customization & Extending
 
-- **Add new priors:** Implement your prior in `gemss/models.py` and update inference logic.
-- **Add diagnostics:** Extend `gemss/result_postprocessing.py` or the notebook.
-- **Change or add sweeps:** Edit `run_sweep.ps1` for custom batch runs.
-- **Add solution postprocessing logic:** Edit `gemss/result_postprocessing.py` and/or update the postprocessing JSON.
+- **Add new priors:** Implement in `gemss/models.py` and update `BayesianFeatureSelector`
+- **Custom diagnostics:** Extend `gemss/diagnostics/performance_tests.py` with new test methods
+- **New recommendations:** Add message templates to `gemss/diagnostics/recommendation_messages.py`
+- **Visualization:** Create new plots in `gemss/visualizations.py`
+- **Configuration:** Modify JSON files or add new parameter categories
+- **Sweep parameters:** Edit `run_sweep.ps1` for custom batch experiments
+- **Real data workflows:** Follow `explore_unknown_dataset.ipynb` as template
 
 ---
 
