@@ -26,7 +26,7 @@ import gemss.config as C
 from gemss.generate_artificial_dataset import generate_artificial_dataset
 from gemss.inference import BayesianFeatureSelector
 from gemss.result_postprocessing import recover_solutions
-from gemss.performance_tests import run_performance_diagnostics
+from gemss.diagnostics.performance_tests import run_performance_diagnostics
 
 
 def parse_arguments() -> argparse.Namespace:

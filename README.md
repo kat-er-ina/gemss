@@ -38,13 +38,14 @@ gemss/                      # Core package
     algorithm_settings.json # Algorithm configuration
     generated_dataset_parameters.json  # Synthetic dataset configuration
     solution_postprocessing_settings.json  # Postprocessing configuration
+  diagnostics/              # Diagnostics and testing package
+    performance_tests.py    # Performance diagnostics and testing
+    recommendations.py      # Parameter recommendation system
+    recommendation_messages.py # Recommendation message templates
   generate_artificial_dataset.py        # Synthetic dataset generator
   inference.py                          # Main variational inference logic (BayesianFeatureSelector)
   models.py                             # Prior distributions and model components
   result_postprocessing.py              # Solution extraction and diagnostics
-  recommendations.py                    # Parameter recommendation system
-  recommendation_messages.py            # Recommendation message templates
-  performance_tests.py                  # Performance diagnostics and testing
   utils.py                              # Utility functions
   visualizations.py                     # Plotting and visualization functions
 
@@ -173,8 +174,8 @@ The system includes automated performance analysis to assess the algorithmic sen
 Currently, the tests and recommendations are work in progress.
 
 ```python
-from gemss.performance_tests import run_performance_diagnostics
-from gemss.recommendations import display_recommendations
+from gemss.diagnostics.performance_tests import run_performance_diagnostics
+from gemss.diagnostics.recommendations import display_recommendations
 
 # Run diagnostics on optimization history
 diagnostics = run_performance_diagnostics(history, desired_sparsity=C.DESIRED_SPARSITY)

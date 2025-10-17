@@ -8,7 +8,7 @@ diagnostic outcomes.
 
 from typing import Dict, List, Any, Optional
 from IPython.display import display, Markdown
-from gemss.recommendation_messages import get_recommendation_message
+from .recommendation_messages import get_recommendation_message
 from gemss.config import display_current_config
 
 
