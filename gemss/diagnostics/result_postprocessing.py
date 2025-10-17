@@ -7,7 +7,7 @@ from typing import Dict, List, Tuple, Literal, Any, Optional, Union
 import numpy as np
 import pandas as pd
 from IPython.display import display, Markdown
-from gemss.visualizations import plot_elbo, plot_mu, plot_alpha
+from gemss.diagnostics.visualizations import plot_elbo, plot_mu, plot_alpha
 from gemss.diagnostics.simple_regressions import (
     solve_with_logistic_regression,
     solve_with_linear_regression,

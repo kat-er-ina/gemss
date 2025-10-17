@@ -24,7 +24,7 @@ from sklearn.metrics import (
 from sklearn.linear_model import LogisticRegressionCV, RidgeCV, LassoCV, ElasticNetCV
 import warnings
 from sklearn.exceptions import ConvergenceWarning
-from gemss.visualizations import (
+from gemss.diagnostics.visualizations import (
     show_confusion_matrix,
     show_predicted_vs_actual_response,
 )
