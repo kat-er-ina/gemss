@@ -1,7 +1,7 @@
 {
     "N_ITER":  4000,
     "WEIGHT_SPIKE":  0.1,
-    "LAMBDA_JACCARD":  100,
+    "LAMBDA_JACCARD":  500,
     "STUDENT_SCALE":  1,
     "LEARNING_RATE":  0.002,
     "IS_REGULARIZED":  true,

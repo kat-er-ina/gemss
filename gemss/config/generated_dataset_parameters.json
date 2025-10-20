@@ -1,10 +1,10 @@
 {
     "N_FEATURES":  60,
     "N_SAMPLES":  30,
-    "NOISE_STD":  0.5,
+    "NOISE_STD":  0.1,
     "N_GENERATING_SOLUTIONS":  3,
     "DATASET_SEED":  42,
     "BINARIZE":  true,
-    "SPARSITY":  2,
+    "SPARSITY":  3,
     "BINARY_RESPONSE_RATIO":  0.5
 }
