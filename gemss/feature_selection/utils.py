@@ -1,10 +1,5 @@
 """
 Utility functions for feature selection project.
-Includes:
-- Sampling
-- Metrics
-- Data handling
-- Display utilities
 """
 
 from IPython.display import display, Markdown

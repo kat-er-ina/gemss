@@ -45,10 +45,11 @@ gemss/                      # Core package
     result_postprocessing.py    # Solution extraction and diagnostics
     simple_regressions.py       # Simple regression solvers (logistic, linear)
     visualizations.py           # Plotting and visualization functions
+  feature_selection/            # Core feature selection package
+    inference.py                # Main variational inference logic (BayesianFeatureSelector)
+    models.py                   # Prior distributions and model components  
+    utils.py                    # Utility functions for optimization settings
   generate_artificial_dataset.py        # Synthetic dataset generator
-  inference.py                          # Main variational inference logic (BayesianFeatureSelector)
-  models.py                             # Prior distributions and model components
-  utils.py                              # Utility functions
 
 notebooks/
   demo.ipynb                            # Interactive demo with synthetic data
@@ -285,7 +286,7 @@ The sweep scripts automatically update the JSON configuration files:
 
 ## Customization & Extending
 
-- **Add new priors:** Implement in `gemss/models.py` and update `BayesianFeatureSelector`
+- **Add new priors:** Implement in `gemss/feature_selection/models.py` and update `BayesianFeatureSelector`
 - **Custom diagnostics:** Extend `gemss/diagnostics/performance_tests.py` with new test methods
 - **New recommendations:** Add message templates to `gemss/diagnostics/recommendation_messages.py`
 - **Visualization:** Create new plots in `gemss/diagnostics/visualizations.py`
