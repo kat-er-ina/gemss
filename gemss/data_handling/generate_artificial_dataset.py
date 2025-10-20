@@ -186,13 +186,17 @@ def show_overview_of_generated_data(
     display(Markdown(f"- **Number of samples:** {n_samples}"))
     display(Markdown(f"- **Number of features:** {n_features}"))
     display(Markdown(f"- **Number of generating solutions:** {n_solutions}"))
-    display(Markdown(f"- **Sparsity (nonzero dimensions per component):** {sparsity}"))
+    display(
+        Markdown(
+            f"- **Number of nonzero features per solution (sparsity):** {sparsity}"
+        )
+    )
 
     support_indices = parameters["support_indices"].sum()
     support_features = [f"feature_{i}" for i in support_indices]
     display(
         Markdown(
-            f"- **Support features:** {len(support_features)}<br>{sorted(support_features)}"
+            f"- **Nonzero features:** {len(support_features)}<br>{sorted(support_features)}"
         )
     )
 
@@ -291,7 +295,7 @@ def generate_artificial_dataset(
         )
 
     if save_to_csv:
-        suffix = f"{n_samples}x{n_features}_{n_solutions}sols_{sparsity}sparse"
+        suffix = f"{n_samples}x{n_features}_{n_solutions}sols_{sparsity}sparse_{noise_data_std}noise"
         data.to_csv(f"../data/artificial_dataset_{suffix}.csv")
         solutions.to_csv(f"../data/artificial_solutions_{suffix}.csv")
         parameters.to_csv(f"../data/artificial_parameters_{suffix}.csv")
