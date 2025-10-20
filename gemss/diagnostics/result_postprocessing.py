@@ -7,7 +7,12 @@ from typing import Dict, List, Tuple, Literal, Any, Optional, Union, Set
 import numpy as np
 import pandas as pd
 from IPython.display import display, Markdown
-from gemss.diagnostics.visualizations import plot_elbo, plot_mu, plot_alpha
+from gemss.diagnostics.visualizations import (
+    plot_elbo,
+    plot_mu,
+    plot_alpha,
+    compare_parameters,
+)
 from gemss.diagnostics.simple_regressions import (
     solve_with_logistic_regression,
     solve_with_linear_regression,
@@ -52,6 +57,31 @@ def get_long_solutions_df(
             drop=True
         )
     return df_full_solutions
+
+
+def show_long_solutions(
+    full_nonzero_solutions: Dict[str, pd.DataFrame],
+    title: str = "### Solutions",
+) -> None:
+    """
+    Display the solutions in a DataFrame format: each column corresponds to a component
+    and contains the identified features.
+
+    Parameters
+    ----------
+    full_nonzero_solutions : Dict[str, pd.DataFrame]
+        Dictionary mapping each component (solution) to a DataFrame containing
+        features that exceeded the min_mu_threshold in the last iterations,
+        with columns ['Feature', 'Mu value'].
+
+    Returns
+    -------
+    None
+    """
+    display(Markdown(title))
+    df_full_solutions = get_long_solutions_df(full_nonzero_solutions)
+    display(df_full_solutions)
+    return
 
 
 def recover_solutions(
@@ -301,7 +331,7 @@ def show_regression_results_for_solutions(
     This function displays markdown output and regression metrics as side effects.
     Automatically detects binary classification vs regression based on unique values in y.
     """
-    is_binary = set(np.unique(y)) <= {0, 1}
+    is_binary = set(np.unique(y)) == {np.int64(0), np.int64(1)}
 
     stats = {}
     for component, features in solutions.items():
@@ -325,7 +355,10 @@ def show_regression_results_for_solutions(
         if verbose:
             display(Markdown("------------------"))
 
-    display(Markdown(f"## Regression metrics overview"))
+    if is_binary:
+        display(Markdown(f"## Classification metrics overview (penalty: {penalty})"))
+    else:
+        display(Markdown(f"## Regression metrics overview (penalty: {penalty})"))
     # print the stats as data frame
     # each entry is a column in the data frame
     metrics_df = pd.DataFrame.from_dict(stats, orient="index")
@@ -475,4 +508,33 @@ def show_solutions_details(
             print(f"Component weight = {alpha:.3f}")
             for feature in features:
                 print(f"- {feature}")
+    return
+
+
+def show_final_parameter_comparison(
+    true_parameters: Dict[str, Any],
+    final_parameters: Dict[str, Any],
+) -> None:
+    """
+    Display a comparison between true parameters and final estimated parameters.
+
+    Parameters:
+    -----------
+    true_parameters : Dict[str, Any]
+        A dictionary containing the true parameters for comparison.
+    final_parameters : Dict[str, Any]
+        A dictionary containing the final estimated parameters.
+
+    Returns:
+    --------
+    None
+    """
+
+    # Show final mixture means and weights
+    compare_parameters(true_parameters, final_parameters["final mu"])
+
+    # Show final alpha weights
+    display(Markdown("### Final mixture weights (alpha):"))
+    for i, alpha in enumerate(final_parameters["final alpha"]):
+        display(Markdown(f"- **Component {i}:** {alpha:.3f}"))
     return

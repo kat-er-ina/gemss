@@ -156,7 +156,28 @@ def show_overview_of_generated_data(
     df: pd.DataFrame,
     y: pd.Series,
     parameters: pd.DataFrame,
-):
+    show_feature_correlations: bool = False,
+) -> None:
+    """
+    Display an overview of the generated dataset, including its dimensions,
+    generating solutions, label distribution, and possibly feature correlations.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        Generated dataset with features as columns.
+    y : pd.Series
+        Generated binary response variable.
+    parameters : pd.DataFrame
+        DataFrame containing the parameters used for data generation.
+    show_feature_correlations : bool, default=False
+        If True, displays the correlation matrix of the features. The matrix is shown
+        only if the number of features is less than or equal to 100.
+
+    Returns:
+    --------
+    None
+    """
     n_samples, n_features = df.shape
     n_solutions = parameters.shape[0]
     sparsity = parameters["sparsity"].iloc[0]
@@ -179,7 +200,7 @@ def show_overview_of_generated_data(
     display(parameters)
 
     # Plot the distribution of labels y using Plotly
-    is_binary = set(np.unique(y)) <= {0, 1}
+    is_binary = set(np.unique(y)) == {np.int64(0), np.int64(1)}
     if is_binary:
         display(Markdown("- **Distribution of binary labels:**"))
         display(pd.Series(y).value_counts(normalize=True))
@@ -191,7 +212,7 @@ def show_overview_of_generated_data(
     show_correlations_with_response(df, y, support_features)
 
     # Display the correlation matrix of the features
-    if n_features <= 100:
+    if show_feature_correlations and (n_features <= 100):
         display(Markdown("- **Correlation matrix of features:**"))
         show_correlation_matrix(df)
     return
@@ -208,6 +229,7 @@ def generate_artificial_dataset(
     random_seed=42,
     save_to_csv=False,
     print_data_overview=True,
+    show_feature_correlations=False,
 ) -> tuple[pd.DataFrame, pd.Series, Dict[str, List[str]], pd.DataFrame]:
     """
     Generate an artificial binary classification dataset with multiple sparse solutions.
@@ -234,6 +256,9 @@ def generate_artificial_dataset(
         If True, saves the generated dataset and parameters to CSV files.
     print_data_overview : bool, default=True
         If True, prints an overview of the generated data and plots.
+    show_feature_correlations : bool, default=False
+        If True, displays the correlation matrix of the features
+        (only if number of features <= 100).
 
     Returns
     -------
@@ -258,7 +283,12 @@ def generate_artificial_dataset(
     )
 
     if print_data_overview:
-        show_overview_of_generated_data(data, response, parameters)
+        show_overview_of_generated_data(
+            df=data,
+            y=response,
+            parameters=parameters,
+            show_feature_correlations=show_feature_correlations,
+        )
 
     if save_to_csv:
         suffix = f"{n_samples}x{n_features}_{n_solutions}sols_{sparsity}sparse"
