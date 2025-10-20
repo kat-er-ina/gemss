@@ -238,18 +238,22 @@ class BayesianFeatureSelector:
         torch.Tensor
             Regularized ELBO (mean over batch minus penalty).
         """
+        sigmoid_coeff = 100.0  # Steepness parameter for sigmoid
         batch_size = z.shape[0]
-        h_val = self.h(z)
-        elbo_val = h_val.mean()
 
-        # Compute supports: binary mask of nonzero features
-        support_mask = (torch.abs(z) > threshold).float()  # [batch_size, n_features]
+        # Compute supports: binary mask of nonzero features ... nondifferentiable
+        # support_mask = (torch.abs(z) > threshold).float()  # [batch_size, n_features]
+
+        # Compute soft supports using sigmoid for differentiability
+        support_mask = torch.sigmoid(
+            sigmoid_coeff * (torch.abs(z) - threshold)
+        )  # [batch_size, n_features]
 
         # Compute pairwise Jaccard similarities
         jaccard_vals = []
         for i in range(batch_size):
             for j in range(i + 1, batch_size):
-                intersection = (support_mask[i] * support_mask[j]).sum()
+                intersection = (support_mask[i] * support_mask[j]).sum()  #
                 union = ((support_mask[i] + support_mask[j]) > 0).sum()
                 if union > 0:
                     jaccard = intersection / union
@@ -263,7 +267,7 @@ class BayesianFeatureSelector:
             avg_jaccard = torch.tensor(0.0, device=z.device)
 
         # Regularized ELBO
-        elbo_reg = elbo_val - lambda_jaccard * avg_jaccard
+        elbo_reg = self.elbo(z) - lambda_jaccard * avg_jaccard
         return elbo_reg
 
     def optimize(
