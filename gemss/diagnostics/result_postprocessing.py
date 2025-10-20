@@ -440,7 +440,10 @@ def get_unique_features(solutions: Dict[str, Dict[str, List[Any]]]) -> List[str]
     return list(set().union(*solutions.values()))
 
 
-def show_unique_features(solutions: Dict[str, Dict[str, List[Any]]]) -> None:
+def show_unique_features(
+    solutions: Dict[str, Dict[str, List[Any]]],
+    use_markdown: Optional[bool] = True,
+) -> None:
     """
     Display the unique features found across all solutions.
 
@@ -449,18 +452,24 @@ def show_unique_features(solutions: Dict[str, Dict[str, List[Any]]]) -> None:
     solutions : Dict[str, Dict[str, List[Any]]]
         A dictionary where each key is a solution identifier and each value is a dictionary
         of features.
+    use_markdown : bool, optional
+        Whether to format the output using Markdown. Default is True.
 
     Returns
     -------
     None
     """
     unique_features = get_unique_features(solutions)
-    display(
-        Markdown(
-            f"## Unique features across all solutions: {len(unique_features)} total"
+    if use_markdown:
+        display(
+            Markdown(
+                f"## Unique features across all solutions ({len(unique_features)} total):"
+            )
         )
-    )
-    display(Markdown(f"```{sorted(unique_features)}```"))
+        display(Markdown(f"```{sorted(unique_features)}```"))
+    else:
+        print(f"Unique features across all solutions ({len(unique_features)} total):")
+        print(sorted(unique_features))
     return
 
 
