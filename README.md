@@ -35,9 +35,12 @@ gemss/                      # Core package
   config/                   # Configuration package
     config.py               # Configuration manager and parameter loading
     constants.py            # Project constants and file paths
-    algorithm_settings.json # Algorithm configuration
-    generated_dataset_parameters.json  # Synthetic dataset configuration
+    algorithm_settings.json                # Algorithm configuration
+    generated_dataset_parameters.json      # Synthetic dataset configuration
     solution_postprocessing_settings.json  # Postprocessing configuration
+  data_handling/                     # Utilities to handle data
+    generate_artificial_dataset.py   # Synthetic dataset generator
+    data_processing.py               # Utilities to preprocess user-provided datasets
   diagnostics/              # Diagnostics and testing package
     performance_tests.py    # Performance diagnostics and testing
     recommendations.py      # Parameter recommendation system
@@ -45,28 +48,18 @@ gemss/                      # Core package
     result_postprocessing.py    # Solution extraction and diagnostics
     simple_regressions.py       # Simple regression solvers (logistic, linear)
     visualizations.py           # Plotting and visualization functions
-  feature_selection/            # Core feature selection package
-    inference.py                # Main variational inference logic (BayesianFeatureSelector)
-    models.py                   # Prior distributions and model components  
-    utils.py                    # Utility functions for optimization settings
-  data_handling/                # Utilities to handle data
-    generate_artificial_dataset.py   # Synthetic dataset generator
-    data_processing.py    # Utilities to preprocess user-provided datasets
+  feature_selection/  # Core feature selection package
+    inference.py      # Main variational inference logic (BayesianFeatureSelector)
+    models.py         # Prior distributions and model components  
+    utils.py          # Utility functions for optimization settings
 
 notebooks/
-  demo.ipynb                            # Interactive demo with synthetic data
-  explore_unknown_dataset.ipynb        # Example with real user dataset
+  demo.ipynb                     # Interactive demo with synthetic data
+  explore_unknown_dataset.ipynb  # Example with real user dataset
 
 scripts/
-  run_experiment.py                     # Run single experiment (headless)
-  run_sweep.ps1                         # PowerShell sweep script for batch experiments
-
-results/                                # Experiment output summaries (created automatically)
-
-run_sweep.ps1                           # PowerShell sweep script (from root directory)
-requirements.txt
-setup.py
-README.md
+  run_experiment.py  # Run single experiment (headless)
+  run_sweep.ps1      # PowerShell sweep script for batch experiments
 ```
 
 ---
