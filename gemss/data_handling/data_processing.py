@@ -1,0 +1,158 @@
+"""
+
+Data preprocessing utilities for user-provided datasets.
+
+"""
+
+from IPython.display import display, Markdown
+from typing import Literal, Optional, Tuple
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+
+
+def load_data(
+    csv_dataset_name: str,
+    index_column_name: str,
+    label_column_name: str,
+) -> tuple[pd.DataFrame, pd.Series]:
+    """
+    Load dataset from a CSV file.
+
+    Parameters:
+    -----------
+    csv_dataset_name: str
+        Name of the CSV file containing the dataset.
+    index_column_name: str
+        Name of the column to be used as the index.
+    label_column_name: str
+        Name of the column containing the target response values.
+
+    Returns:
+    --------
+    tuple[pd.DataFrame, pd.Series]
+        A tuple containing the features DataFrame and the response Series.
+    """
+    df = pd.read_csv(f"../data/{csv_dataset_name}", index_col=index_column_name)
+    response = df.pop(label_column_name)
+    return df, response
+
+
+def get_feature_name_mapping(df: pd.DataFrame) -> dict:
+    """
+    Generate a mapping from generic feature names (used inside the model) to actual column names.
+
+    Parameters:
+    -----------
+    df: pd.DataFrame
+        The DataFrame containing the features.
+
+    Returns:
+    --------
+    dict
+        A dictionary mapping generic feature names (e.g., 'feature_0') to actual column names.
+    """
+    feature_to_name = {
+        f"feature_{i}": col_name for i, col_name in enumerate(df.columns)
+    }
+    return feature_to_name
+
+
+def preprocess_features(
+    df: pd.DataFrame,
+    response: pd.Series,
+    dropna: Literal["response", "all", "none"] = "response",
+    apply_standard_scaling: Optional[bool] = True,
+    verbose: Optional[bool] = True,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Preprocess the features by cleaning na values and applying scaling, if specified.
+
+    Parameters:
+    -----------
+    df: pd.DataFrame
+        The DataFrame containing the features.
+    response: pd.Series
+        The Series containing the target response values.
+    dropna: Literal["response", "all", "none"], optional, default="response"
+        Whether to drop rows with NA values. Options are:
+        - "response": drop rows with NA in the response column only.
+        - "all": drop rows with NA in any column.
+        - "none": do not drop any rows.
+    apply_standard_scaling: bool, optional, default=True
+        Whether to apply standard scaling to the features.
+    verbose: bool, optional, default=True
+        Whether to display informative messages during preprocessing.
+
+    Returns:
+    --------
+    Tuple[np.ndarray, np.ndarray]
+        A tuple containing the preprocessed features as a NumPy array
+        and the response values as a NumPy array.
+    """
+    df_copy = df.copy()
+
+    # handle NA values
+    if dropna is not "none":
+        initial_shape = df_copy.shape
+        df_copy[response.name] = response
+        if dropna == "response":
+            cols_to_check = [response.name]
+        elif dropna == "all":
+            cols_to_check = df_copy.columns.tolist()
+        else:
+            raise ValueError(
+                "Invalid value for dropna. Choose from 'response', 'all', or 'none'."
+            )
+        df_copy = df_copy.dropna(subset=cols_to_check)
+        response = df_copy.pop(response.name)
+        if verbose:
+            if df_copy.shape[0] == initial_shape[0]:
+                display(Markdown("No NA values found. No rows were dropped."))
+            else:
+                display(
+                    Markdown(
+                        f"Dropped rows with NA values. Shape changed from {initial_shape} to {df_copy.shape}."
+                    )
+                )
+
+    # scaling
+    if apply_standard_scaling:
+        scaler = StandardScaler()
+        X = scaler.fit_transform(df_copy.values)
+        if verbose:
+            display(Markdown("Features have been standardized using StandardScaler."))
+    else:
+        X = df_copy.values
+        if verbose:
+            display(Markdown("No scaling applied to features."))
+
+    # extract response values
+    y = response.values
+
+    return X, y
+
+
+def get_df_from_X(
+    X: np.ndarray,
+    feature_to_name: dict,
+) -> pd.DataFrame:
+    """
+    Convert a NumPy array of features back to a DataFrame using the feature name mapping.
+
+    Parameters:
+    -----------
+    X: np.ndarray
+        The NumPy array of features.
+    feature_to_name: dict
+        A dictionary mapping generic feature names to actual column names.
+
+    Returns:
+    --------
+    pd.DataFrame
+        A DataFrame with the original feature names as columns.
+    """
+    df = pd.DataFrame(
+        X, columns=[feature_to_name[f"feature_{i}"] for i in range(X.shape[1])]
+    )
+    return df

@@ -23,7 +23,7 @@ import argparse
 from typing import Dict, List, Set, Tuple, Any, Optional
 
 import gemss.config as C
-from gemss.generate_artificial_dataset import generate_artificial_dataset
+from gemss.data_handling.generate_artificial_dataset import generate_artificial_dataset
 from gemss.feature_selection.inference import BayesianFeatureSelector
 from gemss.diagnostics.result_postprocessing import recover_solutions
 from gemss.diagnostics.performance_tests import run_performance_diagnostics

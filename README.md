@@ -49,7 +49,9 @@ gemss/                      # Core package
     inference.py                # Main variational inference logic (BayesianFeatureSelector)
     models.py                   # Prior distributions and model components  
     utils.py                    # Utility functions for optimization settings
-  generate_artificial_dataset.py        # Synthetic dataset generator
+  data_handling/                # Utilities to handle data
+    generate_artificial_dataset.py   # Synthetic dataset generator
+    data_processing.py    # Utilities to preprocess user-provided datasets
 
 notebooks/
   demo.ipynb                            # Interactive demo with synthetic data
@@ -150,6 +152,13 @@ The configuration system (`gemss.config`) provides:
      - Call `run_experiment.py` and save output in `results/` with filenames including all parameter values.
 
 - **On Linux/macOS:** Adapt the logic from `run_sweep.ps1` to a Bash script as needed.
+
+---
+
+### Custom dataset
+
+- Copy your dataset in a .csv format in the `data` folder.
+- Open the notebook `explore_unknown_dataset.ipynb` and follow its structure. Modify as needed, esp. the data file name and algorithm hyperparameters. Then run all cells.
 
 ---
 
