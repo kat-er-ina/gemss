@@ -43,7 +43,6 @@ def get_long_solutions_df(
     -----
     This function displays a markdown header "## Full long solutions" as a side effect.
     """
-    display(Markdown("## Full long solutions"))
     max_len = max(
         [
             len(full_solution["Feature"])
@@ -61,7 +60,7 @@ def get_long_solutions_df(
 
 def show_long_solutions(
     full_nonzero_solutions: Dict[str, pd.DataFrame],
-    title: str = "### Solutions",
+    title: str = "Solutions",
 ) -> None:
     """
     Display the solutions in a DataFrame format: each column corresponds to a component
@@ -78,7 +77,7 @@ def show_long_solutions(
     -------
     None
     """
-    display(Markdown(title))
+    display(Markdown(f"### {title}"))
     df_full_solutions = get_long_solutions_df(full_nonzero_solutions)
     display(df_full_solutions)
     return
