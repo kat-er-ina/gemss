@@ -2,17 +2,27 @@
 
 # --- Define your combinations below ---
 # Each line in $combinations:
-#   N_SAMPLES, N_FEATURES, N_GENERATING_SOLUTIONS, SPARSITY, NOISE_STD, N_CANDIDATE_SOLUTIONS
+#   N_SAMPLES, N_FEATURES, N_GENERATING_SOLUTIONS, SPARSITY, NOISE_STD, N_CANDIDATE_SOLUTIONS, LAMBDA_JACCARD
 $combinations = @(
-    "30,60,3,2,0.5,6"
-    # "30,60,3,2,0.01,6"
-    # "30,60,3,2,0.1,6"
-    # "40,400,3,4,0.01,6"
-    # "40,400,3,4,0.01,10"
-    # "50,600,3,4,0.1,6"
-    # "50,200,3,5,0.01,6"
-    # "50,200,3,5,0.01,12"
-    # "50,200,3,5,0.1,12"
+    "30,60,3,3,0.1,6,100"
+    "30,60,3,3,0.1,6,500"
+    "30,60,3,3,0.1,6,1000"
+    # "40,200,3,3,0.1,8,500"
+    # "40,200,3,3,0.1,8,1000"
+    # "40,200,3,3,1.0,8,500"
+    # "40,200,3,3,1.0,8,1000"
+    # "40,400,3,3,0.1,8,500"
+    # "40,600,3,3,0.1,8,500"
+    # "40,800,3,3,0.1,8,500"
+    # "40,800,3,3,0.1,12,500"
+    # "30,60,3,2,0.5,6,500"
+    # "30,60,3,2,0.01,6,500"
+    # "30,60,3,2,0.1,6,500"
+    # "40,400,3,4,0.01,6,500"
+    # "40,400,3,4,0.01,10,500"
+    # "50,200,3,5,0.01,6,500"
+    # "50,200,3,5,0.01,12,500"
+    # "50,200,3,5,0.1,12,500"
 )
 
 # --- Fixed parameters for the algorithm ---
@@ -25,10 +35,9 @@ $VAR_SPIKE = 0.1
 $WEIGHT_SLAB = 0.9
 $WEIGHT_SPIKE = 0.1
 $IS_REGULARIZED = $true
-$LAMBDA_JACCARD = 100.0
 $BATCH_SIZE = 16
 $LEARNING_RATE = 0.002
-$MIN_MU_THRESHOLD = 0.25
+$MIN_MU_THRESHOLD = 0.2
 $BINARIZE = $true
 $BINARY_RESPONSE_RATIO = 0.5
 
@@ -75,6 +84,7 @@ foreach ($combo in $combinations) {
     $SPARSITY = $parts[3]
     $NOISE_STD = $parts[4]
     $N_CANDIDATE_SOLUTIONS = $parts[5]
+    $LAMBDA_JACCARD = $parts[6]
 
     # DESIRED_SPARSITY and PRIOR_SPARSITY always equal SPARSITY
     $DESIRED_SPARSITY = $SPARSITY
@@ -121,7 +131,13 @@ foreach ($combo in $combinations) {
 
     Write-Host "====================================================================================="
     Write-Host "Running experiment with:"
-    Write-Host "N_SAMPLES=$N_SAMPLES, N_FEATURES=$N_FEATURES, N_GENERATING_SOLUTIONS=$N_GENERATING_SOLUTIONS, SPARSITY=$SPARSITY, NOISE_STD=$NOISE_STD, N_CANDIDATE_SOLUTIONS=$N_CANDIDATE_SOLUTIONS"
+    Write-Host "N_SAMPLES = $N_SAMPLES, "
+    Write-Host "N_FEATURES = $N_FEATURES, "
+    Write-Host "N_GENERATING_SOLUTIONS = $N_GENERATING_SOLUTIONS, "
+    Write-Host "SPARSITY = $SPARSITY, "
+    Write-Host "NOISE_STD = $NOISE_STD, "
+    Write-Host "N_CANDIDATE_SOLUTIONS = $N_CANDIDATE_SOLUTIONS, "
+    Write-Host "LAMBDA_JACCARD = $LAMBDA_JACCARD"
     Write-Host "====================================================================================="
 
     # Compose output file name with param settings and timestamp:
@@ -132,7 +148,8 @@ foreach ($combo in $combinations) {
         "N_GENERATING_SOLUTIONS=$N_GENERATING_SOLUTIONS"
         "SPARSITY=$SPARSITY"
         "NOISE_STD=$NOISE_STD"
-        "N_CANDIDATE_SOLUTIONS=$N_CANDIDATE_SOLUTIONS"
+        "N_CANDIDATE_SOLUTIONS=$N_CANDIDATE_SOLUTIONS",
+        "LAMBDA_JACCARD=$LAMBDA_JACCARD"
     ) -join "_"
     $output_file = "${resultsDir}\experiment_output_${timestamp}_${combo_named}.txt"
 
