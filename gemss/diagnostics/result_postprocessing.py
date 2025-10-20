@@ -3,7 +3,7 @@ This module provides functions to recover, display and analyze solutions
 from the optimization history of the Bayesian feature selection algorithm.
 """
 
-from typing import Dict, List, Tuple, Literal, Any, Optional, Union
+from typing import Dict, List, Tuple, Literal, Any, Optional, Union, Set
 import numpy as np
 import pandas as pd
 from IPython.display import display, Markdown
@@ -387,4 +387,92 @@ def display_features_overview(
         )
     )
     display(Markdown(f"{sorted(extra_features)}"))
+    return
+
+
+def get_unique_features(solutions: Dict[str, Dict[str, List[Any]]]) -> List[str]:
+    """
+    Returns the list of features contained in all of the solutions. Each feature is listed only once.
+
+    Parameters:
+    -----------
+    solutions: Dict[str, Dict[str]]
+        A dictionary where each key is a solution identifier and each value is a dictionary
+        of features.
+
+    Returns:
+    --------
+    List[str]
+        A list of unique features across all solutions.
+    """
+    return list(set().union(*solutions.values()))
+
+
+def show_unique_features(solutions: Dict[str, Dict[str, List[Any]]]) -> None:
+    """
+    Display the unique features found across all solutions.
+
+    Parameters
+    ----------
+    solutions : Dict[str, Dict[str, List[Any]]]
+        A dictionary where each key is a solution identifier and each value is a dictionary
+        of features.
+
+    Returns
+    -------
+    None
+    """
+    unique_features = get_unique_features(solutions)
+    display(
+        Markdown(
+            f"## Unique features across all solutions: {len(unique_features)} total"
+        )
+    )
+    display(Markdown(f"```{sorted(unique_features)}```"))
+    return
+
+
+def show_solutions_details(
+    solutions: Dict[str, Dict[str, List[Any]]],
+    history: Dict[str, List[np.ndarray]],
+    constants: Dict[str, float],
+    use_markdown: bool = True,
+) -> None:
+    """
+    Display detailed information about each solution including component weights.
+
+    Parameters:
+    -----------
+    solutions : Dict[str, Dict[str]]
+        A dictionary where each key is a solution identifier and each value is a dictionary
+        of features.
+    history : Dict[str, List[np.ndarray]]
+        The optimization history containing 'alpha' values.
+    constants : Dict[str, float]
+        A dictionary containing the algorithm settings, namely the 'DESIRED_SPARSITY'.
+    use_markdown : bool, optional
+        Whether to format the output using Markdown. Default is True.
+
+    Returns:
+    -------
+    None
+    """
+    if use_markdown:
+        display(Markdown(f"**Required sparsity** = {constants['DESIRED_SPARSITY']}"))
+    else:
+        print(f"Required sparsity = {constants['DESIRED_SPARSITY']}")
+
+    for component, features in solutions.items():
+        i = component.split("_")[-1]
+        alpha = history["alpha"][-1][int(i)]
+        if use_markdown:
+            display(Markdown(f"## Candidate solution no. {i}:"))
+            display(Markdown(f"**Component weight** = {alpha:.3f}"))
+            for feature in features:
+                display(Markdown(f"- {feature}"))
+        else:
+            print(f"Candidate solution no. {i}:")
+            print(f"Component weight = {alpha:.3f}")
+            for feature in features:
+                print(f"- {feature}")
     return
