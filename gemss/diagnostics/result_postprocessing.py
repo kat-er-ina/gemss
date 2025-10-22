@@ -20,6 +20,48 @@ from gemss.diagnostics.simple_regressions import (
 )
 
 
+def myprint(
+    msg: str,
+    use_markdown: Optional[bool] = True,
+    bold: Optional[bool] = False,
+    header: Optional[int] = 0,
+    code: Optional[bool] = False,
+) -> None:
+    """
+    Print a message using Markdown formatting if specified, otherwise in plain text.
+
+    Parameters
+    ----------
+    msg : str
+        The message to print.
+    use_markdown : bool
+        Whether to use Markdown formatting rather than plain text.
+    bold : bool, optional
+        Whether to make the message bold. Default is False.
+    header : int, optional
+        The header level (1-6) for the message. Default is 0 (no header).
+
+    Returns
+    -------
+    None
+    """
+    if use_markdown:
+        if header > 0:
+            msg = f"{'#' * header} {msg}"
+        if bold:
+            msg = f"**{msg}**"
+        if code:
+            msg = f"```{msg}```"
+        display(Markdown(msg))
+    else:
+        if header > 0:
+            print("\n")
+        print(msg)
+        if header > 0:
+            print("-" * len(msg))
+    return
+
+
 def get_long_solutions_df(
     full_nonzero_solutions: Dict[str, pd.DataFrame],
 ) -> pd.DataFrame:
@@ -62,6 +104,7 @@ def get_long_solutions_df(
 def show_long_solutions(
     full_nonzero_solutions: Dict[str, pd.DataFrame],
     title: str = "Solutions",
+    use_markdown: Optional[bool] = True,
 ) -> None:
     """
     Display the solutions in a DataFrame format: each column corresponds to a component
@@ -73,14 +116,27 @@ def show_long_solutions(
         Dictionary mapping each component (solution) to a DataFrame containing
         features that exceeded the min_mu_threshold in the last iterations,
         with columns ['Feature', 'Mu value'].
+    title : str, optional
+        Title for the displayed DataFrame. Default is "Solutions".
+    use_markdown : bool, optional
+        Whether to format the title using Markdown. Default is True.
 
     Returns
     -------
     None
     """
-    display(Markdown(f"### {title}"))
     df_full_solutions = get_long_solutions_df(full_nonzero_solutions)
-    display(df_full_solutions)
+
+    myprint(
+        msg=title,
+        use_markdown=use_markdown,
+        header=2,
+    )
+    if use_markdown:
+        display(df_full_solutions)
+    else:
+        print(df_full_solutions)
+
     return
 
 
@@ -90,6 +146,7 @@ def recover_solutions(
     min_mu_threshold: Optional[float] = 1e-6,
     verbose: Optional[bool] = True,
     original_feature_names_mapping: Optional[Dict[str, str]] = None,
+    use_markdown: Optional[bool] = True,
 ) -> Tuple[
     Dict[str, List[str]],
     Dict[str, Union[np.ndarray, int]],
@@ -117,6 +174,8 @@ def recover_solutions(
         A mapping from internal feature names (e.g., 'feature_0') to original feature names.
         If provided, the recovered features will be displayed using the original names.
         Default is None.
+    use_markdown : bool, optional
+        Whether to format the output using Markdown. Default is True.
 
     Returns
     -------
@@ -140,13 +199,13 @@ def recover_solutions(
     This function displays markdown output as a side effect when verbose=True.
     """
     # Input validation
-    if desired_sparsity <= 0:
-        raise ValueError("desired_sparsity must be positive")
+    if (desired_sparsity <= 0) or (not isinstance(desired_sparsity, int)):
+        raise ValueError("Desired_sparsity must be a positive integer.")
 
     required_keys = {"mu", "var", "alpha"}
     if not required_keys.issubset(search_history.keys()):
         missing_keys = required_keys - set(search_history.keys())
-        raise KeyError(f"search_history missing required keys: {missing_keys}")
+        raise KeyError(f"Search_history missing required keys: {missing_keys}")
 
     n_components = len(search_history["mu"][0])
     n_features = len(search_history["mu"][0][0])
@@ -184,11 +243,14 @@ def recover_solutions(
             ]
             i += 1
         if verbose:
-            display(Markdown(f"## Component {k}:"))
-            display(
-                Markdown(
-                    f"- Last {desired_sparsity}+ features with absolute value greater than {min_mu_threshold}:"
-                )
+            myprint(
+                msg=f"Component {k}:",
+                use_markdown=use_markdown,
+                header=2,
+            )
+            myprint(
+                msg=f"- Last {desired_sparsity}+ features with absolute value greater than {min_mu_threshold}:",
+                use_markdown=use_markdown,
             )
         # Organize these features by their absolute mu values
         if original_feature_names_mapping is not None:
@@ -207,7 +269,10 @@ def recover_solutions(
         )
         full_nonzero_solutions[f"component_{k}"] = top_features
         if verbose:
-            display(top_features[["Feature", "Mu value"]])
+            if use_markdown:
+                display(top_features[["Feature", "Mu value"]])
+            else:
+                print(top_features[["Feature", "Mu value"]])
 
         # Take the top 'desired_sparsity' features according to their absolute mu values
         # and discard the rest
@@ -303,6 +368,7 @@ def show_regression_results_for_solutions(
     use_standard_scaler: bool = True,
     penalty: Literal["l1", "l2", "elasticnet"] = "l1",
     verbose: bool = True,
+    use_markdown: bool = True,
 ) -> None:
     """
     Show regression results for each solution using the identified features.
@@ -324,6 +390,8 @@ def show_regression_results_for_solutions(
     verbose : bool, optional
         Whether to print detailed regression metrics and coefficients
         for each component. Default is True.
+    use_markdown : bool, optional
+        Whether to format the output using Markdown. Default is True.
 
     Returns
     -------
@@ -342,14 +410,21 @@ def show_regression_results_for_solutions(
     stats = {}
     for component, features in solutions.items():
         if verbose:
-            display(Markdown(f"## Features of **{component}**"))
+            myprint(
+                msg=f"Features of **{component}**",
+                use_markdown=use_markdown,
+                header=2,
+            )
 
         if use_standard_scaler:
             scaler = StandardScaler()
             df[features] = scaler.fit_transform(df[features])
 
             if verbose:
-                display(Markdown(f"- Features standardized using StandardScaler."))
+                myprint(
+                    msg=f"- Features standardized using StandardScaler.",
+                    use_markdown=use_markdown,
+                )
 
         if is_binary:
             stats[component] = solve_with_logistic_regression(
@@ -366,17 +441,29 @@ def show_regression_results_for_solutions(
                 verbose=verbose,
             )
         if verbose:
-            display(Markdown("------------------"))
+            myprint(msg="------------------", use_markdown=use_markdown)
 
     # get the stats as data frame
     # each entry is a column in the data frame
     metrics_df = pd.DataFrame.from_dict(stats, orient="index")
 
     if is_binary:
-        display(Markdown(f"## Classification metrics overview (penalty: {penalty})"))
+        myprint(
+            msg=f"Classification metrics overview (penalty: {penalty})",
+            use_markdown=use_markdown,
+            header=2,
+        )
     else:
-        display(Markdown(f"## Regression metrics overview (penalty: {penalty})"))
-    display(metrics_df)
+        myprint(
+            msg=f"Regression metrics overview (penalty: {penalty})",
+            use_markdown=use_markdown,
+            header=2,
+        )
+
+    if use_markdown:
+        display(metrics_df)
+    else:
+        print(metrics_df)
 
     return
 
@@ -385,6 +472,7 @@ def display_features_overview(
     features_found: Union[List[str], set],
     true_support_features: List[str],
     n_total_features: int,
+    use_markdown: Optional[bool] = True,
 ) -> None:
     """
     Display an overview of features found vs true support features.
@@ -397,43 +485,43 @@ def display_features_overview(
         List of true support features (ground truth).
     n_total_features : int
         Total number of features in the dataset. Must be positive.
+    use_markdown : bool, optional
+        Whether to format the output using Markdown. Default is True.
 
     Returns
     -------
     None
-
-    Notes
-    -----
-    This function displays markdown output as a side effect.
-    Shows statistics about missing features, extra features, and coverage percentages.
     """
     # Convert to set for set operations
     features_found = set(features_found)
-
     missing_features = set(true_support_features) - features_found
     extra_features = features_found - set(true_support_features)
 
-    display(Markdown(f"### All features: {n_total_features}"))
-    display(
-        Markdown(
-            f"### True support features: {len(true_support_features)} ({len(true_support_features)/n_total_features:.1%})"
-        )
+    myprint(f"All features: {n_total_features}", use_markdown=use_markdown, header=3)
+    myprint(
+        f"True support features: {len(true_support_features)} ({len(true_support_features)/n_total_features:.1%})",
+        use_markdown=use_markdown,
+        header=3,
     )
-    display(Markdown(f"{sorted(true_support_features)}"))
-    display(
-        Markdown(
-            f"### All features found: {len(features_found)} ({len(features_found)/n_total_features:.1%})"
-        )
+    myprint(f"{sorted(true_support_features)}", use_markdown=use_markdown)
+    myprint(
+        f"All features found: {len(features_found)} ({len(features_found)/n_total_features:.1%})",
+        use_markdown=use_markdown,
+        header=3,
     )
-    display(Markdown(f"{sorted(features_found)}"))
-    display(Markdown(f"### Missing true support features: {len(missing_features)}"))
-    display(Markdown(f"{sorted(missing_features)}"))
-    display(
-        Markdown(
-            f"### Extra features found: {len(extra_features)} ({len(extra_features)/n_total_features:.1%})"
-        )
+    myprint(f"{sorted(features_found)}", use_markdown=use_markdown)
+    myprint(
+        f"Missing true support features: {len(missing_features)}",
+        use_markdown=use_markdown,
+        header=3,
     )
-    display(Markdown(f"{sorted(extra_features)}"))
+    myprint(f"{sorted(missing_features)}", use_markdown=use_markdown)
+    myprint(
+        f"Extra features found: {len(extra_features)} ({len(extra_features)/n_total_features:.1%})",
+        use_markdown=use_markdown,
+        header=3,
+    )
+    myprint(f"{sorted(extra_features)}", use_markdown=use_markdown)
     return
 
 
@@ -475,16 +563,17 @@ def show_unique_features(
     None
     """
     unique_features = get_unique_features(solutions)
-    if use_markdown:
-        display(
-            Markdown(
-                f"## Unique features across all solutions ({len(unique_features)} total):"
-            )
-        )
-        display(Markdown(f"```{sorted(unique_features)}```"))
-    else:
-        print(f"Unique features across all solutions ({len(unique_features)} total):")
-        print(sorted(unique_features))
+
+    myprint(
+        msg=f"Unique features across all solutions ({len(unique_features)} total):",
+        use_markdown=use_markdown,
+        header=2,
+    )
+    myprint(
+        msg=f"{sorted(unique_features)}",
+        use_markdown=use_markdown,
+        code=True,
+    )
     return
 
 
@@ -513,24 +602,30 @@ def show_solutions_details(
     -------
     None
     """
-    if use_markdown:
-        display(Markdown(f"**Required sparsity** = {constants['DESIRED_SPARSITY']}"))
-    else:
-        print(f"Required sparsity = {constants['DESIRED_SPARSITY']}")
+    myprint(
+        msg=f"Required sparsity = {constants['DESIRED_SPARSITY']}",
+        use_markdown=use_markdown,
+        bold=True,
+    )
 
     for component, features in solutions.items():
         i = component.split("_")[-1]
         alpha = history["alpha"][-1][int(i)]
-        if use_markdown:
-            display(Markdown(f"## Candidate solution no. {i}:"))
-            display(Markdown(f"**Component weight** = {alpha:.3f}"))
-            for feature in features:
-                display(Markdown(f"- {feature}"))
-        else:
-            print(f"Candidate solution no. {i}:")
-            print(f"Component weight = {alpha:.3f}")
-            for feature in features:
-                print(f"- {feature}")
+        myprint(
+            msg=f"Candidate solution no. {i}:",
+            use_markdown=use_markdown,
+            header=2,
+        )
+        myprint(
+            msg=f"Component weight = {alpha:.3f}",
+            use_markdown=use_markdown,
+            bold=True,
+        )
+        for feature in features:
+            myprint(
+                msg=f"- {feature}",
+                use_markdown=use_markdown,
+            )
     return
 
 
@@ -647,20 +742,19 @@ def show_outlier_features_by_component(
 
     def print_outlier_info(outlier_info, component_no, use_markdown):
         """Helper function to print outlier information."""
-        msg = f"{len(outlier_info[f'component_{component_no}']['features'])} outliers in candidate solution {component_no}:"
-        if use_markdown:
-            display(Markdown(f"**{msg}**"))
-        else:
-            print(msg)
-
+        myprint(
+            msg=f"{len(outlier_info[f'component_{component_no}']['features'])} outliers in candidate solution {component_no}:",
+            use_markdown=use_markdown,
+            bold=True,
+        )
         for feat, val in zip(
             outlier_info[f"component_{component_no}"]["features"],
             outlier_info[f"component_{component_no}"]["values"],
         ):
-            if use_markdown:
-                display(Markdown(f"- {feat}: {val:.4f}"))
-            else:
-                print(f"- {feat}: {val:.4f}")
+            myprint(
+                msg=f"- {feat}: {val:.4f}",
+                use_markdown=use_markdown,
+            )
 
     n_features = history["mu"][-1][0].shape[0]
     n_components = len(history["mu"][-1])
@@ -673,16 +767,14 @@ def show_outlier_features_by_component(
     else:
         feature_names = [f"feature_{i}" for i in range(n_features)]
 
+    myprint(
+        msg=f"Detection of outlier features based on their last mu values (no |mu| thresholding)",
+        use_markdown=use_markdown,
+        header=2,
+    )
+
     final_mus_df = pd.DataFrame(index=feature_names)
     outliers = {}
-
-    title = f"### Detection of outlier features based on their last mu values (no |mu| thresholding)"
-    if use_markdown:
-        display(Markdown(title))
-    else:
-        print(title)
-        print("-" * len(title))
-
     for component in range(n_components):
         final_mus_df[f"component_{component}_mus"] = history["mu"][-1][component]
         outliers[f"component_{component}"] = detect_outlier_features(
