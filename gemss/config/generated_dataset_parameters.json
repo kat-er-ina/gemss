@@ -1,6 +1,6 @@
 {
-    "N_FEATURES":  60,
-    "N_SAMPLES":  30,
+    "N_FEATURES":  50,
+    "N_SAMPLES":  20,
     "NOISE_STD":  0.1,
     "N_GENERATING_SOLUTIONS":  3,
     "DATASET_SEED":  42,
