@@ -31,7 +31,7 @@ from .models import (
     StructuredSpikeAndSlabPrior,
     GaussianMixture,
 )
-from .utils import print_nice_optimization_settings
+from gemss.utils import print_nice_optimization_settings
 
 
 class BayesianFeatureSelector:
