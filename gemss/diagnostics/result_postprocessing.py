@@ -561,3 +561,140 @@ def show_final_parameter_comparison(
     for i, alpha in enumerate(final_parameters["final alpha"]):
         display(Markdown(f"- **Component {i}:** {alpha:.3f}"))
     return
+
+
+def detect_outlier_features(
+    values: pd.Series,
+    threshold=3,
+    use_median: Optional[bool] = False,
+    replace_middle_by_zero: Optional[bool] = False,
+) -> Dict[str, List[float]]:
+    """
+    Detects outlier features based on their deviation from the mean or median. Return the names of the outliers.
+
+    Parameters:
+    -----------
+    values: pd.Series
+        Series of mu values to analyze. Index of the series represents feature indices.
+    threshold: float
+        Threshold multiplier for the absolute deviation to identify outliers.
+    use_median: bool, optional
+        Whether to use median for outlier detection instead of mean. Using median is less sensitive to large
+        values but it leads to larger deviation values, i.e. more outliers detected. Default is False.
+    replace_middle_by_zero: bool, optional
+        If True, uses zero instead of median or mean for outlier detection. Default is False.
+
+    Returns:
+    -----------
+    Dict[str, List[float]]
+        A dictionary with two keys:
+        - "features": List of feature indices identified as outliers.
+        - "values": Corresponding mu values of the outlier features.
+    """
+
+    if values.empty:
+        return {"features": [], "values": []}
+
+    if replace_middle_by_zero:
+        middle = 0
+    elif use_median:
+        middle = values.median()
+    else:  # use mean
+        middle = values.mean()
+
+    if use_median:
+        deviation = (values - middle).abs().median()
+    else:  # use mean
+        deviation = (values - middle).abs().mean()
+
+    outlier_condition = (values - middle).abs() > threshold * deviation
+
+    return {
+        "features": values.index[outlier_condition].tolist(),
+        "values": values[outlier_condition].tolist(),
+    }
+
+
+def show_outlier_features_by_component(
+    history: Dict[str, List],
+    use_median: Optional[bool] = False,
+    outlier_threshold_coeff: Optional[float] = 3,
+    original_feature_names_mapping: Optional[Dict[str, str]] = None,
+    use_markdown: bool = True,
+) -> None:
+    """
+    Displays outlier features detected in each candidate solution's mu values.
+
+    Parameters:
+    -----------
+    history: Dict[str, List]
+        The search history containing mu values for each iteration.
+    use_median: bool, optional
+        Whether to use median for outlier detection instead of mean. Using median is less sensitive to large
+        values but it leads to larger deviation values, i.e. more outliers detected. Default is False.
+    outlier_threshold_coeff: float, optional
+        The multiplier of absolute deviation for outlier detection. Default is 3.
+        Larger values lead to fewer outliers being detected.
+    original_feature_names_mapping: Optional[Dict[str, str]], optional
+        A mapping from feature indices to original feature names. If provided, will use original names in the output.
+    use_markdown: bool, optional
+        Whether to format the output using Markdown for better readability instead of plain text. Default is True.
+
+    Returns:
+    --------
+    None
+    """
+
+    def print_outlier_info(outlier_info, component_no, use_markdown):
+        """Helper function to print outlier information."""
+        msg = f"{len(outlier_info[f'component_{component_no}']['features'])} outliers in candidate solution {component_no}:"
+        if use_markdown:
+            display(Markdown(f"**{msg}**"))
+        else:
+            print(msg)
+
+        for feat, val in zip(
+            outlier_info[f"component_{component_no}"]["features"],
+            outlier_info[f"component_{component_no}"]["values"],
+        ):
+            if use_markdown:
+                display(Markdown(f"- {feat}: {val:.4f}"))
+            else:
+                print(f"- {feat}: {val:.4f}")
+
+    n_features = history["mu"][-1][0].shape[0]
+    n_components = len(history["mu"][-1])
+
+    if original_feature_names_mapping is not None:
+        feature_names = [
+            original_feature_names_mapping.get(f"feature_{i}", f"feature_{i}")
+            for i in range(n_features)
+        ]
+    else:
+        feature_names = [f"feature_{i}" for i in range(n_features)]
+
+    final_mus_df = pd.DataFrame(index=feature_names)
+    outliers = {}
+
+    title = f"### Detection of outlier features based on their last mu values (no |mu| thresholding)"
+    if use_markdown:
+        display(Markdown(title))
+    else:
+        print(title)
+        print("-" * len(title))
+
+    for component in range(n_components):
+        final_mus_df[f"component_{component}_mus"] = history["mu"][-1][component]
+        outliers[f"component_{component}"] = detect_outlier_features(
+            final_mus_df[f"component_{component}_mus"],
+            threshold=outlier_threshold_coeff,
+            use_median=use_median,
+            replace_middle_by_zero=True,
+        )
+        print_outlier_info(
+            outlier_info=outliers,
+            component_no=component,
+            use_markdown=use_markdown,
+        )
+
+    return None
