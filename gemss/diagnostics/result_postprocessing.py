@@ -7,6 +7,7 @@ from typing import Dict, List, Tuple, Literal, Any, Optional, Union, Set
 import numpy as np
 import pandas as pd
 from IPython.display import display, Markdown
+from sklearn.preprocessing import StandardScaler
 from gemss.diagnostics.visualizations import (
     plot_elbo,
     plot_mu,
@@ -299,6 +300,7 @@ def show_regression_results_for_solutions(
     solutions: Dict[str, List[str]],
     df: pd.DataFrame,
     y: Union[pd.Series, np.ndarray],
+    use_standard_scaler: bool = True,
     penalty: Literal["l1", "l2", "elasticnet"] = "l1",
     verbose: bool = True,
 ) -> None:
@@ -315,6 +317,8 @@ def show_regression_results_for_solutions(
     y : Union[pd.Series, np.ndarray]
         Response vector. Binary values {0, 1} for classification,
         continuous values for regression.
+    use_standard_scaler : bool, optional
+        Whether to standardize features before regression. Default is True.
     penalty : Literal["l1", "l2", "elasticnet"], optional
         Type of regularization to use. Default is "l1".
     verbose : bool, optional
@@ -330,12 +334,22 @@ def show_regression_results_for_solutions(
     This function displays markdown output and regression metrics as side effects.
     Automatically detects binary classification vs regression based on unique values in y.
     """
-    is_binary = set(np.unique(y)) == {np.int64(0), np.int64(1)}
+    if set(np.unique(y)).__len__() == 2:
+        is_binary = True
+    else:
+        is_binary = False
 
     stats = {}
     for component, features in solutions.items():
         if verbose:
             display(Markdown(f"## Features of **{component}**"))
+
+        if use_standard_scaler:
+            scaler = StandardScaler()
+            df[features] = scaler.fit_transform(df[features])
+
+            if verbose:
+                display(Markdown(f"- Features standardized using StandardScaler."))
 
         if is_binary:
             stats[component] = solve_with_logistic_regression(
@@ -354,13 +368,14 @@ def show_regression_results_for_solutions(
         if verbose:
             display(Markdown("------------------"))
 
+    # get the stats as data frame
+    # each entry is a column in the data frame
+    metrics_df = pd.DataFrame.from_dict(stats, orient="index")
+
     if is_binary:
         display(Markdown(f"## Classification metrics overview (penalty: {penalty})"))
     else:
         display(Markdown(f"## Regression metrics overview (penalty: {penalty})"))
-    # print the stats as data frame
-    # each entry is a column in the data frame
-    metrics_df = pd.DataFrame.from_dict(stats, orient="index")
     display(metrics_df)
 
     return
