@@ -87,8 +87,8 @@ def show_long_solutions(
 def recover_solutions(
     search_history: Dict[str, List[Any]],
     desired_sparsity: int,
-    min_mu_threshold: float = 0.25,
-    verbose: bool = True,
+    min_mu_threshold: Optional[float] = 1e-6,
+    verbose: Optional[bool] = True,
     original_feature_names_mapping: Optional[Dict[str, str]] = None,
 ) -> Tuple[
     Dict[str, List[str]],
@@ -110,7 +110,7 @@ def recover_solutions(
         Must be positive.
     min_mu_threshold : float, optional
         The threshold for considering a feature as important based on its absolute mu value.
-        Default is 0.25.
+        Default is 1e-6.
     verbose : bool, optional
         Whether to print detailed information about the recovered solutions. Default is True.
     original_feature_names_mapping : Optional[Dict[str, str]], optional
