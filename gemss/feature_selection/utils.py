@@ -6,6 +6,11 @@ from IPython.display import display, Markdown
 from typing import Any, Dict
 
 
+# TODO: move to a more general utils module along with other printing functions
+# TODO: add use_markdown parameter and use myprint function
+# TODO: set up a global parameter defining whether to use markdown or not (logging in plain text files during batch runs etc.)
+
+
 def print_nice_optimization_settings(
     n_components: int,
     regularize: bool,
@@ -36,7 +41,7 @@ def print_nice_optimization_settings(
     -------
     None
     """
-    display(Markdown(f"#### Running Bayesian Feature Selector:"))
+    display(Markdown(f"#### Running GEMSS feature selector:"))
     display(Markdown(f"- desired number of solutions: {n_components}"))
     display(Markdown(f"- number of iterations: {n_iterations}"))
 
@@ -47,7 +52,7 @@ def print_nice_optimization_settings(
     else:
         display(Markdown("- no regularization"))
 
-    display(Markdown("##### Algorithm settings:"))
+    display(Markdown("##### GEMSS algorithm settings:"))
 
     prior_name = prior_settings.get("prior_name", "N/A")
     prior_settings_to_display = {"prior name": prior_name}
