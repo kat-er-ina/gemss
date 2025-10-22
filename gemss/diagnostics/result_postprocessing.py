@@ -26,6 +26,7 @@ def myprint(
     bold: Optional[bool] = False,
     header: Optional[int] = 0,
     code: Optional[bool] = False,
+    file: Optional[Any] = None,
 ) -> None:
     """
     Print a message using Markdown formatting if specified, otherwise in plain text.
@@ -40,6 +41,8 @@ def myprint(
         Whether to make the message bold. Default is False.
     header : int, optional
         The header level (1-6) for the message. Default is 0 (no header).
+    file : Any, optional
+        The file to print the message to. Default is None (prints to stdout).
 
     Returns
     -------
@@ -56,9 +59,9 @@ def myprint(
     else:
         if header > 0:
             print("\n")
-        print(msg)
+        print(msg, file=file)
         if header > 0:
-            print("-" * len(msg))
+            print("-" * len(msg), file=file)
     return
 
 
@@ -103,7 +106,7 @@ def get_long_solutions_df(
 
 def show_long_solutions(
     full_nonzero_solutions: Dict[str, pd.DataFrame],
-    title: str = "Solutions",
+    title: str = "Long solutions",
     use_markdown: Optional[bool] = True,
 ) -> None:
     """
@@ -117,7 +120,7 @@ def show_long_solutions(
         features that exceeded the min_mu_threshold in the last iterations,
         with columns ['Feature', 'Mu value'].
     title : str, optional
-        Title for the displayed DataFrame. Default is "Solutions".
+        Title for the displayed DataFrame. Default is "Long solutions".
     use_markdown : bool, optional
         Whether to format the title using Markdown. Default is True.
 
@@ -307,10 +310,14 @@ def show_algorithm_progress(
     plot_mu_progress: bool = True,
     plot_alpha_progress: bool = True,
     original_feature_names_mapping: Optional[Dict[str, str]] = None,
+    detect_outliers: bool = True,
+    use_medians_for_outliers: bool = False,
+    outlier_threshold_coeff: float = 3.0,
 ) -> None:
     """
     Show the progress of the algorithm by plotting the evolution of
-    ELBO, mixture means, and weights.
+    ELBO, mixture means, and weights. This function uses markdown formatting
+    and Plotly for interactive visualizations.
 
     Parameters
     ----------
@@ -339,25 +346,54 @@ def show_algorithm_progress(
     This function displays markdown output and plots as side effects.
     The function requires the corresponding keys in history for each plot type requested.
     """
-    display(Markdown(f"### Algorithm progress:"))
+    myprint("Algorithm progress:", header=2, use_markdown=True)
     n_components = len(history["mu"][0])
+
+    if detect_outliers:
+        outliers = {}
+        final_mus_df = pd.DataFrame(
+            index=[
+                (
+                    original_feature_names_mapping[f"feature_{i}"]
+                    if original_feature_names_mapping
+                    else f"feature_{i}"
+                )
+                for i in range(len(history["mu"][0][0]))
+            ]
+        )
 
     # Plot ELBO progress
     if plot_elbo_progress:
         plot_elbo(history)
 
+    # Plot mixture weights (alpha)
+    if plot_alpha_progress:
+        plot_alpha(history)
+
     # Plot mixture means trajectory for each component
     if plot_mu_progress:
         for k in range(n_components):
+            myprint(f"Candidate solution {k}", header=3, use_markdown=True)
+
+            if detect_outliers:
+                final_mus_df[f"component_{k}_mus"] = history["mu"][-1][k]
+                outliers[f"component_{k}"] = detect_outlier_features(
+                    final_mus_df[f"component_{k}_mus"],
+                    threshold=outlier_threshold_coeff,
+                    use_median=use_medians_for_outliers,
+                    replace_middle_by_zero=True,
+                )
+                print_outlier_info(
+                    outlier_info=outliers,
+                    component_no=k,
+                    use_markdown=True,
+                )
+
             plot_mu(
                 history,
                 component=k,
                 original_feature_names_mapping=original_feature_names_mapping,
             )
-
-    # Plot mixture weights (alpha)
-    if plot_alpha_progress:
-        plot_alpha(history)
     return
 
 
@@ -371,7 +407,8 @@ def show_regression_results_for_solutions(
     use_markdown: bool = True,
 ) -> None:
     """
-    Show regression results for each solution using the identified features.
+    Show regression results for each solution using the identified features. Based on the type
+    of response vector y, it automatically selects logistic regression or linear regression.
 
     Parameters
     ----------
@@ -396,11 +433,6 @@ def show_regression_results_for_solutions(
     Returns
     -------
     None
-
-    Notes
-    -----
-    This function displays markdown output and regression metrics as side effects.
-    Automatically detects binary classification vs regression based on unique values in y.
     """
     if set(np.unique(y)).__len__() == 2:
         is_binary = True
@@ -468,14 +500,14 @@ def show_regression_results_for_solutions(
     return
 
 
-def display_features_overview(
+def compare_true_and_found_features(
     features_found: Union[List[str], set],
     true_support_features: List[str],
     n_total_features: int,
     use_markdown: Optional[bool] = True,
 ) -> None:
     """
-    Display an overview of features found vs true support features.
+    Print an overview of features found vs true support features.
 
     Parameters
     ----------
@@ -710,6 +742,38 @@ def detect_outlier_features(
     }
 
 
+def print_outlier_info(outlier_info, component_no, use_markdown) -> None:
+    """
+    Helper function to print outlier information.
+    Parameters:
+    -----------
+    outlier_info: Dict[str, List[float]]
+        A dictionary with outlier features and their values.
+    component_no: int
+        The component number to print outlier information for.
+    use_markdown: bool
+        Whether to format the output using Markdown.
+
+    Returns:
+    --------
+    None
+    """
+    myprint(
+        msg=f"{len(outlier_info[f'component_{component_no}']['features'])} outliers in candidate solution {component_no}:",
+        use_markdown=use_markdown,
+        bold=True,
+    )
+    for feat, val in zip(
+        outlier_info[f"component_{component_no}"]["features"],
+        outlier_info[f"component_{component_no}"]["values"],
+    ):
+        myprint(
+            msg=f"- {feat}: {val:.4f}",
+            use_markdown=use_markdown,
+        )
+    return
+
+
 def show_outlier_features_by_component(
     history: Dict[str, List],
     use_median: Optional[bool] = False,
@@ -739,23 +803,6 @@ def show_outlier_features_by_component(
     --------
     None
     """
-
-    def print_outlier_info(outlier_info, component_no, use_markdown):
-        """Helper function to print outlier information."""
-        myprint(
-            msg=f"{len(outlier_info[f'component_{component_no}']['features'])} outliers in candidate solution {component_no}:",
-            use_markdown=use_markdown,
-            bold=True,
-        )
-        for feat, val in zip(
-            outlier_info[f"component_{component_no}"]["features"],
-            outlier_info[f"component_{component_no}"]["values"],
-        ):
-            myprint(
-                msg=f"- {feat}: {val:.4f}",
-                use_markdown=use_markdown,
-            )
-
     n_features = history["mu"][-1][0].shape[0]
     n_components = len(history["mu"][-1])
 
