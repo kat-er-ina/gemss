@@ -3,10 +3,13 @@ Simple regression utilities for feature selection project.
 Includes:
 - Logistic regression with various penalties
 - Linear regression with various penalties
+- Function to show the results
 """
 
 from IPython.display import display, Markdown
-from typing import Any, Dict
+from typing import Any, Dict, Union, List
+import warnings
+
 import numpy as np
 import pandas as pd
 from typing import Literal
@@ -22,8 +25,9 @@ from sklearn.metrics import (
     confusion_matrix,
 )
 from sklearn.linear_model import LogisticRegressionCV, RidgeCV, LassoCV, ElasticNetCV
-import warnings
 from sklearn.exceptions import ConvergenceWarning
+
+from gemss.utils import myprint
 from gemss.diagnostics.visualizations import (
     show_confusion_matrix,
     show_predicted_vs_actual_response,
@@ -235,3 +239,106 @@ def solve_with_linear_regression(
             show_predicted_vs_actual_response(y, y_pred)
 
     return stats
+
+
+def show_regression_results_for_solutions(
+    solutions: Dict[str, List[str]],
+    df: pd.DataFrame,
+    y: Union[pd.Series, np.ndarray],
+    use_standard_scaler: bool = True,
+    penalty: Literal["l1", "l2", "elasticnet"] = "l1",
+    verbose: bool = True,
+    use_markdown: bool = True,
+) -> None:
+    """
+    Show regression results for each solution using the identified features. Based on the type
+    of response vector y, it automatically selects logistic regression or linear regression.
+
+    Parameters
+    ----------
+    solutions : Dict[str, List[str]]
+        Dictionary mapping each component (solution) to its identified features.
+        Feature names should correspond to column names in df.
+    df : pd.DataFrame
+        Feature matrix with features as columns.
+    y : Union[pd.Series, np.ndarray]
+        Response vector. Binary values {0, 1} for classification,
+        continuous values for regression.
+    use_standard_scaler : bool, optional
+        Whether to standardize features before regression. Default is True.
+    penalty : Literal["l1", "l2", "elasticnet"], optional
+        Type of regularization to use. Default is "l1".
+    verbose : bool, optional
+        Whether to print detailed regression metrics and coefficients
+        for each component. Default is True.
+    use_markdown : bool, optional
+        Whether to format the output using Markdown. Default is True.
+
+    Returns
+    -------
+    None
+    """
+    if set(np.unique(y)).__len__() == 2:
+        is_binary = True
+    else:
+        is_binary = False
+
+    stats = {}
+    for component, features in solutions.items():
+        if verbose:
+            myprint(
+                msg=f"Features of **{component}**",
+                use_markdown=use_markdown,
+                header=2,
+            )
+
+        if use_standard_scaler:
+            scaler = StandardScaler()
+            df[features] = scaler.fit_transform(df[features])
+
+            if verbose:
+                myprint(
+                    msg=f"- Features standardized using StandardScaler.",
+                    use_markdown=use_markdown,
+                )
+
+        if is_binary:
+            stats[component] = solve_with_logistic_regression(
+                X=df[features],
+                y=y,
+                penalty=penalty,
+                verbose=verbose,
+            )
+        else:
+            stats[component] = solve_with_linear_regression(
+                X=df[features],
+                y=y,
+                penalty=penalty,
+                verbose=verbose,
+            )
+        if verbose:
+            myprint(msg="------------------", use_markdown=use_markdown)
+
+    # get the stats as data frame
+    # each entry is a column in the data frame
+    metrics_df = pd.DataFrame.from_dict(stats, orient="index")
+
+    if is_binary:
+        myprint(
+            msg=f"Classification metrics overview (penalty: {penalty})",
+            use_markdown=use_markdown,
+            header=2,
+        )
+    else:
+        myprint(
+            msg=f"Regression metrics overview (penalty: {penalty})",
+            use_markdown=use_markdown,
+            header=2,
+        )
+
+    if use_markdown:
+        display(metrics_df)
+    else:
+        print(metrics_df)
+
+    return

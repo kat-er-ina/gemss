@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from IPython.display import display, Markdown
 from sklearn.preprocessing import StandardScaler
+from gemss.utils import myprint, get_solution_summary_df, show_solution_summary
 from gemss.diagnostics.visualizations import (
     plot_elbo,
     plot_mu,
@@ -18,129 +19,11 @@ from gemss.diagnostics.simple_regressions import (
     solve_with_logistic_regression,
     solve_with_linear_regression,
 )
-
-
-def myprint(
-    msg: str,
-    use_markdown: Optional[bool] = True,
-    bold: Optional[bool] = False,
-    header: Optional[int] = 0,
-    code: Optional[bool] = False,
-    file: Optional[Any] = None,
-) -> None:
-    """
-    Print a message using Markdown formatting if specified, otherwise in plain text.
-
-    Parameters
-    ----------
-    msg : str
-        The message to print.
-    use_markdown : bool
-        Whether to use Markdown formatting rather than plain text.
-    bold : bool, optional
-        Whether to make the message bold. Default is False.
-    header : int, optional
-        The header level (1-6) for the message. Default is 0 (no header).
-    file : Any, optional
-        The file to print the message to. Default is None (prints to stdout).
-
-    Returns
-    -------
-    None
-    """
-    if use_markdown:
-        if header > 0:
-            msg = f"{'#' * header} {msg}"
-        if bold:
-            msg = f"**{msg}**"
-        if code:
-            msg = f"```{msg}```"
-        display(Markdown(msg))
-    else:
-        if header > 0:
-            print("\n")
-        print(msg, file=file)
-        if header > 0:
-            print("-" * len(msg), file=file)
-    return
-
-
-def get_long_solutions_df(
-    full_nonzero_solutions: Dict[str, pd.DataFrame],
-) -> pd.DataFrame:
-    """
-    Convert the full nonzero solutions dictionary into a long-format DataFrame.
-
-    Parameters
-    ----------
-    full_nonzero_solutions : Dict[str, pd.DataFrame]
-        Dictionary mapping each component (solution) to a DataFrame containing
-        features that exceeded the min_mu_threshold in the last iterations,
-        with columns ['Feature', 'Mu value'].
-
-    Returns
-    -------
-    pd.DataFrame
-        A long-format DataFrame where each column corresponds to a component and contains
-        all the features that were considered nonzero for that component, ordered by the absolute
-        value of their mu values. Missing values are filled with NaN.
-
-    Notes
-    -----
-    This function displays a markdown header "## Full long solutions" as a side effect.
-    """
-    max_len = max(
-        [
-            len(full_solution["Feature"])
-            for _, full_solution in full_nonzero_solutions.items()
-        ]
-    )
-    df_full_solutions = pd.DataFrame(index=range(max_len))
-
-    for component, full_solution in full_nonzero_solutions.items():
-        df_full_solutions[component] = pd.Series(full_solution["Feature"]).reset_index(
-            drop=True
-        )
-    return df_full_solutions
-
-
-def show_long_solutions(
-    full_nonzero_solutions: Dict[str, pd.DataFrame],
-    title: str = "Long solutions",
-    use_markdown: Optional[bool] = True,
-) -> None:
-    """
-    Display the solutions in a DataFrame format: each column corresponds to a component
-    and contains the identified features.
-
-    Parameters
-    ----------
-    full_nonzero_solutions : Dict[str, pd.DataFrame]
-        Dictionary mapping each component (solution) to a DataFrame containing
-        features that exceeded the min_mu_threshold in the last iterations,
-        with columns ['Feature', 'Mu value'].
-    title : str, optional
-        Title for the displayed DataFrame. Default is "Long solutions".
-    use_markdown : bool, optional
-        Whether to format the title using Markdown. Default is True.
-
-    Returns
-    -------
-    None
-    """
-    df_full_solutions = get_long_solutions_df(full_nonzero_solutions)
-
-    myprint(
-        msg=title,
-        use_markdown=use_markdown,
-        header=2,
-    )
-    if use_markdown:
-        display(df_full_solutions)
-    else:
-        print(df_full_solutions)
-
-    return
+from gemss.diagnostics.outliers import (
+    detect_outlier_features,
+    show_outlier_info,
+    show_outlier_features_by_component,
+)
 
 
 def recover_solutions(
@@ -267,8 +150,10 @@ def recover_solutions(
             }
         )
         top_features["absolute_mu"] = np.abs(top_features["Mu value"])
-        top_features = top_features.sort_values(by="absolute_mu", ascending=False).drop(
-            columns=["absolute_mu"]
+        top_features = (
+            top_features.sort_values(by="absolute_mu", ascending=False)
+            .drop(columns=["absolute_mu"])
+            .reset_index(drop=True)
         )
         full_nonzero_solutions[f"component_{k}"] = top_features
         if verbose:
@@ -310,7 +195,7 @@ def show_algorithm_progress(
     plot_mu_progress: bool = True,
     plot_alpha_progress: bool = True,
     original_feature_names_mapping: Optional[Dict[str, str]] = None,
-    detect_outliers: bool = True,
+    detect_outliers: bool = False,
     use_medians_for_outliers: bool = False,
     outlier_threshold_coeff: float = 3.0,
 ) -> None:
@@ -377,15 +262,16 @@ def show_algorithm_progress(
 
             if detect_outliers:
                 final_mus_df[f"component_{k}_mus"] = history["mu"][-1][k]
-                outliers[f"component_{k}"] = detect_outlier_features(
-                    final_mus_df[f"component_{k}_mus"],
-                    threshold=outlier_threshold_coeff,
+                outlier_info = detect_outlier_features(
+                    values=final_mus_df[f"component_{k}_mus"],
+                    threshold_coeff=outlier_threshold_coeff,
                     use_median=use_medians_for_outliers,
                     replace_middle_by_zero=True,
                 )
-                print_outlier_info(
-                    outlier_info=outliers,
-                    component_no=k,
+                outlier_dict = {f"component_{k}": outlier_info}
+                show_outlier_info(
+                    outlier_info=outlier_dict,
+                    component_numbers=k,
                     use_markdown=True,
                 )
 
@@ -394,109 +280,6 @@ def show_algorithm_progress(
                 component=k,
                 original_feature_names_mapping=original_feature_names_mapping,
             )
-    return
-
-
-def show_regression_results_for_solutions(
-    solutions: Dict[str, List[str]],
-    df: pd.DataFrame,
-    y: Union[pd.Series, np.ndarray],
-    use_standard_scaler: bool = True,
-    penalty: Literal["l1", "l2", "elasticnet"] = "l1",
-    verbose: bool = True,
-    use_markdown: bool = True,
-) -> None:
-    """
-    Show regression results for each solution using the identified features. Based on the type
-    of response vector y, it automatically selects logistic regression or linear regression.
-
-    Parameters
-    ----------
-    solutions : Dict[str, List[str]]
-        Dictionary mapping each component (solution) to its identified features.
-        Feature names should correspond to column names in df.
-    df : pd.DataFrame
-        Feature matrix with features as columns.
-    y : Union[pd.Series, np.ndarray]
-        Response vector. Binary values {0, 1} for classification,
-        continuous values for regression.
-    use_standard_scaler : bool, optional
-        Whether to standardize features before regression. Default is True.
-    penalty : Literal["l1", "l2", "elasticnet"], optional
-        Type of regularization to use. Default is "l1".
-    verbose : bool, optional
-        Whether to print detailed regression metrics and coefficients
-        for each component. Default is True.
-    use_markdown : bool, optional
-        Whether to format the output using Markdown. Default is True.
-
-    Returns
-    -------
-    None
-    """
-    if set(np.unique(y)).__len__() == 2:
-        is_binary = True
-    else:
-        is_binary = False
-
-    stats = {}
-    for component, features in solutions.items():
-        if verbose:
-            myprint(
-                msg=f"Features of **{component}**",
-                use_markdown=use_markdown,
-                header=2,
-            )
-
-        if use_standard_scaler:
-            scaler = StandardScaler()
-            df[features] = scaler.fit_transform(df[features])
-
-            if verbose:
-                myprint(
-                    msg=f"- Features standardized using StandardScaler.",
-                    use_markdown=use_markdown,
-                )
-
-        if is_binary:
-            stats[component] = solve_with_logistic_regression(
-                X=df[features],
-                y=y,
-                penalty=penalty,
-                verbose=verbose,
-            )
-        else:
-            stats[component] = solve_with_linear_regression(
-                X=df[features],
-                y=y,
-                penalty=penalty,
-                verbose=verbose,
-            )
-        if verbose:
-            myprint(msg="------------------", use_markdown=use_markdown)
-
-    # get the stats as data frame
-    # each entry is a column in the data frame
-    metrics_df = pd.DataFrame.from_dict(stats, orient="index")
-
-    if is_binary:
-        myprint(
-            msg=f"Classification metrics overview (penalty: {penalty})",
-            use_markdown=use_markdown,
-            header=2,
-        )
-    else:
-        myprint(
-            msg=f"Regression metrics overview (penalty: {penalty})",
-            use_markdown=use_markdown,
-            header=2,
-        )
-
-    if use_markdown:
-        display(metrics_df)
-    else:
-        print(metrics_df)
-
     return
 
 
@@ -609,7 +392,7 @@ def show_unique_features(
     return
 
 
-def show_solutions_details(
+def show_features_in_solutions(
     solutions: Dict[str, Dict[str, List[Any]]],
     history: Dict[str, List[np.ndarray]],
     constants: Dict[str, float],
@@ -688,152 +471,3 @@ def show_final_parameter_comparison(
     for i, alpha in enumerate(final_parameters["final alpha"]):
         display(Markdown(f"- **Component {i}:** {alpha:.3f}"))
     return
-
-
-def detect_outlier_features(
-    values: pd.Series,
-    threshold=3,
-    use_median: Optional[bool] = False,
-    replace_middle_by_zero: Optional[bool] = False,
-) -> Dict[str, List[float]]:
-    """
-    Detects outlier features based on their deviation from the mean or median. Return the names of the outliers.
-
-    Parameters:
-    -----------
-    values: pd.Series
-        Series of mu values to analyze. Index of the series represents feature indices.
-    threshold: float
-        Threshold multiplier for the absolute deviation to identify outliers.
-    use_median: bool, optional
-        Whether to use median for outlier detection instead of mean. Using median is less sensitive to large
-        values but it leads to larger deviation values, i.e. more outliers detected. Default is False.
-    replace_middle_by_zero: bool, optional
-        If True, uses zero instead of median or mean for outlier detection. Default is False.
-
-    Returns:
-    -----------
-    Dict[str, List[float]]
-        A dictionary with two keys:
-        - "features": List of feature indices identified as outliers.
-        - "values": Corresponding mu values of the outlier features.
-    """
-
-    if values.empty:
-        return {"features": [], "values": []}
-
-    if replace_middle_by_zero:
-        middle = 0
-    elif use_median:
-        middle = values.median()
-    else:  # use mean
-        middle = values.mean()
-
-    if use_median:
-        deviation = (values - middle).abs().median()
-    else:  # use mean
-        deviation = (values - middle).abs().mean()
-
-    outlier_condition = (values - middle).abs() > threshold * deviation
-
-    return {
-        "features": values.index[outlier_condition].tolist(),
-        "values": values[outlier_condition].tolist(),
-    }
-
-
-def print_outlier_info(outlier_info, component_no, use_markdown) -> None:
-    """
-    Helper function to print outlier information.
-    Parameters:
-    -----------
-    outlier_info: Dict[str, List[float]]
-        A dictionary with outlier features and their values.
-    component_no: int
-        The component number to print outlier information for.
-    use_markdown: bool
-        Whether to format the output using Markdown.
-
-    Returns:
-    --------
-    None
-    """
-    myprint(
-        msg=f"{len(outlier_info[f'component_{component_no}']['features'])} outliers in candidate solution {component_no}:",
-        use_markdown=use_markdown,
-        bold=True,
-    )
-    for feat, val in zip(
-        outlier_info[f"component_{component_no}"]["features"],
-        outlier_info[f"component_{component_no}"]["values"],
-    ):
-        myprint(
-            msg=f"- {feat}: {val:.4f}",
-            use_markdown=use_markdown,
-        )
-    return
-
-
-def show_outlier_features_by_component(
-    history: Dict[str, List],
-    use_median: Optional[bool] = False,
-    outlier_threshold_coeff: Optional[float] = 3,
-    original_feature_names_mapping: Optional[Dict[str, str]] = None,
-    use_markdown: bool = True,
-) -> None:
-    """
-    Displays outlier features detected in each candidate solution's mu values.
-
-    Parameters:
-    -----------
-    history: Dict[str, List]
-        The search history containing mu values for each iteration.
-    use_median: bool, optional
-        Whether to use median for outlier detection instead of mean. Using median is less sensitive to large
-        values but it leads to larger deviation values, i.e. more outliers detected. Default is False.
-    outlier_threshold_coeff: float, optional
-        The multiplier of absolute deviation for outlier detection. Default is 3.
-        Larger values lead to fewer outliers being detected.
-    original_feature_names_mapping: Optional[Dict[str, str]], optional
-        A mapping from feature indices to original feature names. If provided, will use original names in the output.
-    use_markdown: bool, optional
-        Whether to format the output using Markdown for better readability instead of plain text. Default is True.
-
-    Returns:
-    --------
-    None
-    """
-    n_features = history["mu"][-1][0].shape[0]
-    n_components = len(history["mu"][-1])
-
-    if original_feature_names_mapping is not None:
-        feature_names = [
-            original_feature_names_mapping.get(f"feature_{i}", f"feature_{i}")
-            for i in range(n_features)
-        ]
-    else:
-        feature_names = [f"feature_{i}" for i in range(n_features)]
-
-    myprint(
-        msg=f"Detection of outlier features based on their last mu values (no |mu| thresholding)",
-        use_markdown=use_markdown,
-        header=2,
-    )
-
-    final_mus_df = pd.DataFrame(index=feature_names)
-    outliers = {}
-    for component in range(n_components):
-        final_mus_df[f"component_{component}_mus"] = history["mu"][-1][component]
-        outliers[f"component_{component}"] = detect_outlier_features(
-            final_mus_df[f"component_{component}_mus"],
-            threshold=outlier_threshold_coeff,
-            use_median=use_median,
-            replace_middle_by_zero=True,
-        )
-        print_outlier_info(
-            outlier_info=outliers,
-            component_no=component,
-            use_markdown=use_markdown,
-        )
-
-    return None
