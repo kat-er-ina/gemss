@@ -3,7 +3,7 @@ Diagnostics and plotting for Bayesian feature selection.
 """
 
 from IPython.display import display, Markdown
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Optional
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -199,35 +199,43 @@ def show_correlation_matrix(
 
 def show_label_histogram(
     y: np.ndarray,
-    nbins=10,
+    nbins: Optional[int] = 10,
 ) -> None:
     """
     Show histogram of continuous labels y using Plotly.
+
     Parameters
     ----------
     y : array-like
         Continuous labels.
     nbins : int, optional
-        Number of bins for the histogram.
+        Number of bins for the histogram. If y has at most 10 unique values, the number of unique
+        values is used regardless of this parameter. Otherwise, default is 10.
 
     Returns
     -------
     None
     """
+    # if the label is binary or discrete with at most 10 unique values, take only those few bins
+    y_unique = np.unique(y).tolist()
+    y_unique.sort()
+    nunique = len(y_unique)
+    if nunique <= 10:
+        nbins = nunique
+
     hist_data = np.histogram(y, bins=nbins)
     fig = go.Figure(
         data=[
             go.Bar(
-                x=hist_data[1][:-1],
+                x=y_unique,
                 y=hist_data[0],
                 width=np.diff(hist_data[1]),
                 marker_color="blue",
             )
         ],
-        text_auto=True,
     )
     fig.update_layout(
-        title="Distribution of continuous labels",
+        title="Distribution of labels",
         xaxis_title="Value",
         yaxis_title="Count",
         width=450,
