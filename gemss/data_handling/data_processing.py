@@ -5,10 +5,12 @@ Data preprocessing utilities for user-provided datasets.
 """
 
 from IPython.display import display, Markdown
-from typing import Literal, Optional, Tuple
+from typing import Dict, Literal, Optional, Tuple
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+
+from gemss.utils import myprint
 
 
 def load_data(
@@ -58,13 +60,62 @@ def get_feature_name_mapping(df: pd.DataFrame) -> dict:
     return feature_to_name
 
 
+def preprocess_non_numeric_features(
+    df: pd.DataFrame,
+    how: Literal["drop", "onehot"] = "drop",
+    verbose: Optional[bool] = True,
+) -> pd.DataFrame:
+    """
+    Process non-numeric features in the DataFrame.
+
+    Parameters:
+    -----------
+    df: pd.DataFrame
+        The DataFrame containing the features.
+    how: Literal["drop", "onehot"], optional, default="drop"
+        How to handle non-numeric features. Options are:
+        - "drop": drop non-numeric features.
+        - "onehot": apply one-hot encoding to non-numeric features.
+    verbose: bool, optional, default=True
+        Whether to display informative messages during processing.
+
+    Returns:
+    --------
+    pd.DataFrame
+        The processed DataFrame with non-numeric features handled according to the specified method.
+    """
+    df_copy = df.copy()
+
+    if how == "drop":
+        non_numeric_cols = df_copy.select_dtypes(exclude=[np.number]).columns.tolist()
+        df_copy = df_copy.drop(columns=non_numeric_cols)
+        if verbose:
+            if len(non_numeric_cols) > 0:
+                display(
+                    Markdown(
+                        f"Dropped {len(non_numeric_cols)} non-numeric features: {non_numeric_cols}."
+                    )
+                )
+            else:
+                display(
+                    Markdown("No non-numeric features found. No columns were dropped.")
+                )
+
+    elif how == "onehot":
+        df_copy = pd.get_dummies(df_copy, drop_first=True)
+        if verbose:
+            display(Markdown("Applied one-hot encoding to non-numeric features."))
+
+    return df_copy
+
+
 def preprocess_features(
     df: pd.DataFrame,
     response: pd.Series,
     dropna: Literal["response", "all", "none"] = "response",
     apply_standard_scaling: Optional[bool] = True,
     verbose: Optional[bool] = True,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray, Dict[str, str]]:
     """
     Preprocess the features by cleaning na values and applying scaling, if specified.
 
@@ -86,14 +137,16 @@ def preprocess_features(
 
     Returns:
     --------
-    Tuple[np.ndarray, np.ndarray]
-        A tuple containing the preprocessed features as a NumPy array
-        and the response values as a NumPy array.
+    Tuple[np.ndarray, np.ndarray, Dict[str, str]]
+        A tuple containing:
+        - the preprocessed features as a NumPy array
+        - the response values as a NumPy array
+        - a mapping from feature names to their original column names
     """
     df_copy = df.copy()
 
     # handle NA values
-    if dropna is not "none":
+    if dropna != "none":
         initial_shape = df_copy.shape
         df_copy[response.name] = response
         if dropna == "response":
@@ -108,12 +161,14 @@ def preprocess_features(
         response = df_copy.pop(response.name)
         if verbose:
             if df_copy.shape[0] == initial_shape[0]:
-                display(Markdown("No NA values found. No rows were dropped."))
+                myprint(
+                    "No NA values found. No rows were dropped.",
+                    use_markdown=True,
+                )
             else:
-                display(
-                    Markdown(
-                        f"Dropped rows with NA values. Shape changed from {initial_shape} to {df_copy.shape}."
-                    )
+                myprint(
+                    f"Dropped rows with NA values. Shape changed from {initial_shape} to {df_copy.shape}.",
+                    use_markdown=True,
                 )
 
     # scaling
@@ -121,16 +176,28 @@ def preprocess_features(
         scaler = StandardScaler()
         X = scaler.fit_transform(df_copy.values)
         if verbose:
-            display(Markdown("Features have been standardized using StandardScaler."))
+            myprint(
+                "Features have been standardized using StandardScaler.",
+                use_markdown=True,
+            )
     else:
         X = df_copy.values
         if verbose:
-            display(Markdown("No scaling applied to features."))
+            myprint(
+                "No scaling applied to features.",
+                use_markdown=True,
+            )
 
-    # extract response values
-    y = response.values
+    # report % of missing values
+    n_missing = np.sum(np.isnan(X).astype(int))
+    n_total = X.size
+    missing_pct = (n_missing / n_total) * 100
+    myprint(
+        f"Dataset contains {n_missing}/{n_total} ({missing_pct:.1f}%) missing feature values. They will be handled natively by the model.",
+        use_markdown=True,
+    )
 
-    return X, y
+    return X, response.values, get_feature_name_mapping(df_copy)
 
 
 def get_df_from_X(
