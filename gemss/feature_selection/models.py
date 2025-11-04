@@ -172,22 +172,25 @@ class StructuredSpikeAndSlabPrior:
                 for _ in range(n_support_samples)
             ]
         for support in supports:
-            mask = torch.zeros(self.n_features, dtype=torch.bool)
-            mask[support] = True
+            mask = torch.zeros(self.n_features, dtype=torch.bool, device=z.device)
+            if len(support) > 0:  # Only set mask if support is not empty
+                mask[list(support)] = True
             # Slab for mask, spike for others
             logp = torch.zeros(z_flat.shape[0], device=z.device)
             # Slab part
-            logp += -0.5 * torch.sum(
-                (z_flat[:, mask] / self.var_slab) ** 2
-                + torch.log(torch.tensor(self.var_slab)),
-                dim=1,
-            )
+            if mask.any():  # Only compute if there are slab features
+                logp += -0.5 * torch.sum(
+                    (z_flat[:, mask] / self.var_slab) ** 2
+                    + torch.log(torch.tensor(self.var_slab, device=z.device)),
+                    dim=1,
+                )
             # Spike part
-            logp += -0.5 * torch.sum(
-                (z_flat[:, ~mask] / self.var_spike) ** 2
-                + torch.log(torch.tensor(self.var_spike)),
-                dim=1,
-            )
+            if (~mask).any():  # Only compute if there are spike features
+                logp += -0.5 * torch.sum(
+                    (z_flat[:, ~mask] / self.var_spike) ** 2
+                    + torch.log(torch.tensor(self.var_spike, device=z.device)),
+                    dim=1,
+                )
             logps.append(logp)
         # Average over supports
         logps = torch.stack(logps, dim=1)  # [batch, n_supports]
@@ -201,9 +204,10 @@ class GaussianMixture(nn.Module):
     """
     Implements a learnable mixture of diagonal Gaussians.
     Mixture parameters: means, diagonal variances, mixing weights.
+    Includes robust support for missing features (NaNs) during log probability evaluation.
     """
 
-    def __init__(self, n_components, n_features):
+    def __init__(self, n_components: int, n_features: int):
         """
         Parameters
         ----------
@@ -223,10 +227,8 @@ class GaussianMixture(nn.Module):
         # Mixing log-weights [n_components-1] (last alpha is 1-sum(...))
         self._log_alpha = nn.Parameter(torch.zeros(n_components - 1))
 
-    def get_variance(self):
+    def get_variance(self) -> torch.Tensor:
         """
-        Get positive variances for each component via softplus transformation.
-
         Returns
         -------
         torch.Tensor
@@ -234,23 +236,27 @@ class GaussianMixture(nn.Module):
         """
         return F.softplus(self._log_var)
 
-    def get_alpha(self):
+    def get_alpha(self) -> torch.Tensor:
         """
-        Get normalized mixing weights for the mixture.
-
         Returns
         -------
         torch.Tensor
             Tensor of shape (n_components,) with mixing weights summing to 1.
+            Handles NaN robustness by replacing any NaN with 0 and re-normalizing.
         """
         log_alpha = torch.cat(
             [self._log_alpha, torch.zeros(1, device=self._log_alpha.device)]
         )
         alpha = torch.exp(log_alpha)
-        alpha = alpha / alpha.sum()
+        # NaN-safe: Replace NaNs with zeros, renormalize. If degenerate, fallback to uniform.
+        alpha = torch.where(torch.isnan(alpha), torch.zeros_like(alpha), alpha)
+        if alpha.sum() == 0 or not torch.isfinite(alpha).all():
+            alpha = torch.ones_like(alpha) / len(alpha)
+        else:
+            alpha = alpha / alpha.sum()
         return alpha
 
-    def sample(self, batch_size):
+    def sample(self, batch_size: int) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Sample points from the mixture using the reparameterization trick.
 
@@ -267,14 +273,21 @@ class GaussianMixture(nn.Module):
             Indices of chosen components for each sample, shape (batch_size,).
         """
         alpha = self.get_alpha()
+
+        # Use multinomial sampling for component selection
         comp_idx = torch.multinomial(alpha, batch_size, replacement=True)
-        mu = self.mu[comp_idx]
-        var = self.get_variance()[comp_idx]
+
+        # Reparameterized sampling from selected components
+        mu = self.mu[comp_idx]  # [batch_size, n_features]
+        var = self.get_variance()[comp_idx]  # [batch_size, n_features]
+
+        # Standard reparameterization trick
         eps = torch.randn(batch_size, self.n_features, device=mu.device)
         z = mu + eps * torch.sqrt(var)
+
         return z, comp_idx
 
-    def log_prob(self, z):
+    def log_prob(self, z: torch.Tensor) -> torch.Tensor:
         """
         Compute log-probability of samples under the mixture model.
 
@@ -286,40 +299,80 @@ class GaussianMixture(nn.Module):
         Returns
         -------
         torch.Tensor
-            Log-probabilities of shape (batch_size,).
+            Log-probabilities (in mixture) of shape (batch_size,).
         """
+        # Ensure z has no NaNs for variational inference
+        if torch.isnan(z).any():
+            raise ValueError(
+                "z contains NaN values - variational inference requires complete latent samples"
+            )
+
         mu = self.mu.unsqueeze(0)  # [1, K, D]
         var = self.get_variance().unsqueeze(0)  # [1, K, D]
-        log_alpha = torch.cat(
-            [self._log_alpha, torch.zeros(1, device=self._log_alpha.device)]
-        )
-        alpha = torch.exp(log_alpha)
-        alpha = alpha / alpha.sum()
-        # log N(z | mu_k, var_k), shape [batch_size, K]
-        log_prob_k = -0.5 * torch.sum(
-            torch.log(var) + ((z.unsqueeze(1) - mu) ** 2) / var, dim=-1
-        )
-        # log mixture: logsumexp over components
-        log_mix = torch.logsumexp(torch.log(alpha) + log_prob_k, dim=-1)
-        return log_mix
+        alpha = self.get_alpha()  # [K]
 
-    def component_log_prob(self, z):
+        # Standard mixture log-probability computation
+        # log N(z | mu_k, var_k), shape [batch, K]
+        log_prob_k = -0.5 * torch.sum(
+            torch.log(2 * torch.pi * var) + ((z.unsqueeze(1) - mu) ** 2) / var, dim=-1
+        )
+
+        # log mixture: logsumexp over components
+        log_prob_weighted = log_prob_k + torch.log(alpha.unsqueeze(0))
+        return torch.logsumexp(log_prob_weighted, dim=-1)  # [batch_size]
+
+    def log_prob_masked(self, z: torch.Tensor) -> torch.Tensor:
         """
-        Compute log-probabilities for each mixture component separately.
+        Compute the log-probability of each sample under each mixture component,
+        masking missing values (NaNs) locally.
+
+        Note: This method is for data analysis only, not for variational inference.
+        Returns only the per-component likelihoods (not marginalized), averaged over observed features.
 
         Parameters
         ----------
         z : torch.Tensor
-            Input tensor of shape (batch_size, n_features).
+            Data tensor of shape (batch_size, n_features) with possible NaNs.
 
         Returns
         -------
         torch.Tensor
-            Log-probabilities for each component, shape (batch_size, n_components).
+            Log-probabilities of shape (batch_size, n_components),
+            averaged over observed features for each sample.
         """
-        mu = self.mu.unsqueeze(0)
-        var = self.get_variance().unsqueeze(0)
-        log_prob_k = -0.5 * torch.sum(
-            torch.log(var) + ((z.unsqueeze(1) - mu) ** 2) / var, dim=-1
-        )
-        return log_prob_k
+        batch, n_features = z.shape
+        mu = self.mu.unsqueeze(0)  # [1, K, D]
+        var = self.get_variance().unsqueeze(0)  # [1, K, D]
+        mask = ~torch.isnan(z)  # [batch, features]
+        z_filled = torch.where(mask, z, torch.zeros_like(z))
+        z_b = z_filled.unsqueeze(1)  # [batch, 1, features]
+        mask_b = mask.unsqueeze(1)  # [batch, 1, features]
+
+        log_prob = -0.5 * (torch.log(2 * torch.pi * var) + ((z_b - mu) ** 2) / var)
+        log_prob = log_prob * mask_b
+        f_sum = log_prob.sum(-1)
+        n_obs = mask_b.sum(-1).clamp(min=1)
+        log_prob_mean = f_sum / n_obs
+        return log_prob_mean  # [batch, n_components]
+
+    def log_marginal(self, z: torch.Tensor) -> torch.Tensor:
+        """
+        Compute the marginalized log-probability (logsumexp over components),
+        using NaN-masked per-component log-likelihood.
+
+        Note: This method is for data analysis only, not for variational inference.
+
+        Parameters
+        ----------
+        z : torch.Tensor
+            Input with shape (batch_size, n_features).
+        Returns
+        -------
+        torch.Tensor
+            Marginal log-likelihood, (batch_size,).
+        """
+        component_logp = self.log_prob_masked(z)  # (batch, n_components)
+        alpha = self.get_alpha()  # (n_components,)
+
+        log_weighted = component_logp + torch.log(alpha)
+        return torch.logsumexp(log_weighted, dim=-1)

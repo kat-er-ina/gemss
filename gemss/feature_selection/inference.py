@@ -31,7 +31,7 @@ from .models import (
     StructuredSpikeAndSlabPrior,
     GaussianMixture,
 )
-from gemss.utils import print_nice_optimization_settings
+from gemss.utils import print_nice_optimization_settings, myprint
 
 
 class BayesianFeatureSelector:
@@ -130,8 +130,17 @@ class BayesianFeatureSelector:
         """
         self.n_features = n_features
         self.n_components = n_components
+
+        # Convert data to tensors, preserving NaN values
         self.X = torch.tensor(X, dtype=torch.float32, device=device)
         self.y = torch.tensor(y, dtype=torch.float32, device=device)
+
+        # Validate that response values don't contain NaN
+        if torch.isnan(self.y).any():
+            raise ValueError(
+                "Response variable (y) contains NaN values. Please remove samples with missing responses before feature selection."
+            )
+
         self.batch_size = batch_size
         self.n_iter = n_iter
 
@@ -158,6 +167,9 @@ class BayesianFeatureSelector:
         """
         Compute log-likelihood for regression: log p(y | z, X).
 
+        Handles missing values in X by using only observed features for each sample.
+        This allows the algorithm to work with missing data without imputation or dropping samples.
+
         Parameters
         ----------
         z : torch.Tensor
@@ -168,9 +180,75 @@ class BayesianFeatureSelector:
         torch.Tensor
             Log-likelihood values for each sample, shape (batch_size,).
         """
-        pred = torch.matmul(z, self.X.T)  # [batch_size, n_samples]
-        mse = ((pred - self.y.unsqueeze(0)) ** 2).sum(dim=-1)  # sum over samples
-        return -0.5 * mse
+        # Check if X has missing values
+        if torch.isnan(self.X).any():
+            return self._log_likelihood_with_missing(z)
+        else:
+            # Standard computation for complete data
+            pred = torch.matmul(z, self.X.T)  # [batch_size, n_samples]
+            mse = ((pred - self.y.unsqueeze(0)) ** 2).sum(dim=-1)  # sum over samples
+            return -0.5 * mse
+
+    def _log_likelihood_with_missing(self, z) -> torch.Tensor:
+        """
+        Compute log-likelihood when X contains missing values.
+
+        For each data sample, use only the observed features to compute the prediction.
+        This maintains gradient flow while handling missing data naturally.
+
+        Parameters
+        ----------
+        z : torch.Tensor
+            Parameter samples, shape (batch_size, n_features).
+
+        Returns
+        -------
+        torch.Tensor
+            Log-likelihood values, shape (batch_size,).
+        """
+        batch_size = z.shape[0]
+        n_samples = self.X.shape[0]
+
+        # Compute log-likelihood for each data sample separately
+        log_likes = []
+
+        for i in range(n_samples):
+            x_i = self.X[i]  # [n_features]
+            y_i = self.y[i]  # scalar
+
+            # Skip if response is missing (shouldn't happen if properly preprocessed)
+            if torch.isnan(y_i):
+                continue
+
+            # Find observed features for this sample
+            observed_mask = ~torch.isnan(x_i)  # [n_features]
+
+            if observed_mask.sum() == 0:
+                # If no features observed, skip this sample
+                continue
+
+            # Use only observed features for prediction
+            x_obs = x_i[observed_mask]  # [n_observed]
+            z_obs = z[:, observed_mask]  # [batch_size, n_observed]
+
+            # Compute prediction using observed features only
+            pred_i = torch.matmul(z_obs, x_obs)  # [batch_size]
+
+            # Compute log-likelihood for this sample
+            # Scale by number of observed features to maintain comparable magnitudes
+            mse_i = (pred_i - y_i) ** 2
+            log_like_i = -0.5 * mse_i
+
+            log_likes.append(log_like_i)
+
+        if len(log_likes) == 0:
+            # If no valid samples, return zero log-likelihood
+            return torch.zeros(batch_size, device=z.device)
+
+        # Sum log-likelihoods across all data samples
+        total_log_like = torch.stack(log_likes, dim=0).sum(dim=0)  # [batch_size]
+
+        return total_log_like
 
     def h(
         self,
@@ -279,9 +357,12 @@ class BayesianFeatureSelector:
         verbose: bool = True,
     ) -> Dict[str, List[float]]:
         """
-        Main optimization loop for variational inference.
+        Main optimization loop for the feature selector.
 
-        Parameters
+        Handles missing values internally using masking, ensures valid alphas,
+        and prevents propagation of NaNs in mixture weights.
+
+         Parameters
         ----------
         log_callback : callable, optional
             Function to call for logging every 100 iterations.
@@ -305,6 +386,7 @@ class BayesianFeatureSelector:
             - 'var': list of mixture variances per iteration
             - 'alpha': list of mixture weights per iteration
         """
+
         if verbose:
             print_nice_optimization_settings(
                 n_components=self.n_components,
@@ -325,10 +407,11 @@ class BayesianFeatureSelector:
             )
 
         history = {"elbo": [], "mu": [], "var": [], "alpha": []}
+
         for it in range(self.n_iter):
-            # Sample z ~ q(z)
+            # Sample z ~ q(z) - this should always produce complete samples (no NaNs)
             z, comp_idx = self.mixture.sample(self.batch_size)
-            z = z.requires_grad_()  # Ensure gradients for z
+            # Note: z automatically has requires_grad=True through reparameterization
 
             if regularize:
                 elbo = self.elbo_regularized(
@@ -349,12 +432,13 @@ class BayesianFeatureSelector:
             history["var"].append(
                 self.mixture.get_variance().detach().cpu().clone().numpy()
             )
-            history["alpha"].append(
-                self.mixture.get_alpha().detach().cpu().clone().numpy()
-            )
+
+            # Store alphas safely
+            alpha_val = self.mixture.get_alpha()
+            history["alpha"].append(alpha_val.detach().cpu().clone().numpy())
 
             if log_callback and it % 100 == 0:
                 log_callback(it, elbo.item(), self.mixture)
         if verbose:
-            display(Markdown("Optimization complete."))
+            myprint("Optimization complete.", use_markdown=True)
         return history
