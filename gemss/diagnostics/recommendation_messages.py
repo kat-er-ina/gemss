@@ -5,89 +5,100 @@ This module contains all the message content for different recommendation scenar
 Each message dictionary contains standardized keys for consistent display formatting.
 """
 
-from typing import Dict, Any
+from typing import Dict
 
 
 # Message templates for different recommendation scenarios
 RECOMMENDATION_MESSAGES: Dict[str, Dict[str, str]] = {
     "feature_ordering_failed_sparsity_gap_failed": {
         "section_header": "Critical issues detected",
-        "title": "Feature ordering and sparsity gap tests failed",
-        "description": "Both feature ordering and sparsity separation are problematic.",
+        "title": "Feature ordering and sparsity gap test failed",
+        "description": "The optimization process is not working, likely due to too tight spike in the prior.",
         "recommendations": (
-            "**Lorem ipsum:**\n"
-            "- Example recommendation 1\n"
-            "- Example recommendation 2\n"
+            "**Focus on getting the features not to converge uniformly:**\n"
+            "- Increase VAR_SPIKE by at least one order of magnitude\n"
         ),
     },
     "feature_ordering_failed_sparsity_gap_warning": {
         "section_header": "Critical issues detected",
         "title": "Feature ordering test failed, sparsity gap test warning",
-        "description": "Primary issue: poor feature ordering convergence. Secondary: suboptimal separation.",
+        "description": "The optimization process is not working, likely due to too tight spike in the prior.",
         "recommendations": (
-            "**Lorem ipsum:**\n"
-            "- Example recommendation 1\n"
-            "- Example recommendation 2\n"
+            "**Focus on getting the features not to converge uniformly:**\n"
+            "- Increase VAR_SPIKE by at least one order of magnitude\n"
         ),
     },
     "feature_ordering_failed_sparsity_gap_passed": {
         "section_header": "Critical issues detected",
         "title": "Feature ordering test failed",
-        "description": "Good feature discrimination but poor convergence behavior.",
+        "description": "The optimization process is not working, likely due to too tight spike in the prior.",
         "recommendations": (
-            "**Lorem ipsum:**\n"
-            "- Example recommendation 1\n"
-            "- Example recommendation 2\n"
+            "**Focus on getting the features not to converge uniformly:**\n"
+            "- Increase VAR_SPIKE by at least one order of magnitude\n"
+            "- Very carefully decrease VAR_SPIKE\n"
         ),
     },
     "feature_ordering_warning_sparsity_gap_failed": {
         "section_header": "Critical issues detected",
         "title": "Sparsity gap test failed, feature ordering test warning",
-        "description": "Primary issue: poor feature separation. Secondary: suboptimal convergence.",
+        "description": "The quality of the feature selection process is questionable for at least some components. Poor discrimination among features.",
         "recommendations": (
-            "**Lorem ipsum:**\n"
-            "- Example recommendation 1\n"
-            "- Example recommendation 2\n"
+            "**Focus on getting the features not to converge uniformly:**\n"
+            "- Carefully increase VAR_SPIKE.\n"
+            "- Possibly counter-balance with VAR_SLAB.\n"
+            "**Other possible actions:**\n"
+            "- Decrease DESIRED_SPARSITY to have more sparse priors.\n"
+            "- Consider whether to decrease the number of components N_CANDIDATE_SOLUTIONS.\n"
         ),
     },
     "feature_ordering_passed_sparsity_gap_failed": {
         "section_header": "Critical issues detected",
-        "title": "Sparsity gap test failed",
-        "description": "Good convergence behavior but poor feature discrimination.",
+        "title": "Sparsity gap test failed and the feature ordering test passed.",
+        "description": "Two scenarios have been observed that lead to this outcome.",
         "recommendations": (
-            "**Lorem ipsum:**\n"
-            "- Example recommendation 1\n"
-            "- Example recommendation 2\n"
+            "**If there is a large variance among the features' mu and their ordering changes over the iterations, the algorithm probably needs just fine tuning to improve feature discrimination:**\n"
+            "- Increase the number of iterations N_ITER.\n"
+            "- Very carefully decrease VAR_SPIKE.\n"
+            "- Possibly play with Jaccard regularization to obtain optimally diverse solutions.\n"
+            "- Decrease DESIRED_SPARSITY to have more sparse priors.\n"
+            "**If the same features have the largest mu(s) at the beginning and at the end while the rest converges to 0, the algorithm is NOT working:**\n"
+            "- Increase VAR_SPIKE.\n"
+            "- Possibly counter-balance with VAR_SLAB.\n"
+            "- Consider decreasing DESIRED_SPARSITY.\n"
         ),
     },
     "feature_ordering_warning_sparsity_gap_warning": {
         "section_header": "Optimization opportunities",
         "title": "Feature ordering and sparsity gap tests warning",
-        "description": "Both tests show room for improvement with balanced adjustments.",
+        "description": "The quality of the feature selection process is questionable for at least some components.",
         "recommendations": (
-            "**Lorem ipsum:**\n"
-            "- Example recommendation 1\n"
-            "- Example recommendation 2\n"
+            "**Possible courses of action:**\n"
+            "- Carefully increase VAR_SPIKE.\n"
+            "- Carefully balance VAR_SPIKE and VAR_SLAB.\n"
+            "- Possibly play with Jaccard regularization to obtain optimally diverse solutions.\n"
+            "- Consider whether to decrease the number of components N_CANDIDATE_SOLUTIONS.\n"
         ),
     },
     "feature_ordering_warning_sparsity_gap_passed": {
         "section_header": "Optimization opportunities",
         "title": "Feature ordering test warning",
-        "description": "Good feature separation with room for convergence improvement.",
+        "description": "The quality of the feature selection process is questionable for at least some components.",
         "recommendations": (
-            "**Lorem ipsum:**\n"
-            "- Example recommendation 1\n"
-            "- Example recommendation 2\n"
+            "**Focus on getting the features not to converge uniformly:**\n"
+            "- Carefully increase VAR_SPIKE.\n"
+            "- Possibly counter-balance with VAR_SLAB.\n"
+            "- Consider whether to decrease the number of components N_CANDIDATE_SOLUTIONS.\n"
         ),
     },
     "feature_ordering_passed_sparsity_gap_warning": {
         "section_header": "Optimization opportunities",
         "title": "Sparsity gap test warning",
-        "description": "Good convergence with room for separation improvement.",
+        "description": "Good convergence with room for improvement regarding separation of selected and not-selected features.",
         "recommendations": (
-            "**Lorem ipsum:**\n"
-            "- Example recommendation 1\n"
-            "- Example recommendation 2\n"
+            "**Possible courses of action:**\n"
+            "- Consider increasing the number of iterations N_ITER.\n"
+            "- Very carefully decrease VAR_SPIKE\n"
+            "- Possibly play with Jaccard regularization to obtain optimally diverse solutions.\n"
         ),
     },
     "feature_ordering_passed_sparsity_gap_passed": {

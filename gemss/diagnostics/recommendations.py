@@ -43,9 +43,9 @@ class RecommendationEngine:
     PARAMETER_REFERENCE_RANGES = {
         "N_ITER": (1000, 10000),
         "LEARNING_RATE": (0.0005, 0.005),
-        "VAR_SLAB": (50, 500),
-        "VAR_SPIKE": (0.0001, 0.1),
-        "LAMBDA_JACCARD": (10, 1500),
+        "VAR_SLAB": (10, 500),
+        "VAR_SPIKE": (0.0001, 1.0),
+        "LAMBDA_JACCARD": (0, 2000),
     }
 
     def __init__(
@@ -87,22 +87,19 @@ class RecommendationEngine:
     def display_all_recommendations(self) -> None:
         """
         Display all recommendations based on the analyzed test results.
-
-        This is the main entry point for displaying recommendations,
-        replacing the function-based approach.
         """
         if not self.diagnostics.test_results:
             display(Markdown("## No test results available for recommendations"))
             return
 
-        # Display configuration summary if constants provided
+        # Display current configuration if constants are provided
         if self.constants is not None:
             self._display_configuration_summary()
 
         # Display recommendations header
         self._display_recommendations_header()
 
-        # Display individual recommendations
+        # Display individual recommendations for each key
         for key in self.recommendation_keys:
             self._display_single_recommendation(key)
 
@@ -273,9 +270,6 @@ class RecommendationEngine:
 
         # Display section header
         display(Markdown(f"## {recommendation['section_header']}"))
-        display(
-            Markdown(f"## !!! WARNING: recommendation content not yet reviewed !!!")
-        )
 
         # Display specific recommendation
         display(Markdown(f"### {recommendation['title']}"))
@@ -353,7 +347,6 @@ def display_recommendation(key: str) -> None:
 
     # Display section header
     display(Markdown(f"## {recommendation['section_header']}"))
-    display(Markdown(f"## WARNING: recommendation not yet reviewed!"))
 
     # Display specific recommendation
     display(Markdown(f"### {recommendation['title']}"))
@@ -389,11 +382,12 @@ def display_parameter_adjustment_summary() -> None:
         Markdown(
             "| Parameter | Increase when | Decrease when | Typical range |\n"
             "|-----------|---------------|---------------|---------------|\n"
+            f"| `VAR_SPIKE` | All features converge (uniformly) to 0, i.e. over-regularization leads to no optimization and feature selection. | Too many features are selected in each component (false positives). | {var_spike_range} |\n"
+            f"| `VAR_SLAB` | Poor feature separation. | Over-regularization. | {var_slab_range} |\n"
+            f"| `IS_REGULARIZED` | True = penalize similarity among solutions. | False = do not influence diversity of features among solutions. | False (0) or True (1) |\n"
+            f"| `LAMBDA_JACCARD` | Greater diversity wanted: the individual solutions contain too many similar features. | Interested in solutions with overlapping feature sets. | {lambda_jaccard_range} |\n"
             f"| `N_ITER` | The ELBO has not converged, the mu values are still changing significantly | The ELBO convergence plateaus early, time constraints | {n_iter_range} |\n"
             f"| `LEARNING_RATE` | Too slow progress | Unstable training | {lr_range} |\n"
-            f"| `VAR_SLAB` | Poor feature separation | Over-regularization | {var_slab_range} |\n"
-            f"| `VAR_SPIKE` | False positives | Poor separation gap between selected and not-selected features | {var_spike_range} |\n"
-            f"| `LAMBDA_JACCARD` | Greater diversity wanted: the individual solutions contain too many similar features. | Interested in solutions with overlapping feature sets. | {lambda_jaccard_range} |\n"
             "| `DESIRED_SPARSITY` | Too restrictive | The progress of mu values indicates that fewer features remain non-negligible | Dataset-dependent |"
             "|`N_CANDIDATE_SOLUTIONS`| Current set of solutions does not contain enough combinations despite proper Jaccard regularization and desired sparsity settings. | Solutions overlap siginificantly and uselessly. Some component weights (alphas) might be negligible too. | Dataset-dependent. Advisable to be at least double the expected `true` number of solutions. |"
         )
