@@ -155,7 +155,7 @@ class PerformanceTests:
         ----------
         top_n_features : int, optional
             Number of top features to compare. Default is None.
-            If None, uses 2 * desired_sparsity if set, otherwise defaults to
+            If None, uses desired_sparsity + 2 if available, otherwise defaults to
             max(10, 5% of total features). Ensures it does not exceed half
             of total features.
 
@@ -481,11 +481,11 @@ class PerformanceTests:
         Returns
         -------
         int
-            Default number of top features. Uses 2 * desired_sparsity if available,
+            Default number of top features. Uses desired_sparsity + 2 if available,
             otherwise max(DEFAULT_TOP_FEATURES_MIN, 5% of total features).
         """
         if hasattr(self, "desired_sparsity"):
-            return 2 * self.desired_sparsity
+            return self.desired_sparsity + 2
         return max(
             self.DEFAULT_TOP_FEATURES_MIN,
             int(self.DEFAULT_TOP_FEATURES_COEFFICIENT * self.n_features),
@@ -623,7 +623,7 @@ class PerformanceTests:
         None
             Displays test results as markdown output.
         """
-        display(Markdown("# Testing algorithm performance"))
+        display(Markdown("# Testing algorithm performance (work in progress)"))
         display(Markdown(f"**Total tests run:** {len(self.test_results)}"))
 
         failed_tests = [r for r in self.test_results if r["status"] == "FAILED"]
