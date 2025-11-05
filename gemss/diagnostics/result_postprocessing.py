@@ -340,6 +340,29 @@ def compare_true_and_found_features(
     return
 
 
+def get_features_from_long_solutions(
+    solutions: Dict[str, pd.DataFrame],
+) -> Dict[str, List[str]]:
+    """
+    Extract features from full non-zero solutions.
+
+    Parameters:
+    -----------
+    solutions: Dict[str, pd.DataFrame]
+        A dictionary where each key is a solution identifier and each value is a DataFrame
+        of features and their mu values.
+
+    Returns:
+    --------
+    Dict[str, List[str]]
+        A dictionary mapping each component to its list of features.
+    """
+    extracted_solutions = {}
+    for component, details in solutions.items():
+        extracted_solutions[component] = details["Feature"].tolist()
+    return extracted_solutions
+
+
 def get_unique_features(solutions: Dict[str, Dict[str, List[Any]]]) -> List[str]:
     """
     Returns the list of features contained in all of the solutions. Each feature is listed only once.
@@ -390,6 +413,28 @@ def show_unique_features(
         code=True,
     )
     return
+
+
+def show_unique_features_from_full_solutions(
+    solutions: Dict[str, pd.DataFrame],
+    use_markdown: Optional[bool] = True,
+) -> None:
+    """
+    Display the unique features found across all full non-zero solutions.
+
+    Parameters
+    ----------
+    solutions : Dict[str, pd.DataFrame]
+        A dictionary where each key is a solution identifier and each value is a DataFrame
+        of features and their mu values.
+    use_markdown : bool, optional
+        Whether to format the output using Markdown. Default is True.
+    """
+    solutions = get_features_from_long_solutions(solutions)
+    return show_unique_features(
+        solutions=solutions,
+        use_markdown=use_markdown,
+    )
 
 
 def show_features_in_solutions(
