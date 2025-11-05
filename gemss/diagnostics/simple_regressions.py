@@ -36,6 +36,9 @@ from gemss.diagnostics.visualizations import (
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
+MAX_ALLOWED_NAN_RATIO = 0.5  # maximum proportion of missing values to run regression
+MIN_ALLOWED_SAMPLES = 15  # minimum number of samples to run regression
+
 
 def solve_with_logistic_regression(
     X: pd.DataFrame,
@@ -106,6 +109,7 @@ def solve_with_logistic_regression(
         "recall_class_1": np.round(
             np.sum((y_pred == 1) & (y == 1)) / np.sum(y == 1), 3
         ),
+        "n_samples": len(y),
     }
 
     # Print results
@@ -115,6 +119,7 @@ def solve_with_logistic_regression(
                 f"### Logistic regression with {penalty.upper()} penalty - performance on training set"
             )
         )
+        display(Markdown(f"**Number of samples:** {stats['n_samples']}"))
         display(Markdown(f"**Accuracy:** {stats['accuracy']}"))
         display(Markdown(f"**Balanced Accuracy:** {stats['balanced_accuracy']}"))
         display(Markdown(f"**ROC-AUC:** {stats['roc_auc']}"))
@@ -205,6 +210,7 @@ def solve_with_linear_regression(
     y_pred = pipeline.predict(X)
 
     stats = {
+        "n_samples": len(y),
         "r2_score": np.round(r2_score(y, y_pred), 3),
         "mean_squared_error": np.round(mean_squared_error(y, y_pred), 3),
     }
@@ -215,6 +221,7 @@ def solve_with_linear_regression(
                 f"### Linear regression with {model_name} penalty - performance on training set"
             )
         )
+        display(Markdown(f"**Number of samples:** {stats['n_samples']}"))
         display(Markdown(f"**R² Score:** {stats['r2_score']}"))
         display(Markdown(f"**Mean Squared Error:** {stats['mean_squared_error']}"))
 
@@ -244,7 +251,7 @@ def solve_with_linear_regression(
 def show_regression_results_for_solutions(
     solutions: Dict[str, List[str]],
     df: pd.DataFrame,
-    y: Union[pd.Series, np.ndarray],
+    response: Union[pd.Series, np.ndarray],
     use_standard_scaler: bool = True,
     penalty: Literal["l1", "l2", "elasticnet"] = "l1",
     verbose: bool = True,
@@ -261,9 +268,8 @@ def show_regression_results_for_solutions(
         Feature names should correspond to column names in df.
     df : pd.DataFrame
         Feature matrix with features as columns.
-    y : Union[pd.Series, np.ndarray]
-        Response vector. Binary values {0, 1} for classification,
-        continuous values for regression.
+    response : Union[pd.Series, np.ndarray]
+        Response vector. Binary values {0, 1} for classification, continuous values for regression.
     use_standard_scaler : bool, optional
         Whether to standardize features before regression. Default is True.
     penalty : Literal["l1", "l2", "elasticnet"], optional
@@ -278,7 +284,7 @@ def show_regression_results_for_solutions(
     -------
     None
     """
-    if set(np.unique(y)).__len__() == 2:
+    if set(np.unique(response.dropna())).__len__() == 2:
         is_binary = True
     else:
         is_binary = False
@@ -291,10 +297,38 @@ def show_regression_results_for_solutions(
                 use_markdown=use_markdown,
                 header=2,
             )
+            myprint(
+                f"- {len(features)} features: {features}",
+                use_markdown=use_markdown,
+            )
+
+        df_filtered = df[features].copy()
+        df_filtered["response"] = response
+        df_filtered = df_filtered.dropna()
+        y_filtered = df_filtered.pop("response")
+
+        # check missing value ratio and sample size
+        nan_ratio = df[features].isna().sum().sum() / (
+            len(df[features]) * len(features)
+        )
+
+        if nan_ratio > MAX_ALLOWED_NAN_RATIO:
+            myprint(
+                msg=f"**Cannot run classical regression for {component}.** NAN_RATIO is {nan_ratio}, which is greater than the allowed ratio {MAX_ALLOWED_NAN_RATIO}.",
+                use_markdown=use_markdown,
+            )
+            continue
+
+        if df_filtered.shape[0] < MIN_ALLOWED_SAMPLES:
+            myprint(
+                msg=f"**Cannot run classical regression for {component}.** After removing NaNs, only {df_filtered.shape[0]} samples are left (at least {MIN_ALLOWED_SAMPLES} are required).",
+                use_markdown=use_markdown,
+            )
+            continue
 
         if use_standard_scaler:
             scaler = StandardScaler()
-            df[features] = scaler.fit_transform(df[features])
+            df_filtered[features] = scaler.fit_transform(df_filtered[features])
 
             if verbose:
                 myprint(
@@ -304,15 +338,15 @@ def show_regression_results_for_solutions(
 
         if is_binary:
             stats[component] = solve_with_logistic_regression(
-                X=df[features],
-                y=y,
+                X=df_filtered[features],
+                y=y_filtered,
                 penalty=penalty,
                 verbose=verbose,
             )
         else:
             stats[component] = solve_with_linear_regression(
-                X=df[features],
-                y=y,
+                X=df_filtered[features],
+                y=y_filtered,
                 penalty=penalty,
                 verbose=verbose,
             )
@@ -322,6 +356,13 @@ def show_regression_results_for_solutions(
     # get the stats as data frame
     # each entry is a column in the data frame
     metrics_df = pd.DataFrame.from_dict(stats, orient="index")
+
+    if metrics_df.empty:
+        myprint(
+            msg="No regression results to display.",
+            use_markdown=use_markdown,
+        )
+        return
 
     if is_binary:
         myprint(
