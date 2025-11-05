@@ -9,7 +9,6 @@ setup(
     packages=find_packages(),
     install_requires=[
         "numpy>=1.23.0",
-        "scipy>=1.10.0",
         "pandas>=2.0.0,<3.0.0",
         "torch>=2.0.0,<3.0.0",
         "plotly>=5.15.0",
