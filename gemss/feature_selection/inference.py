@@ -295,7 +295,6 @@ class BayesianFeatureSelector:
         self,
         z: torch.Tensor,
         lambda_jaccard: float = 10.0,
-        threshold: float = 1e-3,
     ) -> torch.Tensor:
         """
         Compute ELBO with regularization using average Jaccard similarity between supports.
@@ -307,9 +306,6 @@ class BayesianFeatureSelector:
         lambda_jaccard : float, optional
             Strength of regularization penalty (penalizes overlap between supports).
             Default is 10.0.
-        threshold : float, optional
-            Threshold for considering a feature active (nonzero).
-            Default is 1e-3.
 
         Returns
         -------
@@ -319,12 +315,9 @@ class BayesianFeatureSelector:
         sigmoid_coeff = 100.0  # Steepness parameter for sigmoid
         batch_size = z.shape[0]
 
-        # Compute supports: binary mask of nonzero features ... nondifferentiable
-        # support_mask = (torch.abs(z) > threshold).float()  # [batch_size, n_features]
-
         # Compute soft supports using sigmoid for differentiability
         support_mask = torch.sigmoid(
-            sigmoid_coeff * (torch.abs(z) - threshold)
+            sigmoid_coeff * torch.abs(z)
         )  # [batch_size, n_features]
 
         # Compute pairwise Jaccard similarities
@@ -338,6 +331,7 @@ class BayesianFeatureSelector:
                 else:
                     jaccard = torch.tensor(0.0, device=z.device)
                 jaccard_vals.append(jaccard)
+
         # Average Jaccard similarity
         if len(jaccard_vals) > 0:
             avg_jaccard = torch.stack(jaccard_vals).mean()
@@ -353,7 +347,6 @@ class BayesianFeatureSelector:
         log_callback: callable = None,
         regularize: bool = False,
         lambda_jaccard: float = 10.0,
-        regularization_threshold: float = 1e-3,
         verbose: bool = True,
     ) -> Dict[str, List[float]]:
         """
@@ -372,8 +365,6 @@ class BayesianFeatureSelector:
         lambda_jaccard : float, optional
             Regularization strength for penalty in the ELBO computation (default: 10.0). Higher values
             encourage more diverse solutions (lesser overlap). Used only if regularize=True.
-        regularization_threshold : float, optional
-            Nonzero threshold for support computation (default: 1e-3).
         verbose : bool, optional
             If True, print optimization settings and progress (default: True).
 
@@ -392,7 +383,6 @@ class BayesianFeatureSelector:
                 n_components=self.n_components,
                 regularize=regularize,
                 lambda_jaccard=lambda_jaccard,
-                regularization_threshold=regularization_threshold,
                 n_iterations=self.n_iter,
                 prior_settings={
                     "prior_name": type(self.prior).__name__,
@@ -417,7 +407,6 @@ class BayesianFeatureSelector:
                 elbo = self.elbo_regularized(
                     z,
                     lambda_jaccard=lambda_jaccard,
-                    threshold=regularization_threshold,
                 )
             else:
                 elbo = self.elbo(z)

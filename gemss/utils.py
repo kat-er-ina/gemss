@@ -280,7 +280,6 @@ def print_nice_optimization_settings(
     n_components: int,
     regularize: bool,
     lambda_jaccard: float,
-    regularization_threshold: float,
     n_iterations: int,
     prior_settings: Dict[str, Any],
 ) -> None:
@@ -295,8 +294,6 @@ def print_nice_optimization_settings(
         Whether regularization is applied.
     lambda_jaccard : float
         Regularization strength for Jaccard similarity penalty.
-    regularization_threshold : float
-        Threshold for support computation.
     n_iterations : int
         Number of optimization iterations.
     prior_settings : Dict[str, Any]
@@ -313,7 +310,6 @@ def print_nice_optimization_settings(
     if regularize:
         display(Markdown("- regularization parameters:"))
         display(Markdown(f"  - Jaccard penalization: {lambda_jaccard}"))
-        display(Markdown(f"  - threshold for support: {regularization_threshold}"))
     else:
         display(Markdown("- no regularization"))
 
