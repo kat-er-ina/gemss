@@ -44,6 +44,7 @@ class ConfigurationManager:
         "N_GENERATING_SOLUTIONS",
         "SPARSITY",
         "NOISE_STD",
+        "NAN_RATIO",
         "BINARIZE",
         "BINARY_RESPONSE_RATIO",
         "DATASET_SEED",
@@ -77,6 +78,7 @@ class ConfigurationManager:
         "N_GENERATING_SOLUTIONS": "Number of distinct sparse solutions ('true' supports)",
         "SPARSITY": "Number of nonzero features per solution (support size)",
         "NOISE_STD": "Standard deviation of noise added to synthetic data",
+        "NAN_RATIO": "Proportion of missing values (NaNs) in the synthetic dataset",
         "BINARIZE": "Whether to binarize the synthetic response variable",
         "BINARY_RESPONSE_RATIO": "Proportion of synthetic samples assigned label 1",
         "DATASET_SEED": "Random seed for synthetic data reproducibility",
@@ -173,6 +175,7 @@ N_FEATURES = _all_params["N_FEATURES"]
 N_GENERATING_SOLUTIONS = _all_params["N_GENERATING_SOLUTIONS"]
 SPARSITY = _all_params["SPARSITY"]
 NOISE_STD = _all_params["NOISE_STD"]
+NAN_RATIO = _all_params["NAN_RATIO"]
 BINARIZE = _all_params["BINARIZE"]
 BINARY_RESPONSE_RATIO = _all_params["BINARY_RESPONSE_RATIO"]
 DATASET_SEED = _all_params["DATASET_SEED"]

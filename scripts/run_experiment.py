@@ -56,6 +56,14 @@ def generate_dataset() -> Tuple[pd.DataFrame, Any, Dict, Dict, List[str]]:
     print("Generating dataset with:")
     print(f" - {C.N_SAMPLES} samples")
     print(f" - {C.N_FEATURES} features")
+    print(f" - noise std: {C.NOISE_STD}")
+    print(f" - ratio of missing values: {C.NAN_RATIO}")
+    if C.BINARIZE:
+        print(
+            f" - binary classification problem with {C.BINARY_RESPONSE_RATIO} ratio of positive labels"
+        )
+    else:
+        print(" - regression problem")
     print(
         f" - {C.N_GENERATING_SOLUTIONS} original solutions, each with {C.SPARSITY} supporting vectors"
     )
@@ -66,6 +74,7 @@ def generate_dataset() -> Tuple[pd.DataFrame, Any, Dict, Dict, List[str]]:
         n_solutions=C.N_GENERATING_SOLUTIONS,
         sparsity=C.SPARSITY,
         noise_data_std=C.NOISE_STD,
+        nan_ratio=C.NAN_RATIO,
         binarize=C.BINARIZE,
         binary_response_ratio=C.BINARY_RESPONSE_RATIO,
         random_seed=C.DATASET_SEED,

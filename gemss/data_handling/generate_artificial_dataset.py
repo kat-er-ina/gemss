@@ -228,6 +228,7 @@ def generate_artificial_dataset(
     n_solutions=3,
     sparsity=1,
     noise_data_std=0.01,
+    nan_ratio=0.0,
     binarize=True,
     binary_response_ratio=0.5,
     random_seed=42,
@@ -250,6 +251,8 @@ def generate_artificial_dataset(
         Number of nonzero entries per solution.
     noise_data_std : float, default=0.01
         Standard deviation of the Gaussian noise added to the features.
+    nan_ratio : float, default=0.0
+        Proportion of missing values (NaNs) to introduce randomly in the dataset.
     binarize : bool, default=True
         If True, the response variable is binary (0 or 1).
     binary_response_ratio : float, default=0.5
@@ -285,6 +288,14 @@ def generate_artificial_dataset(
         binary_response_ratio=binary_response_ratio,
         random_seed=random_seed,
     )
+
+    if nan_ratio < 0.0 or nan_ratio > 1.0:
+        raise ValueError(
+            "The ratio of missing values (nan_ratio) must be between 0.0 and 1.0"
+        )
+    elif nan_ratio > 0.0:
+        # Introduce missing values randomly
+        data = data.mask(np.random.rand(*data.shape) < nan_ratio)
 
     if print_data_overview:
         show_overview_of_generated_data(

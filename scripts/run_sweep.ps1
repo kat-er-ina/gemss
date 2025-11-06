@@ -2,35 +2,35 @@
 
 # --- Define your combinations below ---
 # Each line in $combinations:
-#   N_SAMPLES, N_FEATURES, N_GENERATING_SOLUTIONS, SPARSITY, NOISE_STD, N_CANDIDATE_SOLUTIONS, LAMBDA_JACCARD
+#   N_SAMPLES, N_FEATURES, N_GENERATING_SOLUTIONS, SPARSITY, NOISE_STD, NAN_RATIO, N_CANDIDATE_SOLUTIONS, LAMBDA_JACCARD
 $combinations = @(
-    # "30,60,3,3,0.1,6,100"
-    # "30,60,3,3,0.1,6,500"
-    # "30,60,3,3,0.1,6,1000"
-    # "40,200,3,3,0.1,8,500"
-    # "40,200,3,3,0.1,8,100"
-    # "40,200,3,3,1.0,8,500"
-    # "40,200,3,3,1.0,8,1000"
-    # "40,400,3,3,0.1,8,500"
-    # "40,600,3,3,0.1,8,500"
-    # "40,800,3,3,0.1,8,500"
-    # "40,800,3,3,0.1,12,1000"
-    # "30,60,3,2,0.5,6,100"
-    # "30,60,3,2,0.5,6,500"
-    # "40,1200,3,3,0.1,12,100",
-    # "40,1600,3,3,0.1,12,100",
-    # "40,2000,3,3,0.1,12,100"
-    #"40,800,3,3,1.0,12,100",
-    "40,1200,3,3,1.0,12,100",
-    "40,1600,3,3,1.0,12,100",
-    "40,2000,3,3,1.0,12,100"
-    # "30,60,3,2,0.01,6,100"
-    # "30,60,3,2,0.1,6,100"
-    # "40,400,3,4,0.01,6,100"
-    # "40,400,3,4,0.01,10,500"
-    # "50,200,3,5,0.01,6,500"
-    # "50,200,3,5,0.01,12,500"
-    # "50,200,3,5,0.1,12,500"
+    # "30,60,3,3,0.1,0.0,6,100"
+    # "30,60,3,3,0.1,0.0,6,500"
+    # "30,60,3,3,0.1,0.0,6,1000"
+    # "40,200,3,3,0.1,0.0,8,500"
+    # "40,200,3,3,0.1,0.0,8,100"
+    # "40,200,3,3,1.0,0.0,8,500"
+    # "40,200,3,3,1.0,0.0,8,1000"
+    # "40,400,3,3,0.1,0.0,8,500"
+    # "40,600,3,3,0.1,0.0,8,500"
+    # "40,800,3,3,0.1,0.0,8,500"
+    # "40,800,3,3,0.1,0.0,12,1000"
+    # "30,60,3,2,0.5,0.0,6,100"
+    # "30,60,3,2,0.5,0.0,6,500"
+    # "40,1200,3,3,0.1,0.0,12,100",
+    # "40,1600,3,3,0.1,0.0,12,100",
+    # "40,2000,3,3,0.1,0.0,12,100"
+    #"40,800,3,3,1.0,0.0,12,100",
+    "40,1200,3,3,1.0,0.0,12,100",
+    "40,1600,3,3,1.0,0.0,12,100",
+    "40,2000,3,3,1.0,0.0,12,100"
+    # "30,60,3,2,0.01,0.0,6,100"
+    # "30,60,3,2,0.1,0.0,6,100"
+    # "40,400,3,4,0.01,0.0,6,100"
+    # "40,400,3,4,0.01,0.0,10,500"
+    # "50,200,3,5,0.01,0.0,6,500"
+    # "50,200,3,5,0.01,0.0,12,500"
+    # "50,200,3,5,0.1,0.0,12,500"
 )
 
 # --- Fixed parameters for the algorithm ---
@@ -91,10 +91,11 @@ foreach ($combo in $combinations) {
     $N_GENERATING_SOLUTIONS = $parts[2]
     $SPARSITY = $parts[3]
     $NOISE_STD = $parts[4]
-    $N_CANDIDATE_SOLUTIONS = $parts[5]
-    $LAMBDA_JACCARD = $parts[6]
+    $NAN_RATIO = $parts[5]
+    $N_CANDIDATE_SOLUTIONS = $parts[6]
+    $LAMBDA_JACCARD = $parts[7]
 
-    # DESIRED_SPARSITY and PRIOR_SPARSITY always equal SPARSITY
+    # DESIRED_SPARSITY and PRIOR_SPARSITY shall always equal SPARSITY
     $DESIRED_SPARSITY = $SPARSITY
     $PRIOR_SPARSITY = $SPARSITY
 
@@ -105,6 +106,7 @@ foreach ($combo in $combinations) {
         "N_GENERATING_SOLUTIONS" = [int]$N_GENERATING_SOLUTIONS
         "SPARSITY" = [int]$SPARSITY
         "NOISE_STD" = [double]$NOISE_STD
+        "NAN_RATIO" = [double]$NAN_RATIO
         "BINARIZE" = [bool]$BINARIZE
         "BINARY_RESPONSE_RATIO" = [double]$BINARY_RESPONSE_RATIO
         "DATASET_SEED" = [int]$DATASET_SEED
@@ -144,6 +146,7 @@ foreach ($combo in $combinations) {
     Write-Host "N_GENERATING_SOLUTIONS = $N_GENERATING_SOLUTIONS, "
     Write-Host "SPARSITY = $SPARSITY, "
     Write-Host "NOISE_STD = $NOISE_STD, "
+    Write-Host "NAN_RATIO = $NAN_RATIO, "
     Write-Host "N_CANDIDATE_SOLUTIONS = $N_CANDIDATE_SOLUTIONS, "
     Write-Host "LAMBDA_JACCARD = $LAMBDA_JACCARD"
     Write-Host "====================================================================================="
@@ -156,6 +159,7 @@ foreach ($combo in $combinations) {
         "N_GENERATING_SOLUTIONS=$N_GENERATING_SOLUTIONS"
         "SPARSITY=$SPARSITY"
         "NOISE_STD=$NOISE_STD"
+        "NAN_RATIO=$NAN_RATIO"
         "N_CANDIDATE_SOLUTIONS=$N_CANDIDATE_SOLUTIONS",
         "LAMBDA_JACCARD=$LAMBDA_JACCARD"
     ) -join "_"
