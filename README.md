@@ -440,7 +440,7 @@ The test suite automatically generates synthetic datasets with controlled missin
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.11+
 - numpy
 - pandas
 - torch

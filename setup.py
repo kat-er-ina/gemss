@@ -16,5 +16,5 @@ setup(
         "scikit-learn>=1.3.0,<2.0.0",
         "jupyter>=1.0.0,<2.0.0",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.11",
 )
