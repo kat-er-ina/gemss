@@ -7,7 +7,7 @@ This directory is where you should place your CSV datasets for analysis with GEM
 ### For Custom Datasets
 
 1. **Place your CSV file** in this directory
-2. **Open** `notebooks/explore_unknown_dataset.ipynb`
+2. **Open** `notebooks/explore_custom_dataset.ipynb`
 3. **Configure** the dataset parameters in the notebook:
    ```python
    csv_dataset_name = "your_dataset.csv"
@@ -42,7 +42,7 @@ sample_003,3.45,6.78,9.01,...,0
 
 ### Data Preprocessing
 
-The `explore_unknown_dataset.ipynb` notebook includes optional data preprocessing:
+The `explore_custom_dataset.ipynb` notebook includes optional data preprocessing:
 - **Standard scaling** of features (can be enabled/disabled)
 - **Automatic handling** of binary vs continuous targets
 - **Feature name mapping** for better interpretability
@@ -67,4 +67,4 @@ The `explore_unknown_dataset.ipynb` notebook includes optional data preprocessin
 - **Column names:** Ensure `index_column_name` and `label_column_name` match your CSV headers exactly
 - **Data types:** Features should be numerical; other variables need encoding first.
 
-For more details, see the main [README.md](../README.md) and follow the `demo.ipynb` and `explore_unknown_dataset.ipynb` notebooks.
+For more details, see the main [README.md](../README.md) and follow the `demo.ipynb` and `explore_custom_dataset.ipynb` notebooks.

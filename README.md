@@ -58,7 +58,7 @@ gemss/                      # Core package
 
 notebooks/
   demo.ipynb                     # Interactive demo with synthetic data
-  explore_unknown_dataset.ipynb  # Example with real user dataset
+  explore_custom_dataset.ipynb  # Example with real user dataset
 
 scripts/
   run_experiment.py  # Run single experiment (headless)
@@ -161,9 +161,9 @@ GEMSS provides a notebook to explore your own datasets. While basic preprocessin
 
 **Steps:**
 1. Copy your dataset in a .csv format in the `data` folder.
-2. Open the notebook `explore_unknown_dataset.ipynb` and follow its structure.
+2. Open the notebook `explore_custom_dataset.ipynb` and follow its structure.
 
-**Workflow in `explore_unknown_dataset`:**
+**Workflow in `explore_custom_dataset`:**
 1. Modify the data file name, choose the index and target value columns.
 2. Supervise data preprocessing: check out the cells output and possibly adjust parameters as desired.
 3. Adjust the algorithm hyperparameters in the notebook.
@@ -219,7 +219,7 @@ selector = BayesianFeatureSelector(
   - Performance testing and recommendations
   - Handling missing data when setting `NAN_RATIO > 0` in configuration
 
-- **Real Data Notebook (`explore_unknown_dataset.ipynb`):**
+- **Real Data Notebook (`explore_custom_dataset.ipynb`):**
   - Example workflow for user datasets
   - Parameter tuning for real-world problems
   - Best practices for unknown data exploration
@@ -432,7 +432,7 @@ The test suite automatically generates synthetic datasets with controlled missin
 - **Visualization:** Create new plots in `gemss/diagnostics/visualizations.py`
 - **Configuration:** Modify JSON files or add new parameter categories
 - **Sweep parameters:** Edit `run_sweep.ps1` for custom batch experiments
-- **Real data workflows:** Follow `explore_unknown_dataset.ipynb` as template
+- **Real data workflows:** Follow `explore_custom_dataset.ipynb` as template
 - **Testing:** Add new test cases to `tests/` directory following `test_missing_data_native.py` pattern
 - **Data preprocessing:** Extend `gemss/data_handling/data_processing.py` for custom preprocessing pipelines
 
