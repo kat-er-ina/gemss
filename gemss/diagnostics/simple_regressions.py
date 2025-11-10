@@ -7,7 +7,7 @@ Includes:
 """
 
 from IPython.display import display, Markdown
-from typing import Any, Dict, Union, List
+from typing import Any, Dict, Optional, Union, List
 import warnings
 
 import numpy as np
@@ -43,9 +43,10 @@ MIN_ALLOWED_SAMPLES = 15  # minimum number of samples to run regression
 def solve_with_logistic_regression(
     X: pd.DataFrame,
     y: pd.Series | np.ndarray,
+    use_standard_scaler: Optional[bool] = True,
     penalty: Literal["l1", "l2", "elasticnet"] = "l2",
-    verbose: bool = True,
-    show_cm_figure: bool = True,
+    verbose: Optional[bool] = True,
+    show_cm_figure: Optional[bool] = True,
 ) -> Dict[str, Any]:
     """
     Solve a logistic regression problem with the specified penalty.
@@ -56,6 +57,8 @@ def solve_with_logistic_regression(
         Feature matrix.
     y : pd.Series | np.ndarray
         Binary response vector.
+    use_standard_scaler: bool, optional
+        If true, use the Standard Scaler in the the regression pipeline. Default is True.
     penalty : str
         Type of regularization to use ("l1", "l2", or "elasticnet").
         Default is "l2".
@@ -72,20 +75,22 @@ def solve_with_logistic_regression(
     Dict[str, Any]
         Dictionary containing performance metrics and model coefficients.
     """
-    clf = make_pipeline(
-        StandardScaler(),
-        LogisticRegressionCV(
-            Cs=10,
-            cv=5,
-            penalty=penalty,
-            solver="saga",
-            scoring="roc_auc",
-            max_iter=2000,
-            random_state=42,
-            refit=True,
-            class_weight="balanced",
-        ),
+    model = LogisticRegressionCV(
+        Cs=10,
+        cv=5,
+        penalty=penalty,
+        solver="saga",
+        scoring="roc_auc",
+        max_iter=2000,
+        random_state=42,
+        refit=True,
+        class_weight="balanced",
     )
+
+    if use_standard_scaler:
+        clf = make_pipeline(StandardScaler(), model)
+    else:
+        clf = make_pipeline(model)
 
     # Solve the full problem
     # Ignore warnings about convergence for this demo
@@ -156,9 +161,10 @@ def solve_with_logistic_regression(
 def solve_with_linear_regression(
     X: pd.DataFrame,
     y: pd.Series | np.ndarray,
+    use_standard_scaler: Optional[bool] = True,
     penalty: Literal["l1", "l2", "elasticnet"] = "l2",
-    verbose: bool = True,
-    illustrate_predicted_vs_actual: bool = False,
+    verbose: Optional[bool] = True,
+    illustrate_predicted_vs_actual: Optional[bool] = False,
 ) -> Dict[str, Any]:
     """
     Solve a linear regression problem with the specified penalty.
@@ -169,6 +175,8 @@ def solve_with_linear_regression(
         Feature matrix.
     y : pd.Series | np.ndarray
         Continuous response vector.
+    use_standard_scaler: bool, optional
+        If true, use the Standard Scaler in the the regression pipeline. Default is True.
     penalty : str
         Type of regularization to use ("l1", "l2", or "elasticnet").
         Default is "l2".
@@ -198,7 +206,10 @@ def solve_with_linear_regression(
     else:
         raise ValueError("Penalty must be 'l1', 'l2', or 'elasticnet'.")
 
-    pipeline = make_pipeline(StandardScaler(), model)
+    if use_standard_scaler:
+        pipeline = make_pipeline(StandardScaler(), model)
+    else:
+        pipeline = make_pipeline(model)
 
     # Fit the model
     with warnings.catch_warnings():
@@ -252,10 +263,10 @@ def show_regression_results_for_solutions(
     solutions: Dict[str, List[str]],
     df: pd.DataFrame,
     response: Union[pd.Series, np.ndarray],
-    use_standard_scaler: bool = True,
+    use_standard_scaler: Optional[bool] = True,
     penalty: Literal["l1", "l2", "elasticnet"] = "l1",
-    verbose: bool = True,
-    use_markdown: bool = True,
+    verbose: Optional[bool] = True,
+    use_markdown: Optional[bool] = True,
 ) -> None:
     """
     Show regression results for each solution using the identified features. Based on the type
@@ -326,20 +337,11 @@ def show_regression_results_for_solutions(
             )
             continue
 
-        if use_standard_scaler:
-            scaler = StandardScaler()
-            df_filtered[features] = scaler.fit_transform(df_filtered[features])
-
-            if verbose:
-                myprint(
-                    msg=f"- Features standardized using StandardScaler.",
-                    use_markdown=use_markdown,
-                )
-
         if is_binary:
             stats[component] = solve_with_logistic_regression(
                 X=df_filtered[features],
                 y=y_filtered,
+                use_standard_scaler=use_standard_scaler,
                 penalty=penalty,
                 verbose=verbose,
             )
@@ -347,6 +349,7 @@ def show_regression_results_for_solutions(
             stats[component] = solve_with_linear_regression(
                 X=df_filtered[features],
                 y=y_filtered,
+                use_standard_scaler=use_standard_scaler,
                 penalty=penalty,
                 verbose=verbose,
             )
