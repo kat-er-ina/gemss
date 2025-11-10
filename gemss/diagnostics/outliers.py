@@ -90,7 +90,7 @@ def detect_outlier_features(
     """
     # Input validation
     if threshold_coeff <= 0:
-        raise ValueError("Threshold coefficient must be positive")
+        raise ValueError("Threshold coefficient must be positive.")
 
     # Early return for empty data
     if values.empty:
@@ -241,14 +241,15 @@ def show_outlier_info(
     return None
 
 
-def get_outlier_summary_from_history(
+def get_outlier_solutions(
     history: Dict[str, List[Any]],
     use_medians_for_outliers: Optional[bool] = False,
     outlier_threshold_coeff: Optional[float] = 3.0,
     original_feature_names_mapping: Optional[Dict[str, str]] = None,
-) -> pd.DataFrame:
+) -> Dict[str, pd.DataFrame]:
     """
-    Compute the outliers features from the optimization history and summarize the results across all components.
+    Compute the outliers features from the optimization history and summarize the results
+    across all components.
 
     Parameters:
     -----------
@@ -263,10 +264,11 @@ def get_outlier_summary_from_history(
 
     Returns:
     --------
-    pd.DataFrame
-        A DataFrame summarizing outlier features across all components.
-        Each column corresponds to a component and contains formatted outlier info.
+    Dict[str, pd.DataFrame]
+        A dictionary where each key is a component identifier (e.g., "component_0")
+        and each value is a DataFrame containing outlier features for that component.
     """
+
     if "mu" not in history or not history["mu"]:
         raise KeyError("'mu' key not found in history or history['mu'] is empty")
 
@@ -293,7 +295,43 @@ def get_outlier_summary_from_history(
         component_df = get_outlier_info_df(outlier_info_dict, component)
 
         if not component_df.empty:
-            outlier_dataframes[f"Component {component} outliers"] = component_df
+            outlier_dataframes[f"component_{component}"] = component_df
+
+    return outlier_dataframes
+
+
+def get_outlier_summary_from_history(
+    history: Dict[str, List[Any]],
+    use_medians_for_outliers: Optional[bool] = False,
+    outlier_threshold_coeff: Optional[float] = 3.0,
+    original_feature_names_mapping: Optional[Dict[str, str]] = None,
+) -> pd.DataFrame:
+    """
+    Compute the outliers features from the optimization history and return a summary DataFrame.
+
+    Parameters:
+    -----------
+    history : Dict[str, List[Any]]
+        The optimization history containing 'mu' values.
+    use_medians_for_outliers : bool, optional
+        Whether to use medians for outlier detection. Default is False.
+    outlier_threshold_coeff : float, optional
+        The threshold coefficient for outlier detection. Default is 3.0.
+    original_feature_names_mapping : Optional[Dict[str, str]], optional
+        Mapping from feature indices to original names. Default is None.
+
+    Returns:
+    --------
+    pd.DataFrame
+        A DataFrame summarizing outlier features across all components.
+        Each column corresponds to a component and contains formatted outlier info.
+    """
+    outlier_dataframes = get_outlier_solutions(
+        history=history,
+        use_medians_for_outliers=use_medians_for_outliers,
+        outlier_threshold_coeff=outlier_threshold_coeff,
+        original_feature_names_mapping=original_feature_names_mapping,
+    )
 
     # Create summary using the utility function
     if outlier_dataframes:

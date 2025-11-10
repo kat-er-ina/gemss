@@ -22,25 +22,21 @@ from gemss.diagnostics.simple_regressions import (
 from gemss.diagnostics.outliers import (
     detect_outlier_features,
     show_outlier_info,
-    show_outlier_features_by_component,
+    get_outlier_solutions,
 )
 
 
-def recover_solutions(
+def get_full_solutions(
     search_history: Dict[str, List[Any]],
     desired_sparsity: int,
     min_mu_threshold: Optional[float] = 1e-6,
-    verbose: Optional[bool] = True,
     original_feature_names_mapping: Optional[Dict[str, str]] = None,
-    use_markdown: Optional[bool] = True,
 ) -> Tuple[
-    Dict[str, List[str]],
-    Dict[str, Union[np.ndarray, int]],
     Dict[str, pd.DataFrame],
+    Dict[str, Union[np.ndarray, int]],
 ]:
     """
-    Recover solutions from the optimization history by identifying features that
-    have significant mean values (mu) in the final iterations.
+    Recover full non-zero solutions and the corresponding final parameters from the optimization history.
 
     Parameters
     ----------
@@ -48,51 +44,26 @@ def recover_solutions(
         The history of the optimization process containing 'mu', 'var', and 'alpha'.
         Expected keys: 'mu', 'var', 'alpha' with values as lists of arrays.
         'mu' should have shape [n_iterations, n_components, n_features].
-    desired_sparsity : int
-        The number of most important features to identify for each component.
-        Must be positive.
     min_mu_threshold : float, optional
         The threshold for considering a feature as important based on its absolute mu value.
         Default is 1e-6.
-    verbose : bool, optional
-        Whether to print detailed information about the recovered solutions. Default is True.
     original_feature_names_mapping : Optional[Dict[str, str]], optional
         A mapping from internal feature names (e.g., 'feature_0') to original feature names.
         If provided, the recovered features will be displayed using the original names.
         Default is None.
-    use_markdown : bool, optional
-        Whether to format the output using Markdown. Default is True.
 
     Returns
     -------
-    Tuple[Dict[str, List[str]], Dict[str, Union[np.ndarray, int]], Dict[str, pd.DataFrame]]
+    Tuple[
+        Dict[str, pd.DataFrame],
+        Dict[str, Union[np.ndarray, int]],
+    ]
         A tuple containing:
-        - solutions: Dictionary mapping each component (solution) to its identified features.
+        - full_solutions: Dictionary mapping each component to a DataFrame of all features
+          that exceeded the min_mu_threshold, with columns ['Feature', 'Mu value'].
         - final_parameters: Dictionary with keys 'final iteration', 'final mu', 'final var', 'final alpha'
           containing the final parameters for each component at the iteration where features were selected.
-        - full_nonzero_solutions: Dictionary mapping each component to a DataFrame of all features
-          that exceeded the min_mu_threshold, with columns ['Feature', 'Mu value'].
-
-    Raises
-    ------
-    ValueError
-        If desired_sparsity is not positive.
-    KeyError
-        If search_history is missing required keys ('mu', 'var', 'alpha').
-
-    Notes
-    -----
-    This function displays markdown output as a side effect when verbose=True.
     """
-    # Input validation
-    if (desired_sparsity <= 0) or (not isinstance(desired_sparsity, int)):
-        raise ValueError("Desired_sparsity must be a positive integer.")
-
-    required_keys = {"mu", "var", "alpha"}
-    if not required_keys.issubset(search_history.keys()):
-        missing_keys = required_keys - set(search_history.keys())
-        raise KeyError(f"Search_history missing required keys: {missing_keys}")
-
     n_components = len(search_history["mu"][0])
     n_features = len(search_history["mu"][0][0])
 
@@ -104,9 +75,7 @@ def recover_solutions(
 
     # A dictionary to store the solutions found for each component
     # all features with mu > min_mu_threshold in last iterations
-    full_nonzero_solutions = {}
-    # top 'desired_sparsity' features for each component
-    solutions = {}
+    full_solutions = {}
 
     # In cases when all features converge to zero at the end, we want to look at those that
     # zero out the latest. So, we set up the threshold and get at least
@@ -128,44 +97,25 @@ def recover_solutions(
                 if abs(mu_traj[j]) > min_mu_threshold
             ]
             i += 1
-        if verbose:
-            myprint(
-                msg=f"Component {k}:",
-                use_markdown=use_markdown,
-                header=2,
-            )
-            myprint(
-                msg=f"- Last {desired_sparsity}+ features with absolute value greater than {min_mu_threshold}:",
-                use_markdown=use_markdown,
-            )
+
         # Organize these features by their absolute mu values
         if original_feature_names_mapping is not None:
             feature_names = [original_feature_names_mapping[f] for f in features]
         else:
             feature_names = features
-        top_features = pd.DataFrame(
+        df_features = pd.DataFrame(
             {
                 "Feature": feature_names,
                 "Mu value": [mu_traj[int(f.split("_")[1])] for f in features],
             }
         )
-        top_features["absolute_mu"] = np.abs(top_features["Mu value"])
-        top_features = (
-            top_features.sort_values(by="absolute_mu", ascending=False)
+        df_features["absolute_mu"] = np.abs(df_features["Mu value"])
+        df_features = (
+            df_features.sort_values(by="absolute_mu", ascending=False)
             .drop(columns=["absolute_mu"])
             .reset_index(drop=True)
         )
-        full_nonzero_solutions[f"component_{k}"] = top_features
-        if verbose:
-            if use_markdown:
-                display(top_features[["Feature", "Mu value"]])
-            else:
-                print(top_features[["Feature", "Mu value"]])
-
-        # Take the top 'desired_sparsity' features according to their absolute mu values
-        # and discard the rest
-        top_features = top_features.head(desired_sparsity)
-        features = top_features["Feature"].tolist()
+        full_solutions[f"component_{k}"] = df_features
 
         # Store the final parameters for this component at the iteration where features were selected
         final_iteration[k] = -(i - 1)
@@ -173,9 +123,7 @@ def recover_solutions(
         final_var[k] = np.array(search_history["var"])[final_iteration[k], k, :]
         final_alpha[k] = np.array(search_history["alpha"])[final_iteration[k], k]
 
-        # Store the features found for this component
-        solutions[f"component_{k}"] = features
-
+    # Get the final parameters
     final_parameters = {
         "final iteration": final_iteration,  # the iteration from which the final parameters are taken
         "final mu": final_mu,
@@ -183,9 +131,173 @@ def recover_solutions(
         "final alpha": final_alpha,
     }
     return (
-        solutions,
+        full_solutions,
         final_parameters,
-        full_nonzero_solutions,
+    )
+
+
+def get_top_solutions(
+    full_solutions: Dict[str, pd.DataFrame],
+    top_n: int,
+) -> Dict[str, pd.DataFrame]:
+    """
+    Extract the top few features from full non-zero solutions based on their mu values.
+
+    Parameters:
+    -----------
+    full_solutions: Dict[str, pd.DataFrame]
+        A dictionary where each key is a component identifier and each value is a DataFrame
+        of features and their mu values in a column named 'Mu value'.
+    top_n: int
+        The number of top features to extract based on their absolute mu values.
+
+    Returns:
+    --------
+    Dict[str, pd.DataFrame]
+        A dictionary mapping each component to its DataFrame of top features.
+    """
+    top_solutions = {}
+    for component, df in full_solutions.items():
+        df_copy = df.copy()
+        df_copy["abs_mu"] = df_copy["Mu value"].abs()
+        df_copy = (
+            df_copy.sort_values(by="abs_mu", ascending=False)
+            .drop(columns=["abs_mu"])
+            .reset_index(drop=True)
+        )
+        top_solutions[component] = df_copy.head(top_n)
+
+    return top_solutions
+
+
+def get_features_from_solutions(
+    solutions: Dict[str, pd.DataFrame],
+) -> Dict[str, List[float]]:
+    """
+    Extract the lists of features of a given set of solutions.
+
+    Parameters:
+    -----------
+    solutions: Dict[str, pd.DataFrame]
+        A dictionary where each key is a component identifier and each value is a DataFrame
+        of features (in columns named 'Feature') and their mu values.
+
+    Returns:
+    --------
+    Dict[str, List[float]]
+        A dictionary mapping each component to the corresponding list of features.
+    """
+    feature_lists = {}
+    for component, df in solutions.items():
+        feature_lists[component] = df["Feature"].tolist()
+    return feature_lists
+
+
+def recover_solutions(
+    search_history: Dict[str, List[Any]],
+    desired_sparsity: int,
+    min_mu_threshold: Optional[float] = 1e-6,
+    use_median_for_outlier_detection: Optional[bool] = False,
+    outlier_deviation_thresholds: Optional[List[float]] = [2.5, 3.5],
+    original_feature_names_mapping: Optional[Dict[str, str]] = None,
+) -> Tuple[
+    Dict[str, pd.DataFrame],
+    Dict[str, pd.DataFrame],
+    Dict[str, Dict[str, pd.DataFrame]],
+    Dict[str, Union[np.ndarray, int]],
+]:
+    """
+    Recover solutions from the optimization history by identifying features that
+    have significant mean values (mu) in the final iterations.
+
+    Parameters
+    ----------
+    search_history : Dict[str, List[Any]]
+        The history of the optimization process containing 'mu', 'var', and 'alpha'.
+        Expected keys: 'mu', 'var', 'alpha' with values as lists of arrays.
+        'mu' should have shape [n_iterations, n_components, n_features].
+    desired_sparsity : int
+        The number of most important features to identify for each component.
+        Must be positive.
+    min_mu_threshold : float, optional
+        The threshold for considering a feature as important based on its absolute mu value.
+        Default is 1e-6.
+    use_median_for_outlier_detection: bool, optional
+        If True, use median and MAD for outlier detection; otherwise, use mean and STD.
+        Default is False, i.e. use mean and STD.
+    outlier_deviation_thresholds : List[float], optional
+        A list of deviation thresholds to use for outlier detection. Default is [2.0, 2.5, 3.0].
+    original_feature_names_mapping : Optional[Dict[str, str]], optional
+        A mapping from internal feature names (e.g., 'feature_0') to original feature names.
+        If provided, the recovered features will be displayed using the original names.
+        Default is None.
+
+    Returns
+    -------
+    Tuple[
+        Dict[str, pd.DataFrame],
+        Dict[str, pd.DataFrame],
+        Dict[str, Dict[str, pd.DataFrame]],
+        Dict[str, Union[np.ndarray, int]],
+    ]
+        A tuple containing:
+        - full_solutions: Dictionary mapping each component to a DataFrame of all features
+          that exceeded the min_mu_threshold, with columns ['Feature', 'Mu value'].
+        - top_solutions: Dictionary mapping each component (solution) to a DataFrame of the top few features
+          based on their |mu| values. The DataFrames contain columns ['Feature', 'Mu value'].
+        - outlier_solutions: A dictionary where the keys are MAD/STD values for outlier detection
+          and the corresponding values are dictionaries mapping each component to a DataFrame
+          of outlier features.
+        - final_parameters: Dictionary with keys 'final iteration', 'final mu', 'final var', 'final alpha'
+          containing the final parameters for each component at the iteration where features were selected.
+
+    Raises
+    ------
+    ValueError
+        If desired_sparsity is not positive.
+    KeyError
+        If search_history is missing required keys ('mu', 'var', 'alpha').
+    """
+    # Input validation
+    if (desired_sparsity <= 0) or (not isinstance(desired_sparsity, int)):
+        raise ValueError("Desired_sparsity must be a positive integer.")
+
+    required_keys = {"mu", "var", "alpha"}
+    if not required_keys.issubset(search_history.keys()):
+        missing_keys = required_keys - set(search_history.keys())
+        raise KeyError(f"Search_history missing required keys: {missing_keys}")
+
+    # Get the full solutions
+    full_solutions, final_parameters = get_full_solutions(
+        search_history=search_history,
+        desired_sparsity=desired_sparsity,
+        min_mu_threshold=min_mu_threshold,
+        original_feature_names_mapping=original_feature_names_mapping,
+    )
+
+    # Get the solutions with top 'desired_sparsity' features for each component
+    top_solutions = get_top_solutions(full_solutions, desired_sparsity)
+
+    # Get the outlier solutions
+    if use_median_for_outlier_detection:
+        std_or_mad = "MAD"
+    else:
+        std_or_mad = "STD"
+
+    outlier_solutions = {}
+    for deviation in outlier_deviation_thresholds:
+        outlier_solutions[f"{std_or_mad}_{deviation}"] = get_outlier_solutions(
+            history=search_history,
+            use_medians_for_outliers=use_median_for_outlier_detection,
+            outlier_threshold_coeff=deviation,
+            original_feature_names_mapping=original_feature_names_mapping,
+        )
+
+    return (
+        full_solutions,
+        top_solutions,
+        outlier_solutions,
+        final_parameters,
     )
 
 
@@ -430,11 +542,12 @@ def show_unique_features_from_full_solutions(
     use_markdown : bool, optional
         Whether to format the output using Markdown. Default is True.
     """
-    solutions = get_features_from_long_solutions(solutions)
-    return show_unique_features(
+    solutions = get_features_from_solutions(solutions)
+    show_unique_features(
         solutions=solutions,
         use_markdown=use_markdown,
     )
+    return
 
 
 def show_features_in_solutions(

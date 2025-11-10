@@ -68,7 +68,12 @@ class ConfigurationManager:
         "LEARNING_RATE",
     }
 
-    POSTPROCESSING_PARAMS = {"DESIRED_SPARSITY", "MIN_MU_THRESHOLD"}
+    POSTPROCESSING_PARAMS = {
+        "DESIRED_SPARSITY",
+        "MIN_MU_THRESHOLD",
+        "USE_MEDIAN_FOR_OUTLIER_DETECTION",
+        "OUTLIER_DEVIATION_THRESHOLDS",
+    }
 
     # Parameter descriptions for display
     PARAM_DESCRIPTIONS = {
@@ -101,6 +106,8 @@ class ConfigurationManager:
         # Postprocessing
         "DESIRED_SPARSITY": "Desired number of features in final solution",
         "MIN_MU_THRESHOLD": "Minimum mu threshold for feature selection",
+        "USE_MEDIAN_FOR_OUTLIER_DETECTION": "Whether to use median and MAD or mean and STD when selecting features by outlier detection",
+        "OUTLIER_DEVIATION_THRESHOLDS": "A list of thresholding values of either MAD or STD to be used to define outliers",
     }
 
     def __init__(self):
@@ -200,6 +207,8 @@ LEARNING_RATE = _all_params["LEARNING_RATE"]
 # Postprocessing parameters
 DESIRED_SPARSITY = _all_params["DESIRED_SPARSITY"]
 MIN_MU_THRESHOLD = _all_params["MIN_MU_THRESHOLD"]
+USE_MEDIAN_FOR_OUTLIER_DETECTION = _all_params["USE_MEDIAN_FOR_OUTLIER_DETECTION"]
+OUTLIER_DEVIATION_THRESHOLDS = _all_params["OUTLIER_DEVIATION_THRESHOLDS"]
 
 
 def check_sparsities(artificial_dataset: bool = True) -> None:
