@@ -4,33 +4,12 @@
 # Each line in $combinations:
 #   N_SAMPLES, N_FEATURES, N_GENERATING_SOLUTIONS, SPARSITY, NOISE_STD, NAN_RATIO, N_CANDIDATE_SOLUTIONS, LAMBDA_JACCARD
 $combinations = @(
-    # "30,60,3,3,0.1,0.0,6,100"
-    # "30,60,3,3,0.1,0.0,6,500"
-    # "30,60,3,3,0.1,0.0,6,1000"
-    # "40,200,3,3,0.1,0.0,8,500"
-    # "40,200,3,3,0.1,0.0,8,100"
-    # "40,200,3,3,1.0,0.0,8,500"
-    # "40,200,3,3,1.0,0.0,8,1000"
-    # "40,400,3,3,0.1,0.0,8,500"
-    # "40,600,3,3,0.1,0.0,8,500"
-    # "40,800,3,3,0.1,0.0,8,500"
-    # "40,800,3,3,0.1,0.0,12,1000"
-    # "30,60,3,2,0.5,0.0,6,100"
-    # "30,60,3,2,0.5,0.0,6,500"
-    # "40,1200,3,3,0.1,0.0,12,100",
-    # "40,1600,3,3,0.1,0.0,12,100",
-    # "40,2000,3,3,0.1,0.0,12,100"
-    #"40,800,3,3,1.0,0.0,12,100",
-    "40,1200,3,3,1.0,0.0,12,100",
-    "40,1600,3,3,1.0,0.0,12,100",
-    "40,2000,3,3,1.0,0.0,12,100"
-    # "30,60,3,2,0.01,0.0,6,100"
-    # "30,60,3,2,0.1,0.0,6,100"
-    # "40,400,3,4,0.01,0.0,6,100"
-    # "40,400,3,4,0.01,0.0,10,500"
-    # "50,200,3,5,0.01,0.0,6,500"
-    # "50,200,3,5,0.01,0.0,12,500"
-    # "50,200,3,5,0.1,0.0,12,500"
+    "30,60,3,3,0.1,0.0,6,500",
+    "30,60,3,2,0.5,0.0,6,500",
+    "40,200,3,3,0.1,0.0,8,500",
+    "40,1200,3,3,0.1,0.0,8,500",
+    "50,200,3,5,0.1,0.0,10,500",
+    "200,200,3,5,0.1,0.0,6,500",
 )
 
 # --- Fixed parameters for the algorithm ---
@@ -48,9 +27,12 @@ $LEARNING_RATE = 0.002
 $MIN_MU_THRESHOLD = 0.2
 $BINARIZE = $true
 $BINARY_RESPONSE_RATIO = 0.5
+$DATASET_SEED = 42 # Seed for generating the artificial dataset
+$SAMPLE_MORE_PRIORS_COEFF = 1.0  # Coefficient for sampling more priors
 
-# Seed for generating the artificial dataset
-$DATASET_SEED = 42
+
+$USE_MEDIAN_FOR_OUTLIER_DETECTION = $false
+$OUTLIER_DEVIATION_THRESHOLDS = @(2.0, 2.5, 3.0)
 
 # --- Get paths from Python constants ---
 $pythonCmd = @"
@@ -83,7 +65,9 @@ if (-not (Test-Path $resultsDir)) {
 }
 Write-Host "Results will be saved in: $resultsDir"
 
+$iteration_counter = 0
 foreach ($combo in $combinations) {
+    $iteration_counter = $iteration_counter + 1
     if ([string]::IsNullOrWhiteSpace($combo)) { continue }
     $parts = $combo.Split(",")
     $N_SAMPLES = $parts[0]
@@ -129,6 +113,7 @@ foreach ($combo in $combinations) {
         "BATCH_SIZE" = [int]$BATCH_SIZE
         "LEARNING_RATE" = [double]$LEARNING_RATE
         "PRIOR_SPARSITY" = [int]$PRIOR_SPARSITY
+        "SAMPLE_MORE_PRIORS_COEFF" = [double]$SAMPLE_MORE_PRIORS_COEFF
     } | ConvertTo-Json -Depth 2
     Set-Content -Path $ALG_JSON -Value $algJsonContent
 
@@ -136,11 +121,13 @@ foreach ($combo in $combinations) {
     $postJsonContent = @{
         "DESIRED_SPARSITY" = [int]$DESIRED_SPARSITY
         "MIN_MU_THRESHOLD" = [double]$MIN_MU_THRESHOLD
+        "USE_MEDIAN_FOR_OUTLIER_DETECTION" = [bool]$USE_MEDIAN_FOR_OUTLIER_DETECTION
+        "OUTLIER_DEVIATION_THRESHOLDS" = $OUTLIER_DEVIATION_THRESHOLDS
     } | ConvertTo-Json -Depth 2
     Set-Content -Path $POST_JSON -Value $postJsonContent
 
-    Write-Host "====================================================================================="
-    Write-Host "Running experiment with:"
+    Write-Host "\n=====================================================================================\n"
+    Write-Host "Running experiment $iteration_counter of $($combinations.Count):"
     Write-Host "N_SAMPLES = $N_SAMPLES, "
     Write-Host "N_FEATURES = $N_FEATURES, "
     Write-Host "N_GENERATING_SOLUTIONS = $N_GENERATING_SOLUTIONS, "
@@ -149,6 +136,7 @@ foreach ($combo in $combinations) {
     Write-Host "NAN_RATIO = $NAN_RATIO, "
     Write-Host "N_CANDIDATE_SOLUTIONS = $N_CANDIDATE_SOLUTIONS, "
     Write-Host "LAMBDA_JACCARD = $LAMBDA_JACCARD"
+    Write-Host "DATASET_SEED = $DATASET_SEED"
     Write-Host "====================================================================================="
 
     # Compose output file name with param settings and timestamp:
@@ -161,7 +149,8 @@ foreach ($combo in $combinations) {
         "NOISE_STD=$NOISE_STD"
         "NAN_RATIO=$NAN_RATIO"
         "N_CANDIDATE_SOLUTIONS=$N_CANDIDATE_SOLUTIONS",
-        "LAMBDA_JACCARD=$LAMBDA_JACCARD"
+        "LAMBDA_JACCARD=$LAMBDA_JACCARD",
+        "DATASET_SEED=$DATASET_SEED"
     ) -join "_"
     $output_file = "${resultsDir}\experiment_output_${timestamp}_${combo_named}.txt"
 

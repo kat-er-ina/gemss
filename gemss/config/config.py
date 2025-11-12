@@ -92,7 +92,7 @@ class ConfigurationManager:
         "N_ITER": "Number of optimization iterations",
         "PRIOR_TYPE": "Prior type ('ss', 'sss', or 'student')",
         "PRIOR_SPARSITY": "Expected number of nonzero features per component. Used only in 'sss' prior",
-        "SAMPLE_MORE_PRIORS_COEFF": "Coefficient for increased support sampling",
+        "SAMPLE_MORE_PRIORS_COEFF": "Coefficient for increased support sampling. Experimental use only.",
         "STUDENT_DF": "Degrees of freedom for the Student-t prior",
         "STUDENT_SCALE": "Scale parameter for the Student-t prior",
         "VAR_SLAB": "Variance of the 'slab' component in the 'ss' or 'sss' prior",
