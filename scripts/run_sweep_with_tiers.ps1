@@ -1,38 +1,70 @@
-# PowerShell script for running predefined experiment sweeps (Windows compatible)
-
-# --- Define your combinations below ---
-# Each line in $combinations:
-#   N_SAMPLES, N_FEATURES, N_GENERATING_SOLUTIONS, SPARSITY, NOISE_STD, NAN_RATIO, N_CANDIDATE_SOLUTIONS, LAMBDA_JACCARD
-$combinations = @(
-    "30,60,3,3,0.1,0.0,6,500",      # Small scale, sparsity=3
-    "30,60,3,2,0.5,0.0,6,500",      # Same but sparsity=2, higher noise
-    "40,200,3,3,0.1,0.0,8,500",     # More features
-    "40,1200,3,3,0.1,0.0,8,500",    # High-dimensional
-    "50,200,3,5,0.1,0.0,10,500",    # Higher sparsity
-    "200,200,3,5,0.1,0.0,6,500",    # n ≈ p scenario
+# PowerShell script for running predefined experiment sweeps with tier support (Windows compatible)
+param(
+    [Parameter(Mandatory=$true)]
+    [string]$tier,
+    [string]$parametersFile = "experiment_parameters.json"
 )
 
-# --- Fixed parameters for the algorithm ---
-$N_ITER = 4000
-$PRIOR_TYPE = "sss"
-$STUDENT_DF = 1
-$STUDENT_SCALE = 1.0
-$VAR_SLAB = 100.0
-$VAR_SPIKE = 0.1
-$WEIGHT_SLAB = 0.9
-$WEIGHT_SPIKE = 0.1
-$IS_REGULARIZED = $true
-$BATCH_SIZE = 16
-$LEARNING_RATE = 0.002
-$MIN_MU_THRESHOLD = 0.2
-$BINARIZE = $true
-$BINARY_RESPONSE_RATIO = 0.5
-$DATASET_SEED = 42 # Seed for generating the artificial dataset
-$SAMPLE_MORE_PRIORS_COEFF = 1.0  # Coefficient for sampling more priors
+# --- Load experiment parameters ---
+if (-not (Test-Path $parametersFile)) {
+    Write-Error "Parameters file '$parametersFile' not found. Please ensure the file exists in the current directory."
+    exit 1
+}
 
+Write-Host "Loading experiment parameters from: $parametersFile"
+$experimentData = Get-Content $parametersFile -Raw | ConvertFrom-Json
 
-$USE_MEDIAN_FOR_OUTLIER_DETECTION = $false
-$OUTLIER_DEVIATION_THRESHOLDS = @(2.0, 2.5, 3.0)
+# Validate tier selection
+$tierKey = "tier$tier"
+if (-not $experimentData.tiers.PSObject.Properties.Name -contains $tierKey) {
+    $availableTiers = $experimentData.tiers.PSObject.Properties.Name -join ", "
+    Write-Error "Invalid tier '$tier'. Available tiers: $availableTiers"
+    exit 1
+}
+
+$selectedTier = $experimentData.tiers.$tierKey
+$combinations = $selectedTier.combinations
+$algorithmParams = $selectedTier.algorithm_parameters
+$fixedParams = $experimentData.fixed_parameters
+
+Write-Host "Selected Tier: $tier"
+Write-Host "Tier Name: $($selectedTier.name)"
+Write-Host "Description: $($selectedTier.description)"
+Write-Host "Number of combinations: $($combinations.Count)"
+Write-Host "Parameter format: $($experimentData.parameter_format)"
+Write-Host "Response type: $(if ($algorithmParams.BINARIZE) { 'Binary Classification' } else { 'Regression' })"
+Write-Host ""
+
+# --- Load algorithm parameters from tier configuration ---
+$N_ITER = $algorithmParams.N_ITER
+$PRIOR_TYPE = $algorithmParams.PRIOR_TYPE
+$STUDENT_DF = $algorithmParams.STUDENT_DF
+$STUDENT_SCALE = $algorithmParams.STUDENT_SCALE
+$VAR_SLAB = $algorithmParams.VAR_SLAB
+$VAR_SPIKE = $algorithmParams.VAR_SPIKE
+$WEIGHT_SLAB = $algorithmParams.WEIGHT_SLAB
+$WEIGHT_SPIKE = $algorithmParams.WEIGHT_SPIKE
+$IS_REGULARIZED = $algorithmParams.IS_REGULARIZED
+$BATCH_SIZE = $algorithmParams.BATCH_SIZE
+$LEARNING_RATE = $algorithmParams.LEARNING_RATE
+$MIN_MU_THRESHOLD = $algorithmParams.MIN_MU_THRESHOLD
+$BINARIZE = $algorithmParams.BINARIZE
+$BINARY_RESPONSE_RATIO = $algorithmParams.BINARY_RESPONSE_RATIO
+
+# --- Load fixed parameters ---
+$DATASET_SEED = $fixedParams.DATASET_SEED
+$SAMPLE_MORE_PRIORS_COEFF = $fixedParams.SAMPLE_MORE_PRIORS_COEFF
+$USE_MEDIAN_FOR_OUTLIER_DETECTION = $fixedParams.USE_MEDIAN_FOR_OUTLIER_DETECTION
+$OUTLIER_DEVIATION_THRESHOLDS = $fixedParams.OUTLIER_DEVIATION_THRESHOLDS
+
+Write-Host "Algorithm Parameters for Tier $tier :"
+Write-Host " - N_ITER: $N_ITER"
+Write-Host " - PRIOR_TYPE: $PRIOR_TYPE" 
+Write-Host " - BINARIZE: $BINARIZE"
+Write-Host " - LEARNING_RATE: $LEARNING_RATE"
+Write-Host " - BATCH_SIZE: $BATCH_SIZE"
+Write-Host " - IS_REGULARIZED: $IS_REGULARIZED"
+Write-Host ""
 
 # --- Get paths from Python constants ---
 $pythonCmd = @"
@@ -59,11 +91,11 @@ $RUN_SCRIPT = "run_experiment.py"
 
 # --- Ensure results directory exists ---
 $currentDir = Get-Location
-$resultsDir = Join-Path $currentDir "results"
-if (-not (Test-Path $resultsDir)) {
-    New-Item -ItemType Directory -Path $resultsDir | Out-Null
+$tierResultsDir = Join-Path (Join-Path $currentDir "results") "tier$tier"
+if (-not (Test-Path $tierResultsDir)) {
+    New-Item -ItemType Directory -Path $tierResultsDir -Force | Out-Null
 }
-Write-Host "Results will be saved in: $resultsDir"
+Write-Host "Results will be saved in: $tierResultsDir"
 
 $iteration_counter = 0
 foreach ($combo in $combinations) {
@@ -126,8 +158,8 @@ foreach ($combo in $combinations) {
     } | ConvertTo-Json -Depth 2
     Set-Content -Path $POST_JSON -Value $postJsonContent
 
-    Write-Host "\n=====================================================================================\n"
-    Write-Host "Running experiment $iteration_counter of $($combinations.Count):"
+    Write-Host "`n=====================================================================================`n"
+    Write-Host "Running experiment $iteration_counter of $($combinations.Count) for Tier $tier :"
     Write-Host "N_SAMPLES = $N_SAMPLES, "
     Write-Host "N_FEATURES = $N_FEATURES, "
     Write-Host "N_GENERATING_SOLUTIONS = $N_GENERATING_SOLUTIONS, "
@@ -136,12 +168,15 @@ foreach ($combo in $combinations) {
     Write-Host "NAN_RATIO = $NAN_RATIO, "
     Write-Host "N_CANDIDATE_SOLUTIONS = $N_CANDIDATE_SOLUTIONS, "
     Write-Host "LAMBDA_JACCARD = $LAMBDA_JACCARD"
+    Write-Host "BINARIZE = $BINARIZE"
     Write-Host "DATASET_SEED = $DATASET_SEED"
     Write-Host "====================================================================================="
 
     # Compose output file name with param settings and timestamp:
-    $timestamp = (Get-Date -Format "yyyyMMdd_HHmm")
+    $timestamp = (Get-Date -Format "yyyy-MM-dd-HHmm")
+    $responseType = if ($BINARIZE) { "BINARY" } else { "REGRESSION" }
     $combo_named = @(
+        "TIER=$tier"
         "N_SAMPLES=$N_SAMPLES"
         "N_FEATURES=$N_FEATURES"
         "N_GENERATING_SOLUTIONS=$N_GENERATING_SOLUTIONS"
@@ -150,11 +185,17 @@ foreach ($combo in $combinations) {
         "NAN_RATIO=$NAN_RATIO"
         "N_CANDIDATE_SOLUTIONS=$N_CANDIDATE_SOLUTIONS",
         "LAMBDA_JACCARD=$LAMBDA_JACCARD",
+        "TYPE=$responseType",
         "DATASET_SEED=$DATASET_SEED"
     ) -join "_"
-    $output_file = "${resultsDir}\experiment_output_${timestamp}_${combo_named}.txt"
+    $output_file = "${tierResultsDir}\experiment_output_${timestamp}_${combo_named}.txt"
 
     python $RUN_SCRIPT --output $output_file
 }
 Write-Host "====================================================================================="
-Write-Host "All predefined experiments finished. Check the results/ directory for outputs."
+Write-Host "All Tier $tier experiments finished. Check the results/tier$tier/ directory for outputs."
+Write-Host "Tier summary:"
+Write-Host " - Name: $($selectedTier.name)"
+Write-Host " - Total experiments: $($combinations.Count)"
+Write-Host " - Response type: $(if ($BINARIZE) { 'Binary Classification' } else { 'Regression' })"
+Write-Host " - Algorithm: N_ITER=$N_ITER, LR=$LEARNING_RATE, BATCH=$BATCH_SIZE"

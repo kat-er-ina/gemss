@@ -1,0 +1,188 @@
+{
+  "tiers": {
+    "tier1": {
+      "name": "Comprehensive Small-Scale Validation",
+      "description": "Extended proof of concept and algorithm verification on primary use case",
+      "algorithm_parameters": {
+        "N_ITER": 4000,
+        "PRIOR_TYPE": "sss",
+        "STUDENT_DF": 1,
+        "STUDENT_SCALE": 1.0,
+        "VAR_SLAB": 100.0,
+        "VAR_SPIKE": 0.1,
+        "WEIGHT_SLAB": 0.9,
+        "WEIGHT_SPIKE": 0.1,
+        "IS_REGULARIZED": true,
+        "BATCH_SIZE": 16,
+        "LEARNING_RATE": 0.002,
+        "MIN_MU_THRESHOLD": 0.2,
+        "BINARIZE": true,
+        "BINARY_RESPONSE_RATIO": 0.5
+      },
+      "combinations": [
+        "20,100,3,3,0.1,0.0,6,500",
+        "50,200,3,5,0.1,0.0,6,500",
+        "100,500,3,5,0.1,0.0,6,500",
+        "100,1000,3,5,0.1,0.0,8,500",
+        "100,100,3,5,0.1,0.0,6,500"
+      ]
+    },
+    "tier2": {
+      "name": "Extreme High-Dimensional Stress Test (Realistic Biomedical Scale)",
+      "description": "Ultra-high-dimensional scenarios with ultra-sparse signal detection. Typical omics/biomedical scenarios.",
+      "algorithm_parameters": {
+        "N_ITER": 4000,
+        "PRIOR_TYPE": "sss",
+        "STUDENT_DF": 1,
+        "STUDENT_SCALE": 1.0,
+        "VAR_SLAB": 100.0,
+        "VAR_SPIKE": 0.1,
+        "WEIGHT_SLAB": 0.9,
+        "WEIGHT_SPIKE": 0.1,
+        "IS_REGULARIZED": true,
+        "BATCH_SIZE": 16,
+        "LEARNING_RATE": 0.002,
+        "MIN_MU_THRESHOLD": 0.2,
+        "BINARIZE": true,
+        "BINARY_RESPONSE_RATIO": 0.5
+      },
+      "combinations": [
+        "20,1000,3,3,0.1,0.0,10,500",
+        "40,1000,3,3,0.1,0.0,10,500",
+        "40,2000,3,5,0.1,0.0,10,500",
+        "100,4000,3,10,0.1,0.0,10,500",
+        "100,10000,3,10,0.1,0.0,10,500"
+      ]
+    },
+    "tier3": {
+      "name": "Sample-Rich Scenarios",
+      "description": "Traditional ML problems where n ≥ p or n ~ p",
+      "algorithm_parameters": {
+        "N_ITER": 4000,
+        "PRIOR_TYPE": "sss",
+        "STUDENT_DF": 1,
+        "STUDENT_SCALE": 1.0,
+        "VAR_SLAB": 100.0,
+        "VAR_SPIKE": 0.1,
+        "WEIGHT_SLAB": 0.9,
+        "WEIGHT_SPIKE": 0.1,
+        "IS_REGULARIZED": true,
+        "BATCH_SIZE": 16,
+        "LEARNING_RATE": 0.002,
+        "MIN_MU_THRESHOLD": 0.2,
+        "BINARIZE": true,
+        "BINARY_RESPONSE_RATIO": 0.5
+      },
+      "combinations": [
+        "60,40,3,2,0.1,0.0,6,500",
+        "250,100,3,3,0.1,0.0,6,500",
+        "500,500,3,3,0.1,0.0,10,500",
+        "1000,1000,3,5,0.1,0.0,10,500",
+        "2000,2000,3,5,0.1,0.0,10,500"
+      ]
+    },
+    "tier4": {
+      "name": "Robustness Under Adversity",
+      "description": "Algorithm stability with data quality challenges",
+      "algorithm_parameters": {
+        "N_ITER": 4000,
+        "PRIOR_TYPE": "sss",
+        "STUDENT_DF": 1,
+        "STUDENT_SCALE": 1.0,
+        "VAR_SLAB": 100.0,
+        "VAR_SPIKE": 0.1,
+        "WEIGHT_SLAB": 0.9,
+        "WEIGHT_SPIKE": 0.1,
+        "IS_REGULARIZED": true,
+        "BATCH_SIZE": 16,
+        "LEARNING_RATE": 0.002,
+        "MIN_MU_THRESHOLD": 0.2,
+        "BINARIZE": true,
+        "BINARY_RESPONSE_RATIO": 0.5
+      },
+      "combinations": [
+        "100,200,3,3,0.1,0.0,6,500",
+        "100,200,3,3,1.0,0.0,6,500",
+        "100,200,3,3,0.5,0.5,6,500",
+        "100,200,3,3,0.1,0.75,6,500",
+        "100,200,3,3,0.1,0.5,6,500"
+      ]
+    },
+    "tier5": {
+      "name": "Effect of Jaccard Penalty",
+      "description": "Investigate the effect of regularization on diversity of candidate feature sets and thus coverage of solutions",
+      "algorithm_parameters": {
+        "N_ITER": 4000,
+        "PRIOR_TYPE": "sss",
+        "STUDENT_DF": 1,
+        "STUDENT_SCALE": 1.0,
+        "VAR_SLAB": 100.0,
+        "VAR_SPIKE": 0.1,
+        "WEIGHT_SLAB": 0.9,
+        "WEIGHT_SPIKE": 0.1,
+        "IS_REGULARIZED": true,
+        "BATCH_SIZE": 16,
+        "LEARNING_RATE": 0.002,
+        "MIN_MU_THRESHOLD": 0.2,
+        "BINARIZE": true,
+        "BINARY_RESPONSE_RATIO": 0.5
+      },
+      "combinations": [
+        "100,200,3,3,0.1,0.0,6,0",
+        "100,200,3,3,0.1,0.0,6,500",
+        "100,200,3,3,0.1,0.0,6,1000",
+        "100,200,3,3,0.1,0.0,6,5000"
+      ]
+    },
+    "tier6": {
+      "name": "Regression Validation (Parsimonious)",
+      "description": "Regression scenarios covering key aspects with reduced scope",
+      "algorithm_parameters": {
+        "N_ITER": 4000,
+        "PRIOR_TYPE": "sss",
+        "STUDENT_DF": 1,
+        "STUDENT_SCALE": 1.0,
+        "VAR_SLAB": 100.0,
+        "VAR_SPIKE": 0.1,
+        "WEIGHT_SLAB": 0.9,
+        "WEIGHT_SPIKE": 0.1,
+        "IS_REGULARIZED": true,
+        "BATCH_SIZE": 16,
+        "LEARNING_RATE": 0.002,
+        "MIN_MU_THRESHOLD": 0.2,
+        "BINARIZE": false,
+        "BINARY_RESPONSE_RATIO": 0.5
+      },
+      "combinations": [
+        "20,100,3,3,0.1,0.0,6,500",
+        "50,200,3,5,0.1,0.0,6,500",
+        "100,500,3,5,0.1,0.0,6,500",
+        "100,1000,3,5,0.1,0.0,8,500",
+        "100,100,3,5,0.1,0.0,6,500"
+      ]
+    }
+  },
+  "parameter_format": "N_SAMPLES,N_FEATURES,N_GENERATING_SOLUTIONS,SPARSITY,NOISE_STD,NAN_RATIO,N_CANDIDATE_SOLUTIONS,LAMBDA_JACCARD",
+  "fixed_parameters": {
+    "DATASET_SEED": 42,
+    "SAMPLE_MORE_PRIORS_COEFF": 1.0,
+    "USE_MEDIAN_FOR_OUTLIER_DETECTION": false,
+    "OUTLIER_DEVIATION_THRESHOLDS": [2.0, 2.5, 3.0]
+  },
+  "notes": {
+    "version": "5-tier shortened design",
+    "total_experiments": 25,
+    "selection_criteria": "Representative combinations covering key parameter ranges and research questions per tier",
+    "tier1_focus": "Progressive scale increase covering n≈p to n<<p with varying sparsity",
+    "tier2_focus": "Core biomedical scenarios from moderate to extreme high-dimensional cases",
+    "tier3_focus": "Sample-rich scenarios from n>>p to n=p covering traditional ML regime",
+    "tier4_focus": "Clean baseline, high noise, high missing data, extreme missing data, combined stress",
+    "tier5_focus": "Jaccard penalty effects from none (0) to extreme (5000) with intermediate values",
+    "design_principles": [
+      "Each tier addresses specific research question",
+      "Representative coverage of parameter space",
+      "Focus on ultra-sparse signals (2-20 features)",
+      "Binary classification throughout"
+    ]
+  }
+}

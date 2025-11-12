@@ -61,8 +61,12 @@ notebooks/
   explore_custom_dataset.ipynb  # Example with real user dataset
 
 scripts/
-  run_experiment.py  # Run single experiment (headless)
-  run_sweep.ps1      # PowerShell sweep script for batch experiments
+  run_experiment.py         # Run single experiment (headless)
+  run_sweep.ps1            # PowerShell sweep script for batch experiments
+  run_tiers.ps1            # PowerShell script for tiered experimental runs
+  run_sweep_with_tiers.ps1 # Internal script for tier-based parameter sweeps
+  experiment_parameters.json       # Full experimental parameter definitions
+  experiment_parameters_short.json # Shortened tiers for quick testing
 
 tests/
   test_missing_data_native.py  # Comprehensive test suite for missing data handling
@@ -137,21 +141,6 @@ The configuration system (`gemss.config`) provides:
      python scripts/run_experiment.py --output my_results.txt
      ```
    - Results are saved in the `results/` directory.
-
----
-
-### Batch Experiments (Parameter Sweep)
-
-- **On Windows:** Use the PowerShell script:
-   ```powershell
-   .\run_sweep.ps1
-   ```
-   - The script will:
-     - Iterate over each parameter combination (see `$combinations` in the script).
-     - Overwrite the JSON config files for each run.
-     - Call `run_experiment.py` and save output in `results/` with filenames including all parameter values.
-
-- **On Linux/macOS:** Adapt the logic from `run_sweep.ps1` to a Bash script as needed.
 
 ---
 
@@ -396,9 +385,9 @@ The sweep scripts automatically update the JSON configuration files:
 
 ---
 
-## Testing
+## Performance diagnostics
 
-The repository includes basic tests to validate functionalities, in particular the handling of missing data.
+The repository includes basic diagnostic tests to validate functionalities, in particular the handling of missing data.
 
 ### Running Tests:
 ```bash
@@ -435,6 +424,57 @@ The test suite automatically generates synthetic datasets with controlled missin
 - **Real data workflows:** Follow `explore_custom_dataset.ipynb` as template
 - **Testing:** Add new test cases to `tests/` directory following `test_missing_data_native.py` pattern
 - **Data preprocessing:** Extend `gemss/data_handling/data_processing.py` for custom preprocessing pipelines
+
+---
+
+## Experiments on Artificial Data
+
+GEMSS supports systematic testing of algorithm performance through tiered experiments with comprehensive logging and result tracking.
+
+**Basic Parameter Sweep:**
+- **On Windows:** Use the PowerShell script:
+   ```powershell
+   .\run_sweep.ps1
+   ```
+   - The script will:
+     - Iterate over each parameter combination (see `$combinations` in the script).
+     - Overwrite the JSON config files for each run.
+     - Call `run_experiment.py` and save output in `results/` with filenames including all parameter values.
+
+**Tiered Experimental Setup:**
+For systematic evaluation across multiple experimental conditions:
+   ```powershell
+   # Run all available experimental tiers
+   .\run_tiers.ps1
+   
+   # Run specific tiers only
+   .\run_tiers.ps1 -tiers @("1", "2", "3")
+   
+   # Use custom parameters file
+   .\run_tiers.ps1 -parametersFile "experiment_parameters_short.json"
+   ```
+
+The tiered system provides:
+- **Structured parameter exploration** across multiple experimental conditions
+- **Sequential execution** with comprehensive logging for each tier
+- **Progress tracking** with execution summaries and timing statistics  
+- **Error handling** and failure reporting for robust batch processing
+- **Flexible tier selection** for targeted experimental runs
+- **Detailed logs** saved in `results/logs/` directory for analysis
+
+> **Note:** The tiered experiments described here are designed for algorithm validation and benchmarking on artificial datasets. They are **not** intended for hyperparameter optimization. Each tier tests the algorithm's robustness, accuracy, and stability under different synthetic data scenarios, not for tuning model parameters for best performance.
+
+**Experimental Tiers:**
+- **Tier 1: Comprehensive Small-Scale Validation** - Extended proof of concept and algorithm verification (20-150 samples, 100-1000 features)
+- **Tier 2: Realistic Biomedical Scale** - Typical omics/biomedical scenarios representing the primary use case (50-200 samples, 1000-10000 features)
+- **Tier 3: Extreme High-Dimensional Stress Test** - Ultra-high-dimensional scenarios with ultra-sparse signal detection (30-300 samples, 10000-100000 features)
+- **Tier 4: Sample-Rich Scenarios** - Traditional ML problems where n ≥ p (500-5000 samples, 100-2000 features)
+- **Tier 5: Robustness Under Adversity** - Algorithm stability with data quality challenges (noise levels 0.1-2.0, missing data 0-50%)
+- **Tier 6: Regression Validation** - Regression scenarios covering key aspects with reduced scope (continuous response variables)
+
+Each tier represents a different experimental condition (e.g., different noise levels, feature counts, or algorithm parameters) defined in the parameters JSON file.
+
+- **On Linux/macOS:** Adapt the logic from `run_sweep.ps1` and `run_tiers.ps1` to Bash scripts as needed.
 
 ---
 
