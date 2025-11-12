@@ -72,9 +72,6 @@ def get_solution_summary_df(
     Convert a dictionary of DataFrames into a summary DataFrame where each column
     corresponds to a key and contains values from the specified column.
 
-    This is a generalized function that can be used for both long solutions
-    and outlier summaries.
-
     Parameters
     ----------
     data_dict : Dict[str, pd.DataFrame]
@@ -346,3 +343,116 @@ def print_nice_optimization_settings(
         display(Markdown(f" - {key.lower()}: {value}"))
 
     return
+
+
+def dataframe_to_ascii_table(
+    df: pd.DataFrame,
+    title: Optional[str] = None,
+    max_col_width: Optional[int] = None,
+    precision: int = 3,
+) -> List[str]:
+    """
+    Convert a pandas DataFrame to a nicely formatted ASCII table using | and _.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The DataFrame to convert to ASCII table format.
+    title : str, optional
+        Optional title to display above the table. Default is None.
+    max_col_width : int, optional
+        Maximum width for any column. Long content will be truncated if specified.
+        If None, columns will be sized to fit their content without truncation. Default is None.
+    precision : int, optional
+        Number of decimal places for floating point numbers. Default is 3.
+
+    Returns
+    -------
+    List[str]
+        List of strings representing each line of the ASCII table.
+    """
+    import numpy as np
+
+    if df.empty:
+        lines = []
+        if title:
+            lines.append(title)
+            lines.append("")
+        lines.append("No data to display.")
+        return lines
+
+    # Format the data with proper precision for floats
+    formatted_df = df.copy()
+    for col in df.columns:
+        if df[col].dtype in ["float64", "float32"]:
+            formatted_df[col] = df[col].apply(
+                lambda x: f"{x:.{precision}f}" if pd.notnull(x) else ""
+            )
+        else:
+            formatted_df[col] = df[col].astype(str)
+
+    # Prepare column data
+    columns = ["Index"] + list(formatted_df.columns)
+    rows_data = []
+
+    # Add index and data rows
+    for idx, row in formatted_df.iterrows():
+        row_data = [str(idx)] + [str(val) for val in row.values]
+        rows_data.append(row_data)
+
+    # Calculate column widths
+    col_widths = []
+    for i, col in enumerate(columns):
+        # Start with column header width
+        max_width = len(col)
+        # Check all data in this column
+        for row_data in rows_data:
+            if i < len(row_data):
+                max_width = max(max_width, len(str(row_data[i])))
+        # Apply maximum width constraint only if specified
+        if max_col_width is not None:
+            col_widths.append(min(max_width, max_col_width))
+        else:
+            col_widths.append(max_width)
+
+    # Truncate content that's too long (only if max_col_width is specified)
+    def truncate_content(content: str, width: int) -> str:
+        if max_col_width is None or len(content) <= width:
+            return content
+        return content[: width - 3] + "..."
+
+    # Build the table
+    lines = []
+
+    # Add title if provided
+    if title:
+        lines.append(title)
+        lines.append("=" * len(title))
+        lines.append("")
+
+    # Create header row
+    header_parts = []
+    for i, col in enumerate(columns):
+        truncated_col = truncate_content(col, col_widths[i])
+        header_parts.append(truncated_col.ljust(col_widths[i]))
+    lines.append("| " + " | ".join(header_parts) + " |")
+
+    # Create separator row
+    separator_parts = []
+    for width in col_widths:
+        separator_parts.append("_" * width)
+    lines.append("| " + " | ".join(separator_parts) + " |")
+
+    # Create data rows
+    for row_data in rows_data:
+        row_parts = []
+        for i, width in enumerate(col_widths):
+            if i < len(row_data):
+                content = str(row_data[i])
+                truncated_content = truncate_content(content, width)
+                row_parts.append(truncated_content.ljust(width))
+            else:
+                row_parts.append(" " * width)
+        lines.append("| " + " | ".join(row_parts) + " |")
+
+    return lines

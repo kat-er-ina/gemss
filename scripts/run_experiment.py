@@ -30,7 +30,9 @@ from gemss.diagnostics.result_postprocessing import (
     get_features_from_solutions,
     get_unique_features,
 )
+from gemss.diagnostics.simple_regressions import solve_any_regression
 from gemss.diagnostics.performance_tests import run_performance_diagnostics
+from gemss.utils import dataframe_to_ascii_table, get_solution_summary_df
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -259,13 +261,13 @@ def format_parameters_section() -> List[str]:
     return lines
 
 
-def format_feature_summary(
+def format_feature_discovery_overview(
     solution_type: str,
     feature_analysis: Tuple[Set, Set, Set],
     true_support_features: List[str],
 ) -> List[str]:
     """
-    Format the feature discovery summary for any solution type.
+    Format the overview of discovered and missed features in a set of candidate solution.
 
     Parameters
     ----------
@@ -285,7 +287,7 @@ def format_feature_summary(
     features_found, missing_features, extra_features = feature_analysis
 
     lines = [
-        f"\n## Summary of discovered features for {solution_type.upper()} solutions:\n"
+        f"\n## Overview of discovered features for {solution_type.upper()} solutions:\n"
     ]
     lines.append(f" - {len(true_support_features)} unique true support features:")
     lines.append(f"   {sorted(true_support_features)}\n")
@@ -333,10 +335,12 @@ def format_solution_type_header(
     elif solution_type == "top":
         lines.append(f"Required sparsity = {C.DESIRED_SPARSITY}\n")
     elif "outlier" in solution_type:
-        lines.append(f"\n## {solution_label} Solutions\n")
-        lines.append(
-            " Features identified as outliers based on statistical deviation.\n"
+        devtype = (
+            "standard deviation"
+            if "STD" in solution_label
+            else "median absolute deviation" if "MAD" in solution_label else "deviation"
         )
+        lines.append(f"Features identified as outliers based on {devtype}.\n")
     return lines
 
 
@@ -539,19 +543,44 @@ def main() -> None:
             solutions, true_support_features
         )  # [found, missing, extra]
         output_lines.extend(format_solution_type_header(solution_type))
+        # Overview of discovered and missed features
         output_lines.extend(
-            format_feature_summary(
+            format_feature_discovery_overview(
                 solution_type,
                 feature_discovery_analysis[solution_type],
                 true_support_features,
             )
         )
+        # Detailed features in components
+        summary_df = get_solution_summary_df(solutions)
         output_lines.extend(
-            format_features_in_components(
-                solutions,
+            dataframe_to_ascii_table(
+                summary_df,
+                title=f"\n\nOverview of {solution_type.upper()} solutions",
             )
         )
 
+        # Get regression results and convert them to ASCII table
+        metrics_df = solve_any_regression(
+            solutions=solutions,
+            df=df,
+            response=y,
+            use_standard_scaler=True,
+            penalty="l2",
+            verbose=False,
+            use_markdown=False,
+        )
+
+        # Convert to ASCII table and add lines
+        output_lines.extend(
+            dataframe_to_ascii_table(
+                metrics_df,
+                title=(
+                    f"\n\nRegression results on training data (l2 penalty)"
+                    + "\n================================================"
+                ),
+            )
+        )
         output_lines.append(
             "\n----------------------------------------------------------------------\n"
         )
