@@ -464,12 +464,13 @@ def solve_any_regression(
             len(df[features]) * len(features)
         )
 
-        if nan_ratio > MAX_ALLOWED_NAN_RATIO:
-            myprint(
-                msg=f"**Cannot run classical regression for {component}.** NAN_RATIO is {nan_ratio}, which is greater than the allowed ratio {MAX_ALLOWED_NAN_RATIO}.",
-                use_markdown=use_markdown,
-            )
-            continue
+        # FIXME: nan_ratio is in range 0 to 100 for some components
+        # if nan_ratio > MAX_ALLOWED_NAN_RATIO:
+        #     myprint(
+        #         msg=f"**Cannot run classical regression for {component}.** NAN_RATIO is {nan_ratio}, which is greater than the allowed ratio {MAX_ALLOWED_NAN_RATIO}.",
+        #         use_markdown=use_markdown,
+        #     )
+        #     continue
 
         if df_filtered.shape[0] < MIN_ALLOWED_SAMPLES:
             myprint(

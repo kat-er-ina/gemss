@@ -3,7 +3,8 @@
 
 ## Fixes
 
-- **sparsity gap test** - an essential fix before release: overly pessimistic results, might require major changes
+- **sparsity gap test** - an essential fix before release: overly pessimistic results, might require major changes.
+- **nan_ratio check in regression computations** - nan_ratio is sometimes in range 0 to 100 (instead of 0 - 1) for some components but it is not clear why.
 
 ---
 
@@ -25,6 +26,8 @@
 
 ## Additions
 
+### Postprocessing : analysis of variance
+- Add some analysis of explained variance in data by candidate solutions.
 
 ### Experiment design
 
