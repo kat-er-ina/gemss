@@ -23,6 +23,7 @@ from sklearn.metrics import (
     mean_squared_error,
     r2_score,
     confusion_matrix,
+    precision_score,
 )
 from sklearn.linear_model import LogisticRegressionCV, RidgeCV, LassoCV, ElasticNetCV
 from sklearn.exceptions import ConvergenceWarning
@@ -40,12 +41,87 @@ MAX_ALLOWED_NAN_RATIO = 0.5  # maximum proportion of missing values to run regre
 MIN_ALLOWED_SAMPLES = 15  # minimum number of samples to run regression
 
 
+def print_verbose_logistic_regression_results(
+    stats: Dict[str, Any],
+    penalty: str,
+    confusion_matrix: np.ndarray,
+    show_cm_figure: bool = True,
+) -> None:
+    """
+    Print detailed logistic regression results in a formatted display.
+
+    Parameters
+    ----------
+    stats : dict
+        Dictionary containing regression statistics with keys:
+        - 'n_samples': Number of samples
+        - 'class_distribution': Proportion of each class
+        - 'accuracy': Classification accuracy
+        - 'balanced_accuracy': Balanced classification accuracy
+        - 'roc_auc': ROC-AUC score
+        - 'f1_score': F1 score
+        - 'precision_class_0': Precision for class 0
+        - 'precision_class_1': Precision for class 1
+        - 'recall_class_0': Recall for class 0
+        - 'recall_class_1': Recall for class 1
+        - 'nonzero_coefficients': Series of non-zero model coefficients
+    penalty : str
+        Type of regularization penalty used ('l1', 'l2', or 'elasticnet')
+    confusion_matrix : np.ndarray
+        2x2 confusion matrix from sklearn.metrics.confusion_matrix
+    show_cm_figure : bool, optional
+        Whether to display confusion matrix as interactive figure using Plotly.
+        If False, displays as plain text. Default is True.
+
+    Returns
+    -------
+    None
+    """
+
+    display(
+        Markdown(
+            f"### Logistic regression with {penalty.upper()} penalty - performance on training set"
+        )
+    )
+    display(Markdown(f"**Number of samples:** {stats['n_samples']}"))
+    display(
+        Markdown(
+            f"**Class distribution (0/1):** {stats['class_distribution']['class_0']:.1%} / {stats['class_distribution']['class_1']:.1%}"
+        )
+    )
+    display(Markdown(f"**Accuracy:** {stats['accuracy']}"))
+    display(Markdown(f"**Balanced Accuracy:** {stats['balanced_accuracy']}"))
+    display(Markdown(f"**ROC-AUC:** {stats['roc_auc']}"))
+    display(Markdown(f"**Balanced F1 Score:** {stats['f1_score']}"))
+    display(
+        Markdown(
+            f"**Precision (class 0/1):** {stats['precision_class_0']} / {stats['precision_class_1']}"
+        )
+    )
+    display(
+        Markdown(
+            f"**Recall (class 0/1):** {stats['recall_class_0']} / {stats['recall_class_1']}"
+        )
+    )
+
+    display(Markdown("**Coefficients of the logistic regression model:**"))
+    display(stats["nonzero_coefficients"])
+
+    if show_cm_figure:
+        # Show confusion matrix using Plotly
+        show_confusion_matrix(confusion_matrix=confusion_matrix)
+    else:
+        display(Markdown("**Confusion Matrix:**"))
+        display(confusion_matrix)
+    return
+
+
 def solve_with_logistic_regression(
     X: pd.DataFrame,
     y: pd.Series | np.ndarray,
-    use_standard_scaler: Optional[bool] = True,
+    use_standard_scaler: Optional[bool] = False,
     penalty: Literal["l1", "l2", "elasticnet"] = "l2",
-    verbose: Optional[bool] = True,
+    verbose: Optional[bool] = False,
     show_cm_figure: Optional[bool] = True,
 ) -> Dict[str, Any]:
     """
@@ -58,7 +134,7 @@ def solve_with_logistic_regression(
     y : pd.Series | np.ndarray
         Binary response vector.
     use_standard_scaler: bool, optional
-        If true, use the Standard Scaler in the the regression pipeline. Default is True.
+        If True, use the Standard Scaler in the regression pipeline. Default is False.
     penalty : str
         Type of regularization to use ("l1", "l2", or "elasticnet").
         Default is "l2".
@@ -102,60 +178,113 @@ def solve_with_logistic_regression(
     # Predictions and evaluation
     y_pred = clf.predict(X)
     y_pred_prob = clf.predict_proba(X)[:, 1]
+    cm = confusion_matrix(y, y_pred)
 
-    stats = {
-        "accuracy": np.round(accuracy_score(y, y_pred), 3),
-        "balanced_accuracy": np.round(balanced_accuracy_score(y, y_pred), 3),
-        "roc_auc": np.round(roc_auc_score(y, y_pred_prob), 3),
-        "f1_score": np.round(f1_score(y, y_pred, average="weighted"), 3),
-        "recall_class_0": np.round(
-            np.sum((y_pred == 0) & (y == 0)) / np.sum(y == 0), 3
-        ),
-        "recall_class_1": np.round(
-            np.sum((y_pred == 1) & (y == 1)) / np.sum(y == 1), 3
-        ),
-        "n_samples": len(y),
-    }
-
-    # Print results
-    if verbose:
-        display(
-            Markdown(
-                f"### Logistic regression with {penalty.upper()} penalty - performance on training set"
-            )
-        )
-        display(Markdown(f"**Number of samples:** {stats['n_samples']}"))
-        display(Markdown(f"**Accuracy:** {stats['accuracy']}"))
-        display(Markdown(f"**Balanced Accuracy:** {stats['balanced_accuracy']}"))
-        display(Markdown(f"**ROC-AUC:** {stats['roc_auc']}"))
-        display(Markdown(f"**Balanced F1 Score:** {stats['f1_score']}"))
-        display(Markdown(f"**Recall on class 0:** {stats['recall_class_0']}"))
-        display(Markdown(f"**Recall on class 1:** {stats['recall_class_1']}"))
-
-        display(Markdown("**Coefficients of the logistic regression model:**"))
-
+    # identify nonzero coefficients
     coefficients = (
         pd.Series(clf.named_steps["logisticregressioncv"].coef_[0], index=X.columns)
         .rename("Coefficient")
         .sort_values(ascending=False)
     )
     coefficients = coefficients[coefficients != 0].sort_values(ascending=False)
-    stats["n_nonzero_coefficients"] = len(coefficients)
-    stats["nonzero_coefficients"] = coefficients
 
-    if verbose:
-        display(stats["nonzero_coefficients"])
+    stats = {
+        "n_samples": len(y),
+        "class_distribution": {
+            "class_0": np.round(np.sum(y == 0) / len(y), 3),
+            "class_1": np.round(np.sum(y == 1) / len(y), 3),
+        },
+        "accuracy": np.round(accuracy_score(y, y_pred), 3),
+        "balanced_accuracy": np.round(balanced_accuracy_score(y, y_pred), 3),
+        "roc_auc": np.round(roc_auc_score(y, y_pred_prob), 3),
+        "f1_score": np.round(f1_score(y, y_pred, average="weighted"), 3),
+        "precision_class_0": np.round(
+            precision_score(y, y_pred, pos_label=0, zero_division=0), 3
+        ),
+        "precision_class_1": np.round(
+            precision_score(y, y_pred, pos_label=1, zero_division=0), 3
+        ),
+        "recall_class_0": np.round(
+            np.sum((y_pred == 0) & (y == 0)) / np.sum(y == 0), 3
+        ),
+        "recall_class_1": np.round(
+            np.sum((y_pred == 1) & (y == 1)) / np.sum(y == 1), 3
+        ),
+        "confusion_matrix [TN, FP, FN, TP]": cm.ravel(),
+        "n_nonzero_coefficients": len(coefficients),
+        "nonzero_coefficients": coefficients,
+    }
 
+    # Print results
     if verbose:
-        cm = confusion_matrix(y, y_pred)
-        if show_cm_figure:
-            # Show confusion matrix using Plotly
-            show_confusion_matrix(confusion_matrix=cm)
-        else:
-            display(Markdown("**Confusion Matrix:**"))
-            display(cm)
+        print_verbose_logistic_regression_results(
+            stats=stats,
+            penalty=penalty,
+            confusion_matrix=cm,
+            show_cm_figure=show_cm_figure,
+        )
 
     return stats
+
+
+def print_verbose_linear_regression_results(
+    stats: Dict[str, Any],
+    model_name: str,
+    illustrate_predicted_vs_actual: bool = False,
+    y_actual: Optional[Union[pd.Series, np.ndarray]] = None,
+    y_pred: Optional[np.ndarray] = None,
+) -> None:
+    """
+    Print detailed linear regression results in a formatted display.
+
+    Parameters
+    ----------
+    stats : dict
+        Dictionary containing regression statistics with keys:
+        - 'n_samples': Number of samples
+        - 'r2_score': R² coefficient of determination
+        - 'adjusted_r2': Adjusted R² score
+        - 'MSE': Mean squared error
+        - 'RMSE': Root mean squared error
+        - 'MAE': Mean absolute error
+        - 'MAPE': Mean absolute percentage error
+        - 'n_nonzero_coefficients': Number of non-zero coefficients
+        - 'nonzero_coefficients': Series of non-zero model coefficients
+    model_name : str
+        Name of the regression model (e.g., "Ridge (L2)", "Lasso (L1)", "ElasticNet")
+    illustrate_predicted_vs_actual : bool, optional
+        Whether to show predicted vs actual response plot using Plotly. Default is False.
+    y_actual : pd.Series or np.ndarray, optional
+        Actual response values. Required if illustrate_predicted_vs_actual is True.
+    y_pred : np.ndarray, optional
+        Predicted response values. Required if illustrate_predicted_vs_actual is True.
+
+    Returns
+    -------
+    None
+    """
+    display(
+        Markdown(
+            f"### Linear regression with {model_name} penalty - performance on training set"
+        )
+    )
+    display(Markdown(f"**Number of samples:** {stats['n_samples']}"))
+    display(Markdown(f"**R² Score:** {stats['r2_score']}"))
+    display(Markdown(f"**Adjusted R² Score:** {stats['adjusted_r2']}"))
+    display(Markdown(f"**MSE:** {stats['MSE']}"))
+    display(Markdown(f"**RMSE:** {stats['RMSE']}"))
+    display(Markdown(f"**MAE:** {stats['MAE']}"))
+    if not np.isnan(stats["MAPE"]):
+        display(Markdown(f"**MAPE:** {stats['MAPE']}%"))
+    display(Markdown(f"**{stats['n_nonzero_coefficients']} Non-zero coefficients:**"))
+    display(stats["nonzero_coefficients"])
+
+    if illustrate_predicted_vs_actual:
+        if y_actual is not None and y_pred is not None:
+            show_predicted_vs_actual_response(y_actual, y_pred)
+        else:
+            display(Markdown("*Cannot display predicted vs actual plot: missing data*"))
+    return
 
 
 def solve_with_linear_regression(
@@ -175,15 +304,13 @@ def solve_with_linear_regression(
         Feature matrix.
     y : pd.Series | np.ndarray
         Continuous response vector.
-    use_standard_scaler: bool, optional
-        If true, use the Standard Scaler in the the regression pipeline. Default is True.
+    use_standard_scaler : bool, optional
+        If True, use the Standard Scaler in the regression pipeline. Default is True.
     penalty : str
         Type of regularization to use ("l1", "l2", or "elasticnet").
         Default is "l2".
-    show_cm_figure : bool, optional
-        Whether to display the confusion matrix figure using Plotly (otherwise it is just printed).
     verbose : bool, optional
-        Whether to print detailed metrics and coefficients.
+        Whether to print detailed metrics and coefficients. Default is True.
     illustrate_predicted_vs_actual : bool, optional
         Whether to illustrate predicted vs actual response using Plotly. Default is False.
         Only applicable if verbose is True.
@@ -220,22 +347,6 @@ def solve_with_linear_regression(
     # Predictions and evaluation
     y_pred = pipeline.predict(X)
 
-    stats = {
-        "n_samples": len(y),
-        "r2_score": np.round(r2_score(y, y_pred), 3),
-        "mean_squared_error": np.round(mean_squared_error(y, y_pred), 3),
-    }
-    # Print results
-    if verbose:
-        display(
-            Markdown(
-                f"### Linear regression with {model_name} penalty - performance on training set"
-            )
-        )
-        display(Markdown(f"**Number of samples:** {stats['n_samples']}"))
-        display(Markdown(f"**R² Score:** {stats['r2_score']}"))
-        display(Markdown(f"**Mean Squared Error:** {stats['mean_squared_error']}"))
-
     # Get coefficients, handle difference for RidgeCV (coef_ shape)
     if penalty == "l2":
         coefs = pipeline.named_steps["ridgecv"].coef_
@@ -246,31 +357,58 @@ def solve_with_linear_regression(
 
     coefficients = pd.Series(coefs, index=X.columns)
     coefficients = coefficients[coefficients != 0].sort_values(ascending=False)
-    stats["n_nonzero_coefficients"] = len(coefficients)
-    stats["nonzero_coefficients"] = coefficients
 
+    # Calculate residuals for additional statistics
+    residuals = y - y_pred
+
+    # Calculate additional regression statistics
+    stats = {
+        "n_samples": len(y),
+        "r2_score": np.round(r2_score(y, y_pred), 3),
+        "adjusted_r2": np.round(
+            1
+            - (1 - r2_score(y, y_pred))
+            * (len(y) - 1)
+            / (len(y) - len(coefficients) - 1),
+            3,
+        ),
+        "MSE": np.round(mean_squared_error(y, y_pred), 3),
+        "RMSE": np.round(np.sqrt(mean_squared_error(y, y_pred)), 3),
+        "MAE": np.round(np.mean(np.abs(residuals)), 3),
+        "MAPE": (
+            np.round(np.mean(np.abs(residuals / np.where(y != 0, y, 1e-8))) * 100, 3)
+            if not np.any(y == 0)
+            else np.nan
+        ),
+        "n_nonzero_coefficients": len(coefficients),
+        "nonzero_coefficients": coefficients,
+    }
+
+    # Print results
     if verbose:
-        display(Markdown("Coefficients of the regression model:"))
-        display(stats["nonzero_coefficients"])
-
-        if illustrate_predicted_vs_actual:
-            show_predicted_vs_actual_response(y, y_pred)
-
+        print_verbose_linear_regression_results(
+            stats=stats,
+            model_name=model_name,
+            illustrate_predicted_vs_actual=illustrate_predicted_vs_actual,
+            y_actual=y,
+            y_pred=y_pred,
+        )
     return stats
 
 
-def show_regression_results_for_solutions(
+def solve_any_regression(
     solutions: Dict[str, List[str]],
     df: pd.DataFrame,
     response: Union[pd.Series, np.ndarray],
     use_standard_scaler: Optional[bool] = True,
     penalty: Literal["l1", "l2", "elasticnet"] = "l1",
-    verbose: Optional[bool] = True,
+    verbose: Optional[bool] = False,
     use_markdown: Optional[bool] = True,
-) -> None:
+) -> pd.DataFrame:
     """
-    Show regression results for each solution using the identified features. Based on the type
-    of response vector y, it automatically selects logistic regression or linear regression.
+    Compute regression/classification for each candidate solution using the identified features.
+    Based on the type of response vector y, it automatically selects logistic regression
+    or linear regression.
 
     Parameters
     ----------
@@ -287,20 +425,23 @@ def show_regression_results_for_solutions(
         Type of regularization to use. Default is "l1".
     verbose : bool, optional
         Whether to print detailed regression metrics and coefficients
-        for each component. Default is True.
+        for each component and the resulting overview of metrics. Default is False.
     use_markdown : bool, optional
         Whether to format the output using Markdown. Default is True.
 
     Returns
     -------
-    None
+    pd.DataFrame
+        DataFrame summarizing regression metrics for all candidate solutions.
     """
     if set(np.unique(response.dropna())).__len__() == 2:
         is_binary = True
     else:
         is_binary = False
 
+    task = "Classification" if is_binary else "Regression"
     stats = {}
+    # for each candidate solution
     for component, features in solutions.items():
         if verbose:
             myprint(
@@ -360,22 +501,43 @@ def show_regression_results_for_solutions(
     # each entry is a column in the data frame
     metrics_df = pd.DataFrame.from_dict(stats, orient="index")
 
+    if verbose:
+        show_regression_metrics(
+            metrics_df=metrics_df,
+            title=f"{task} results on training data ({penalty} penalty)",
+            use_markdown=use_markdown,
+        )
+
+    return metrics_df
+
+
+def show_regression_metrics(
+    metrics_df: pd.DataFrame,
+    title: str = "Results on training data",
+    use_markdown: Optional[bool] = True,
+) -> None:
+    """
+    Show regression metrics from a DataFrame.
+
+    Parameters
+    ----------
+    metrics_df : pd.DataFrame
+        DataFrame containing regression metrics for each solution.
+    title : str
+        Optional custom title to display above the metrics.
+
+    Returns
+    -------
+    None
+    """
     if metrics_df.empty:
         myprint(
             msg="No regression results to display.",
             use_markdown=use_markdown,
         )
-        return
-
-    if is_binary:
-        myprint(
-            msg=f"Classification metrics overview (penalty: {penalty})",
-            use_markdown=use_markdown,
-            header=2,
-        )
     else:
         myprint(
-            msg=f"Regression metrics overview (penalty: {penalty})",
+            msg=title,
             use_markdown=use_markdown,
             header=2,
         )
@@ -384,5 +546,4 @@ def show_regression_results_for_solutions(
         display(metrics_df)
     else:
         print(metrics_df)
-
     return
