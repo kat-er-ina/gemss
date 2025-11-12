@@ -290,7 +290,7 @@ The system provides comprehensive tools for analyzing optimization results and e
 from gemss.result_postprocessing import (
     recover_solutions,
     show_algorithm_progress, 
-    show_regression_results_for_solutions,
+    solve_any_regression,
     display_features_overview,
     get_long_solutions_df
 )
@@ -312,7 +312,7 @@ from gemss.result_postprocessing import (
 - Support for original feature name mapping for interpretability
 
 **Predictive Performance Assessment:**
-- `show_regression_results_for_solutions()` - Validates discovered solutions using supervised learning
+- `solve_any_regression()` - Validates discovered solutions using supervised learning
 - Automatic detection of binary classification vs regression tasks
 - Support for L1 (Lasso), L2 (Ridge), and ElasticNet penalties
 - Component-wise performance metrics and coefficient analysis
