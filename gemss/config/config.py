@@ -267,6 +267,78 @@ def get_params_by_category(category: str) -> Dict[str, Any]:
     return _config_manager.get_params_by_category(category)
 
 
+def get_current_config(
+    constants: Optional[Dict[str, Any]] = None,
+    constant_type: Literal[
+        "algorithm",
+        "postprocessing",
+        "dataset",
+        "all",
+    ] = "all",
+) -> str:
+    """
+    Get configuration parameters in a formatted table.
+
+    Parameters
+    ----------
+    constants : Dict[str, Any], optional
+        Configuration parameters to display. If None, uses current config.
+    constant_type : str
+        Parameter category to display: 'algorithm', 'postprocessing', 'dataset', 'all'
+
+    Returns
+    -------
+    str
+        Formatted table of configuration parameters.
+    """
+    if constants is None:
+        constants = as_dict()
+
+    # Map legacy category names and handle special cases
+    if constant_type in ("artificial_data", "dataset"):
+        category = "artificial_dataset"
+    elif constant_type == "algorithm_and_postprocessing":
+        # Special case: combine algorithm and postprocessing parameters
+        algo_params = get_params_by_category("algorithm")
+        post_params = get_params_by_category("postprocessing")
+        filtered_constants = {**algo_params, **post_params}
+        constants = {k: v for k, v in constants.items() if k in filtered_constants}
+    else:
+        category = constant_type
+
+    if constant_type != "algorithm_and_postprocessing":
+        if category != "all":
+            filtered_constants = get_params_by_category(category)
+            constants = {k: v for k, v in constants.items() if k in filtered_constants}
+
+    if not constants:
+        return "No parameters to display."
+
+    # Create formatted table
+    table_lines = [
+        "| Parameter | Current Value | Description |",
+        "|-----------|---------------|-------------|",
+    ]
+
+    for param_name in sorted(constants.keys()):
+        param_value = constants[param_name]
+        description = ConfigurationManager.PARAM_DESCRIPTIONS.get(
+            param_name, "Configuration parameter"
+        )
+
+        # Format value based on type
+        if isinstance(param_value, float):
+            formatted_value = f"{param_value:.6g}"
+        elif isinstance(param_value, str):
+            formatted_value = f'"{param_value}"'
+        else:
+            formatted_value = str(param_value)
+
+        table_lines.append(f"| `{param_name}` | {formatted_value} | {description} |")
+
+    return "\n".join(table_lines)
+
+
 def display_current_config(
     constants: Optional[Dict[str, Any]] = None,
     constant_type: Literal[
@@ -292,58 +364,19 @@ def display_current_config(
         print("IPython not available. Cannot display formatted configuration.")
         return
 
-    if constants is None:
-        constants = as_dict()
+    table_lines = get_current_config(
+        constants=constants,
+        constant_type=constant_type,
+    )
 
     # Map legacy category names and handle special cases
     if constant_type in ("artificial_data", "dataset"):
-        category = "artificial_dataset"
+        section_title = "artificial dataset parameters"
     elif constant_type == "algorithm_and_postprocessing":
-        # Special case: combine algorithm and postprocessing parameters
-        algo_params = get_params_by_category("algorithm")
-        post_params = get_params_by_category("postprocessing")
-        filtered_constants = {**algo_params, **post_params}
-        constants = {k: v for k, v in constants.items() if k in filtered_constants}
         section_title = "algorithm and postprocessing parameters"
     else:
-        category = constant_type
-
-    if constant_type != "algorithm_and_postprocessing":
-        if category != "all":
-            filtered_constants = get_params_by_category(category)
-            constants = {k: v for k, v in constants.items() if k in filtered_constants}
-        section_title = (
-            f"{category.replace('_', ' ')} parameters"
-            if category != "all"
-            else "all parameters"
-        )
+        section_title = f"{constant_type} parameters"
 
     display(Markdown(f"## Current configuration: {section_title}"))
-
-    if not constants:
-        display(Markdown("No parameters to display."))
-        return
-
-    # Create formatted table
-    table_lines = [
-        "| Parameter | Current Value | Description |",
-        "|-----------|---------------|-------------|",
-    ]
-
-    for param_name in sorted(constants.keys()):
-        param_value = constants[param_name]
-        description = ConfigurationManager.PARAM_DESCRIPTIONS.get(
-            param_name, "Configuration parameter"
-        )
-
-        # Format value based on type
-        if isinstance(param_value, float):
-            formatted_value = f"{param_value:.6g}"
-        elif isinstance(param_value, str):
-            formatted_value = f'"{param_value}"'
-        else:
-            formatted_value = str(param_value)
-
-        table_lines.append(f"| `{param_name}` | {formatted_value} | {description} |")
-
-    display(Markdown("\n".join(table_lines)))
+    display(Markdown(table_lines))
+    return
