@@ -486,7 +486,7 @@ Each tier represents a different experimental condition (e.g., different noise l
 - torch
 - scikit-learn
 - plotly
-- seaborn
 - jupyter
+- pyarrow
 
 (See `requirements.txt` for full details.)
