@@ -310,6 +310,7 @@ def show_algorithm_progress(
     detect_outliers: bool = False,
     use_medians_for_outliers: bool = False,
     outlier_threshold_coeff: float = 3.0,
+    subsample_history_for_plotting: bool = False,
 ) -> None:
     """
     Show the progress of the algorithm by plotting the evolution of
@@ -333,6 +334,8 @@ def show_algorithm_progress(
         A mapping from internal feature names (e.g., 'feature_0') to original feature names.
         If provided, the plots will use the original feature names where applicable.
         Default is None.
+    subsample_history_for_plotting: bool, optional
+        If True, plot only every N-th iteration in order to save resources during plotting.
 
     Returns
     -------
@@ -359,19 +362,35 @@ def show_algorithm_progress(
             ]
         )
 
+    if subsample_history_for_plotting:
+        every_nth_iteration = 20
+        if (len(history) > 2000) and (len(history) * len(history["mu"][0])) > 1e6:
+            every_nth_iteration = 50
+        history_to_plot = {
+            key: values[::every_nth_iteration] if isinstance(values, list) else values
+            for key, values in history.items()
+        }
+        myprint(
+            f"Plotting only every {every_nth_iteration}th iteration.", use_markdown=True
+        )
+
+    else:
+        history_to_plot = history
+
     # Plot ELBO progress
     if plot_elbo_progress:
-        plot_elbo(history)
+        plot_elbo(history_to_plot)
 
     # Plot mixture weights (alpha)
     if plot_alpha_progress:
-        plot_alpha(history)
+        plot_alpha(history_to_plot)
 
     # Plot mixture means trajectory for each component
     if plot_mu_progress:
         for k in range(n_components):
             myprint(f"Candidate solution {k}", header=3, use_markdown=True)
 
+            # Optionally add info about outliers
             if detect_outliers:
                 final_mus_df[f"component_{k}_mus"] = history["mu"][-1][k]
                 outlier_info = detect_outlier_features(
@@ -388,7 +407,7 @@ def show_algorithm_progress(
                 )
 
             plot_mu(
-                history,
+                history_to_plot,
                 component=k,
                 original_feature_names_mapping=original_feature_names_mapping,
             )
