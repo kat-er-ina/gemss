@@ -5,6 +5,8 @@ Utility functions for feature selection project.
 from IPython.display import display, Markdown
 from typing import Any, Dict, Optional, List
 import pandas as pd
+import json
+import numpy as np
 
 
 # TODO: move to a more general utils module along with other printing functions
@@ -456,3 +458,258 @@ def dataframe_to_ascii_table(
         lines.append("| " + " | ".join(row_parts) + " |")
 
     return lines
+
+
+def display_feature_lists(
+    features_dict: Dict[str, List[str]],
+    title: str = "Feature lists for candidate solutions",
+    use_markdown: bool = True,
+) -> None:
+    myprint(msg=title, header=3, use_markdown=use_markdown)
+    for component, selected_features in features_dict.items():
+        myprint(msg=component, header=4, use_markdown=use_markdown)
+        myprint(msg=f"{selected_features}", code=True, use_markdown=use_markdown)
+
+
+def save_feature_lists_txt(
+    all_feature_dicts: List[Dict[str, List[str]]],
+    feature_dict_titles: List[str],
+    filename: str,
+) -> str:
+    """Save multiple dictionaries of candidate feature lists to a plain text file.
+
+    Each dictionary in ``all_feature_dicts`` is written under a heading defined by the
+    corresponding entry in ``feature_dict_titles``. Within each dictionary, every key
+    (component identifier) is written in uppercase as a sub-heading, followed by the
+    Python list of its features on the next line. A separator line is appended at the end.
+
+    The file is (re)created; existing contents are overwritten.
+
+    Parameters
+    ----------
+    all_feature_dicts : List[Dict[str, List[str]]]
+        A list where each element is a dictionary mapping component names to lists of
+        feature names (strings).
+    feature_dict_titles : List[str]
+        A list of titles describing each feature dictionary. Must be the same length
+        as ``all_feature_dicts``.
+    filename : str
+        Path (or filename) of the text file to create.
+
+    Returns
+    -------
+    str
+        A status message.
+
+    Raises
+    ------
+    ValueError
+        If ``all_feature_dicts`` and ``feature_dict_titles`` have different lengths
+        or if ``all_feature_dicts`` is empty.
+
+    Examples
+    --------
+    >>> dicts = [
+    ...     {"component_0": ["feat_a", "feat_b"], "component_1": ["feat_c"]},
+    ...     {"component_0": ["feat_x"]}
+    ... ]
+    >>> titles = ["Full solutions", "Top solutions"]
+    >>> save_feature_lists_txt(dicts, titles, "solutions.txt")
+    'Candidate solutions saved to file solutions.txt.'
+    """
+    if not all_feature_dicts:
+        raise ValueError("'all_feature_dicts' is empty; nothing to save.")
+    if len(all_feature_dicts) != len(feature_dict_titles):
+        raise ValueError(
+            "Length mismatch: 'all_feature_dicts' and 'feature_dict_titles' must be equal."
+        )
+    try:
+        with open(filename, "w", encoding="utf-8") as f:
+            for feature_dict, title in zip(all_feature_dicts, feature_dict_titles):
+                f.write(f"### {title}\n\n")
+                for component, features in feature_dict.items():
+                    f.write(f"{component.upper()}\n")
+                    f.write(f"{features}\n\n")
+            f.write(
+                "------------------------------------------------------------------------\n"
+            )
+        return f"Candidate solutions saved to file {filename}."
+    except Exception as e:
+        return f"Problem saving to file {filename}: {e}"
+
+
+def save_feature_lists_json(
+    all_feature_dicts: List[Dict[str, List[str]]],
+    feature_dict_titles: List[str],
+    filename: str,
+) -> str:
+    """Save multiple dictionaries of candidate feature lists to a structured JSON file.
+
+    Produces a JSON document with a top-level key ``sections`` which is a list of
+    objects. Each object contains the keys ``title`` (taken from ``feature_dict_titles``)
+    and ``components`` (a mapping from component identifiers to their list of feature
+    names). Existing file contents (if any) are overwritten.
+
+    Parameters
+    ----------
+    all_feature_dicts : List[Dict[str, List[str]]]
+        A list where each element is a dictionary mapping component names to lists of
+        feature names (strings).
+    feature_dict_titles : List[str]
+        A list of titles describing each feature dictionary. Must be the same length
+        as ``all_feature_dicts``.
+    filename : str
+        Path (or filename) of the JSON file to create.
+
+    Returns
+    -------
+    str
+        A status message.
+
+    Raises
+    ------
+    ValueError
+        If ``all_feature_dicts`` and ``feature_dict_titles`` have different lengths
+        or if ``all_feature_dicts`` is empty.
+    """
+    if not all_feature_dicts:
+        raise ValueError("'all_feature_dicts' is empty; nothing to save.")
+    if len(all_feature_dicts) != len(feature_dict_titles):
+        raise ValueError(
+            "Length mismatch: 'all_feature_dicts' and 'feature_dict_titles' must be equal."
+        )
+    if not isinstance(filename, str) or not filename.strip():
+        raise ValueError("Filename must be a non-empty string.")
+
+    sections: List[Dict[str, Any]] = []
+    for feature_dict, title in zip(all_feature_dicts, feature_dict_titles):
+        components_out: Dict[str, List[str]] = {}
+        for component, features in feature_dict.items():
+            # Ensure list of strings
+            if not isinstance(features, list):
+                raise ValueError(
+                    f"Features for component '{component}' are not a list: {type(features)}"
+                )
+            components_out[component] = [str(f) for f in features]
+        sections.append({"title": title, "components": components_out})
+
+    data = {"sections": sections}
+    try:
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+        return f"Candidate solutions saved to JSON file {filename}."
+    except Exception as e:
+        return f"Problem saving JSON file {filename}: {e}"
+
+
+def save_selector_history_json(history, filename) -> str:
+    """Persist optimization history to a JSON file with basic validation.
+
+    Parameters
+    ----------
+    history : Dict[str, Any]
+        Dictionary expected to contain lists/iterables under keys 'elbo', 'mu', 'var', 'alpha'.
+    filename : str
+        Path to JSON file to create/overwrite.
+
+    Returns
+    -------
+    str
+        Status message.
+    """
+    # Basic input validation
+    if not isinstance(history, dict):
+        return "History must be a dict; nothing saved."
+    required_keys = {"elbo", "mu", "var", "alpha"}
+    missing = required_keys - set(history.keys())
+    if missing:
+        return f"History missing required keys: {sorted(missing)}; nothing saved."
+    if not isinstance(filename, str) or not filename.strip():
+        return "Filename must be a non-empty string; nothing saved."
+
+    try:
+        n_iters = len(history.get("elbo", []))
+    except Exception:
+        return "Could not determine number of iterations; nothing saved."
+    if n_iters == 0:
+        return "History is empty; nothing saved."
+
+    # Ensure length consistency among iterable keys
+    lengths = {}
+    for k in required_keys:
+        try:
+            lengths[k] = len(history[k])
+        except Exception:
+            return f"History key '{k}' is not iterable; nothing saved."
+    if len(set(lengths.values())) != 1:
+        return f"Inconsistent lengths in history: {lengths}; nothing saved."
+
+    # Create parent directory if needed
+    import os
+
+    parent = os.path.dirname(os.path.abspath(filename))
+    if parent and not os.path.exists(parent):
+        try:
+            os.makedirs(parent, exist_ok=True)
+        except Exception as e:
+            return f"Could not create directory '{parent}': {e}"
+
+    # Build serializable structure
+    try:
+        serializable_history = {
+            "elbo": [float(x) for x in history["elbo"]],
+            "mu": [np.asarray(a).tolist() for a in history["mu"]],
+            "var": [np.asarray(a).tolist() for a in history["var"]],
+            "alpha": [np.asarray(a).tolist() for a in history["alpha"]],
+        }
+    except Exception as e:
+        return f"Failed to serialize history arrays: {e}"
+
+    try:
+        with open(filename, "w", encoding="utf-8") as jf:
+            json.dump(serializable_history, jf)
+        return f"Saved history to '{filename}'"
+    except Exception as e:
+        return f"Failed writing history to '{filename}': {e}"
+
+
+def save_constants_json(constants, filename) -> str:
+    """Persist constants dict to JSON after validation.
+
+    Parameters
+    ----------
+    constants : Dict[str, Any]
+        Dictionary of configuration constants.
+    filename : str
+        Path to JSON file to create/overwrite.
+
+    Returns
+    -------
+    str
+        Status message.
+    """
+    if not isinstance(constants, dict):
+        return "Constants must be a dict; nothing saved."
+    if not constants:
+        return "Constants dict is empty; nothing saved."
+    if not isinstance(filename, str) or not filename.strip():
+        return "Filename must be a non-empty string; nothing saved."
+    # Test JSON serializability
+    try:
+        json.dumps(constants)
+    except Exception as e:
+        return f"Constants not JSON serializable: {e}"
+    import os
+
+    parent = os.path.dirname(os.path.abspath(filename))
+    if parent and not os.path.exists(parent):
+        try:
+            os.makedirs(parent, exist_ok=True)
+        except Exception as e:
+            return f"Could not create directory '{parent}': {e}"
+    try:
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(constants, f)
+        return f"Saved constants to '{filename}'"
+    except Exception as e:
+        return f"Failed writing constants to '{filename}': {e}"
