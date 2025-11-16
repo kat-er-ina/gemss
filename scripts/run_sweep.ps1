@@ -9,7 +9,7 @@ $combinations = @(
     "40,200,3,3,0.1,0.0,8,500",     # More features
     "40,1200,3,3,0.1,0.0,8,500",    # High-dimensional
     "50,200,3,5,0.1,0.0,10,500",    # Higher sparsity
-    "200,200,3,5,0.1,0.0,6,500",    # n ≈ p scenario
+    "200,200,3,5,0.1,0.0,6,500"     # n ≈ p scenario
 )
 
 # --- Fixed parameters for the algorithm ---
