@@ -59,22 +59,33 @@ def plot_mu(
     arr = np.array(history["mu"])  # shape [n_iter, n_components, n_features]
     mu_traj = arr[:, component, :]
     fig = go.Figure()
+    longest_name_len = 0
     for f in range(mu_traj.shape[1]):
+        name = (
+            original_feature_names_mapping.get(f"feature_{f}", f"feature_{f}")
+            if original_feature_names_mapping is not None
+            else f"feature_{f}"
+        )
+        longest_name_len = max(longest_name_len, len(name))
         fig.add_trace(
             go.Scatter(
                 y=mu_traj[:, f],
                 mode="lines",
-                name=(
-                    original_feature_names_mapping.get(f"feature_{f}", f"feature_{f}")
-                    if original_feature_names_mapping is not None
-                    else f"feature_{f}"
-                ),
+                name=name,
+                hovertemplate=f"<b>{name}</b><br>Iteration=%{{x}}<br>μ=%{{y}}<extra></extra>",
             )
         )
+    # Dynamic width scales with longest label and number of features
+    base_width = 650
+    width = base_width + longest_name_len * 8 + mu_traj.shape[1] * 6
+    width = int(min(width, 1800))
     fig.update_layout(
         title=f"Mu trajectory, Component {component}",
         xaxis_title="Iteration",
         yaxis_title="Mu value",
+        width=width,
+        height=600,
+        margin=dict(l=60, r=20, t=60, b=60),
     )
     fig.show(config={"displayModeBar": False})
     return
