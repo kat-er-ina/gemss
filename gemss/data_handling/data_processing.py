@@ -8,7 +8,7 @@ from IPython.display import display, Markdown
 from typing import Dict, Literal, Optional, Tuple
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 from gemss.utils import myprint
 
@@ -113,7 +113,7 @@ def preprocess_features(
     df: pd.DataFrame,
     response: pd.Series,
     dropna: Literal["response", "all", "none"] = "response",
-    apply_standard_scaling: Optional[bool] = True,
+    apply_scaling: Literal["standard", "minmax", None] = None,
     verbose: Optional[bool] = True,
 ) -> Tuple[np.ndarray, np.ndarray, Dict[str, str]]:
     """
@@ -130,8 +130,11 @@ def preprocess_features(
         - "response": drop rows with NA in the response column only.
         - "all": drop rows with NA in any column.
         - "none": do not drop any rows.
-    apply_standard_scaling: bool, optional, default=True
-        Whether to apply standard scaling to the features.
+    apply_scaling: Literal["standard", "minmax", None] = None,
+        Whether to apply scaling to the features. Options are:
+        - "standard": apply standard scaling.
+        - "minmax": apply Min-Max scaling.
+        - None: do not apply any scaling.
     verbose: bool, optional, default=True
         Whether to display informative messages during preprocessing.
 
@@ -172,12 +175,20 @@ def preprocess_features(
                 )
 
     # scaling
-    if apply_standard_scaling:
+    if apply_scaling == "standard":
         scaler = StandardScaler()
         X = scaler.fit_transform(df_copy.values)
         if verbose:
             myprint(
                 "Features have been standardized using StandardScaler.",
+                use_markdown=True,
+            )
+    elif apply_scaling == "minmax":
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        X = scaler.fit_transform(df_copy.values)
+        if verbose:
+            myprint(
+                "Features have been scaled using MinMaxScaler.",
                 use_markdown=True,
             )
     else:

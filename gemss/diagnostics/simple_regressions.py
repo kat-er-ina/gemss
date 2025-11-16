@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 from typing import Literal
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
@@ -119,7 +119,7 @@ def print_verbose_logistic_regression_results(
 def solve_with_logistic_regression(
     X: pd.DataFrame,
     y: pd.Series | np.ndarray,
-    use_standard_scaler: Optional[bool] = False,
+    apply_scaling: Literal["standard", "minmax", None] = None,
     penalty: Literal["l1", "l2", "elasticnet"] = "l2",
     verbose: Optional[bool] = False,
     show_cm_figure: Optional[bool] = True,
@@ -133,8 +133,11 @@ def solve_with_logistic_regression(
         Feature matrix.
     y : pd.Series | np.ndarray
         Binary response vector.
-    use_standard_scaler: bool, optional
-        If True, use the Standard Scaler in the regression pipeline. Default is False.
+    apply_scaling: Literal["standard", "minmax", None] = None,
+        Whether to apply scaling inside the regression pipeline. Options are:
+        - "standard": apply standard scaling.
+        - "minmax": apply Min-Max scaling.
+        - None: do not apply any scaling.
     penalty : str
         Type of regularization to use ("l1", "l2", or "elasticnet").
         Default is "l2".
@@ -163,8 +166,10 @@ def solve_with_logistic_regression(
         class_weight="balanced",
     )
 
-    if use_standard_scaler:
+    if apply_scaling == "standard":
         clf = make_pipeline(StandardScaler(), model)
+    elif apply_scaling == "minmax":
+        clf = make_pipeline(MinMaxScaler(), model)
     else:
         clf = make_pipeline(model)
 
@@ -290,7 +295,7 @@ def print_verbose_linear_regression_results(
 def solve_with_linear_regression(
     X: pd.DataFrame,
     y: pd.Series | np.ndarray,
-    use_standard_scaler: Optional[bool] = True,
+    apply_scaling: Literal["standard", "minmax", None] = None,
     penalty: Literal["l1", "l2", "elasticnet"] = "l2",
     verbose: Optional[bool] = True,
     illustrate_predicted_vs_actual: Optional[bool] = False,
@@ -304,8 +309,11 @@ def solve_with_linear_regression(
         Feature matrix.
     y : pd.Series | np.ndarray
         Continuous response vector.
-    use_standard_scaler : bool, optional
-        If True, use the Standard Scaler in the regression pipeline. Default is True.
+    apply_scaling: Literal["standard", "minmax", None] = None,
+        Whether to apply scaling inside the regression pipeline. Options are:
+        - "standard": apply standard scaling.
+        - "minmax": apply Min-Max scaling.
+        - None: do not apply any scaling.
     penalty : str
         Type of regularization to use ("l1", "l2", or "elasticnet").
         Default is "l2".
@@ -333,8 +341,10 @@ def solve_with_linear_regression(
     else:
         raise ValueError("Penalty must be 'l1', 'l2', or 'elasticnet'.")
 
-    if use_standard_scaler:
+    if apply_scaling == "standard":
         pipeline = make_pipeline(StandardScaler(), model)
+    elif apply_scaling == "minmax":
+        pipeline = make_pipeline(MinMaxScaler(), model)
     else:
         pipeline = make_pipeline(model)
 
@@ -400,7 +410,7 @@ def solve_any_regression(
     solutions: Dict[str, List[str]],
     df: pd.DataFrame,
     response: Union[pd.Series, np.ndarray],
-    use_standard_scaler: Optional[bool] = True,
+    apply_scaling: Literal["standard", "minmax", None] = None,
     penalty: Literal["l1", "l2", "elasticnet"] = "l1",
     verbose: Optional[bool] = False,
     use_markdown: Optional[bool] = True,
@@ -419,8 +429,11 @@ def solve_any_regression(
         Feature matrix with features as columns.
     response : Union[pd.Series, np.ndarray]
         Response vector. Binary values {0, 1} for classification, continuous values for regression.
-    use_standard_scaler : bool, optional
-        Whether to standardize features before regression. Default is True.
+    apply_scaling : Literal["standard", "minmax", None], optional
+        Type of feature scaling to apply before regression. Options are:
+        - "standard": apply standard scaling.
+        - "minmax": apply Min-Max scaling.
+        - None: do not apply any scaling.
     penalty : Literal["l1", "l2", "elasticnet"], optional
         Type of regularization to use. Default is "l1".
     verbose : bool, optional
@@ -483,7 +496,7 @@ def solve_any_regression(
             stats[component] = solve_with_logistic_regression(
                 X=df_filtered[features],
                 y=y_filtered,
-                use_standard_scaler=use_standard_scaler,
+                apply_scaling=apply_scaling,
                 penalty=penalty,
                 verbose=verbose,
             )
@@ -491,7 +504,7 @@ def solve_any_regression(
             stats[component] = solve_with_linear_regression(
                 X=df_filtered[features],
                 y=y_filtered,
-                use_standard_scaler=use_standard_scaler,
+                apply_scaling=apply_scaling,
                 penalty=penalty,
                 verbose=verbose,
             )

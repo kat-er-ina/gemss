@@ -1,7 +1,8 @@
+from typing import Literal
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold, KFold
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from tabpfn import TabPFNClassifier, TabPFNRegressor
 
 from sklearn.metrics import (
@@ -179,7 +180,7 @@ def _compute_shap_explanation(model, X, feature_names=None):
 def tabpfn_evaluate(
     X,
     y,
-    scale=False,
+    apply_scaling: Literal["standard", "minmax", None] = None,
     outer_cv_folds=5,
     inner_cv_folds=3,
     tabpfn_kwargs=None,
@@ -199,8 +200,11 @@ def tabpfn_evaluate(
         Feature matrix.
     y : pd.Series or np.ndarray
         Target values.
-    scale : bool, optional
-        If True, standardize features (default: False).
+    apply_scaling: Literal["standard", "minmax", None] = None
+        Whether to apply feature scaling. Options are:
+        - "standard": apply standard scaling.
+        - "minmax": apply Min-Max scaling.
+        - None: do not apply any scaling.
     outer_cv_folds : int, optional
         Number of outer cross-validation folds (default: 5).
     inner_cv_folds : int, optional
@@ -243,8 +247,12 @@ def tabpfn_evaluate(
         X_train, X_test = X[train_idx], X[test_idx]
         y_train, y_test = y[train_idx], y[test_idx]
 
-        if scale:
+        if apply_scaling == "standard":
             scaler = StandardScaler()
+            X_train = scaler.fit_transform(X_train)
+            X_test = scaler.transform(X_test)
+        elif apply_scaling == "minmax":
+            scaler = MinMaxScaler(feature_range=(0, 1))
             X_train = scaler.fit_transform(X_train)
             X_test = scaler.transform(X_test)
 
