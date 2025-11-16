@@ -37,7 +37,7 @@ from gemss.diagnostics.visualizations import (
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
-MAX_ALLOWED_NAN_RATIO = 0.5  # maximum proportion of missing values to run regression
+MAX_ALLOWED_NAN_RATIO = 0.9  # maximum proportion of missing values to run regression
 MIN_ALLOWED_SAMPLES = 15  # minimum number of samples to run regression
 
 
