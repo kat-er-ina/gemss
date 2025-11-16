@@ -602,6 +602,82 @@ def save_feature_lists_json(
         return f"Problem saving JSON file {filename}: {e}"
 
 
+def load_feature_lists_json(
+    filename: str,
+) -> tuple[List[Dict[str, List[str]]], List[str]]:
+    """Load candidate feature list sections saved by ``save_feature_lists_json``.
+
+    Reads the JSON file produced by ``save_feature_lists_json`` and reconstructs
+    the pair (all_feature_dicts, feature_dict_titles) suitable for re-use or
+    re-saving in a different format.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the JSON file previously written by ``save_feature_lists_json``.
+
+    Returns
+    -------
+    tuple[List[Dict[str, List[str]]], List[str]]
+        A tuple containing:
+        - list of feature dictionaries (each mapping component -> list[str])
+        - list of titles for those dictionaries, in the same order.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the file does not exist.
+    ValueError
+        If the JSON structure is invalid or missing required keys.
+    JSONDecodeError
+        If the file content is not valid JSON.
+
+    Examples
+    --------
+    >>> dicts, titles = load_feature_lists_json("solutions.json")
+    >>> len(dicts) == len(titles)
+    True
+    """
+    if not isinstance(filename, str) or not filename.strip():
+        raise ValueError("Filename must be a non-empty string.")
+    import os
+
+    if not os.path.exists(filename):
+        raise FileNotFoundError(f"File '{filename}' not found.")
+    with open(filename, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    if not isinstance(data, dict):
+        raise ValueError("Top-level JSON must be an object.")
+    sections = data.get("sections")
+    if not isinstance(sections, list):
+        raise ValueError("JSON missing 'sections' list.")
+    all_feature_dicts: List[Dict[str, List[str]]] = []
+    feature_dict_titles: List[str] = []
+    for i, section in enumerate(sections):
+        if not isinstance(section, dict):
+            raise ValueError(f"Section index {i} is not an object.")
+        title = section.get("title")
+        components = section.get("components")
+        if title is None or not isinstance(title, str):
+            raise ValueError(f"Section index {i} missing valid 'title'.")
+        if not isinstance(components, dict):
+            raise ValueError(f"Section '{title}' missing 'components' dict.")
+        feature_dict: Dict[str, List[str]] = {}
+        for comp, feats in components.items():
+            if not isinstance(comp, str):
+                raise ValueError(
+                    f"Component key '{comp}' in section '{title}' not a string."
+                )
+            if not isinstance(feats, list):
+                raise ValueError(
+                    f"Features for component '{comp}' in section '{title}' not a list."
+                )
+            feature_dict[comp] = [str(f) for f in feats]
+        feature_dict_titles.append(title)
+        all_feature_dicts.append(feature_dict)
+    return all_feature_dicts, feature_dict_titles
+
+
 def save_selector_history_json(history, filename) -> str:
     """Persist optimization history to a JSON file with basic validation.
 
@@ -673,6 +749,74 @@ def save_selector_history_json(history, filename) -> str:
         return f"Failed writing history to '{filename}': {e}"
 
 
+def load_selector_history_json(
+    filename: str,
+) -> tuple[Dict[str, Any], str]:
+    """Load optimization history saved by ``save_selector_history_json``.
+
+    Opens the JSON file, validates required keys (``elbo``, ``mu``, ``var``, ``alpha``),
+    checks length consistency across iterations, and converts nested lists
+    back to NumPy arrays for each iteration.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the JSON file produced by ``save_selector_history_json``.
+
+    Returns
+    -------
+    (history, message) : tuple[Dict[str, Any], str]
+        ``history`` is the loaded dictionary with NumPy arrays for ``mu``, ``var`` and ``alpha``.
+        ``message`` is a human-readable status summary.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the file does not exist.
+    ValueError
+        If the JSON is missing required keys or lengths are inconsistent.
+    JSONDecodeError
+        If the file contents are not valid JSON.
+    """
+    if not isinstance(filename, str) or not filename.strip():
+        raise ValueError("Filename must be a non-empty string.")
+    import os
+
+    if not os.path.exists(filename):
+        raise FileNotFoundError(f"History file '{filename}' not found.")
+    with open(filename, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    if not isinstance(data, dict):
+        raise ValueError("History JSON must be an object (dict) at top level.")
+
+    required = {"elbo", "mu", "var", "alpha"}
+    missing = required - set(data.keys())
+    if missing:
+        raise ValueError(f"History JSON missing keys: {sorted(missing)}")
+
+    # Length consistency check
+    try:
+        lengths = {k: len(data[k]) for k in required}
+    except Exception as e:
+        raise ValueError(f"Unable to determine lengths of history entries: {e}")
+    if len(set(lengths.values())) != 1:
+        raise ValueError(f"Inconsistent iteration lengths in history: {lengths}")
+    n_iters = lengths["elbo"]
+    if n_iters == 0:
+        return data, "History file loaded but contains zero iterations."
+
+    # Always convert list entries back to NumPy arrays
+    try:
+        data["mu"] = [np.asarray(iter_mu) for iter_mu in data["mu"]]
+        data["var"] = [np.asarray(iter_var) for iter_var in data["var"]]
+        data["alpha"] = [np.asarray(iter_alpha) for iter_alpha in data["alpha"]]
+    except Exception as e:
+        raise ValueError(f"Failed converting lists to arrays: {e}")
+
+    message = f"History loaded from '{filename}' | iterations: {n_iters} | data: {sorted(data.keys())}"
+    return data, message
+
+
 def save_constants_json(constants, filename) -> str:
     """Persist constants dict to JSON after validation.
 
@@ -713,3 +857,50 @@ def save_constants_json(constants, filename) -> str:
         return f"Saved constants to '{filename}'"
     except Exception as e:
         return f"Failed writing constants to '{filename}': {e}"
+
+
+def load_constants_json(filename: str) -> tuple[Dict[str, Any], str]:
+    """Load configuration constants saved by ``save_constants_json``.
+
+    Opens the JSON file, validates it exists and that the top-level object is a
+    dictionary. Returns the loaded constants along with a status message.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the JSON file produced by ``save_constants_json``.
+
+    Returns
+    -------
+    (constants, message) : tuple[Dict[str, Any], str]
+        ``constants`` is the loaded dictionary of configuration values.
+        ``message`` summarizes the load status (file, number of keys).
+
+    Raises
+    ------
+    ValueError
+        If ``filename`` is not a non-empty string or if the JSON top level is not a dict.
+    FileNotFoundError
+        If the file does not exist.
+    JSONDecodeError
+        If the file contents are not valid JSON.
+
+    Examples
+    --------
+    >>> constants, msg = load_constants_json("search_setup.json")
+    >>> isinstance(constants, dict)
+    True
+    """
+    if not isinstance(filename, str) or not filename.strip():
+        raise ValueError("Filename must be a non-empty string.")
+    import os
+
+    if not os.path.exists(filename):
+        raise FileNotFoundError(f"Constants file '{filename}' not found.")
+    with open(filename, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    if not isinstance(data, dict):
+        raise ValueError("Constants JSON must have a dict as the top-level object.")
+    n_keys = len(data)
+    message = f"Constants loaded from '{filename}' | keys: {n_keys}"
+    return data, message
