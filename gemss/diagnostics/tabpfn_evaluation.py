@@ -80,7 +80,8 @@ def regression_metrics(y_true, y_pred, n_features):
         else np.nan
     )
     return {
-        "n_samples": n_samples,
+        "n_samples": int(n_samples),
+        "n_features": int(n_features),
         "r2_score": np.round(r2, 3),
         "adjusted_r2": np.round(adj_r2, 3) if not np.isnan(adj_r2) else np.nan,
         "MSE": np.round(mse, 3),
@@ -135,7 +136,7 @@ def classification_metrics(y_true, y_pred):
     }
     cm = confusion_matrix(y_true, y_pred)
     metrics = {
-        "n_samples": n_samples,
+        "n_samples": int(n_samples),
         "class_distribution": class_dist,
         "accuracy": np.round(acc, 3),
         "balanced_accuracy": np.round(bal_acc, 3),
@@ -268,10 +269,11 @@ def tabpfn_evaluate(
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
 
+        n_features = X_train.shape[1]
         if task == "classification":
             scores = classification_metrics(y_test, y_pred)
+            scores["n_features"] = n_features
         else:
-            n_features = X_train.shape[1]
             scores = regression_metrics(y_test, y_pred, n_features=n_features)
 
         all_scores.append(scores)
