@@ -21,6 +21,7 @@ elbo_regularized(z)    : Computes the ELBO with a penalty for support similarity
 optimize(...)          : Runs the main optimization loop.
 """
 
+from time import time
 from typing import Literal, Dict, List
 from IPython.display import display, Markdown
 import torch
@@ -31,7 +32,7 @@ from .models import (
     StructuredSpikeAndSlabPrior,
     GaussianMixture,
 )
-from gemss.utils import print_nice_optimization_settings, myprint
+from gemss.utils import myprint
 
 
 class BayesianFeatureSelector:
@@ -379,31 +380,23 @@ class BayesianFeatureSelector:
         """
 
         if verbose:
-            print_nice_optimization_settings(
-                n_components=self.n_components,
-                regularize=regularize,
-                lambda_jaccard=lambda_jaccard,
-                n_iterations=self.n_iter,
-                prior_settings={
-                    "prior_name": type(self.prior).__name__,
-                    "prior_sparsity": getattr(self.prior, "sparsity", None),
-                    "var_slab": getattr(self.prior, "var_slab", None),
-                    "var_spike": getattr(self.prior, "var_spike", None),
-                    "weight_slab": getattr(self.prior, "weight_slab", None),
-                    "weight_spike": getattr(self.prior, "weight_spike", None),
-                    "student_df": getattr(self.prior, "df", None),
-                    "student_scale": getattr(self.prior, "scale", None),
-                },
-            )
+            myprint(msg=f"Running GEMSS feature selector:", header=4)
+            myprint(msg=f"- desired number of solutions: {self.n_components}")
+            myprint(msg=f"- number of iterations: {self.n_iter}")
+
+            if regularize and (lambda_jaccard != 0):
+                myprint(msg=f"  - regularization with penalization: {lambda_jaccard}")
+            else:
+                myprint(msg="- no regularization")
 
         history = {"elbo": [], "mu": [], "var": [], "alpha": []}
-
+        start_time = time()
         for it in range(self.n_iter):
             # Sample z ~ q(z) - this should always produce complete samples (no NaNs)
             z, comp_idx = self.mixture.sample(self.batch_size)
             # Note: z automatically has requires_grad=True through reparameterization
 
-            if regularize:
+            if regularize and (lambda_jaccard != 0):
                 elbo = self.elbo_regularized(
                     z,
                     lambda_jaccard=lambda_jaccard,
@@ -426,8 +419,14 @@ class BayesianFeatureSelector:
             alpha_val = self.mixture.get_alpha()
             history["alpha"].append(alpha_val.detach().cpu().clone().numpy())
 
-            if log_callback and it % 100 == 0:
+            nth_iteration = it % 100 == 0
+            if log_callback and nth_iteration:
                 log_callback(it, elbo.item(), self.mixture)
+            if verbose and nth_iteration and it > 0:
+                elapsed_time = time() - start_time
+                myprint(
+                    msg=f"**Iteration {it}:** elapsed time: {elapsed_time:.0f}s, remaining time: {elapsed_time/it * (self.n_iter - it):.0f}s, ELBO = {elbo.item()}"
+                )
         if verbose:
             myprint("Optimization complete.", use_markdown=True)
         return history
