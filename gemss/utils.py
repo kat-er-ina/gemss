@@ -741,7 +741,7 @@ def load_selector_history_json(
     except Exception as e:
         raise ValueError(f"Failed converting lists to arrays: {e}")
 
-    message = f"History loaded from '{filename}' | iterations: {n_iters} | data: {sorted(data.keys())}"
+    message = f"**History loaded from** '{filename}' | **iterations:** {n_iters} | **data:** {sorted(data.keys())}"
     return data, message
 
 
