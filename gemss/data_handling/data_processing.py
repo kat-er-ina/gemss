@@ -113,6 +113,8 @@ def preprocess_features(
     df: pd.DataFrame,
     response: pd.Series,
     dropna: Literal["response", "all", "none"] = "response",
+    allowed_missing_percentage: Optional[float] = None,
+    drop_non_numeric_features: bool = True,
     apply_scaling: Literal["standard", "minmax", None] = None,
     verbose: Optional[bool] = True,
 ) -> Tuple[np.ndarray, np.ndarray, Dict[str, str]]:
@@ -130,6 +132,12 @@ def preprocess_features(
         - "response": drop rows with NA in the response column only.
         - "all": drop rows with NA in any column.
         - "none": do not drop any rows.
+    allowed_missing_percentage: float, optional, default=90
+        The maximum allowed percentage of missing values in the dataset.
+        Features with a higher percentage of missing values will be dropped.
+    drop_non_numeric_features: bool, optional, default=True
+        Whether to drop non-numeric features from the DataFrame.
+        Default is True because the feature selector works only with numerical values.
     apply_scaling: Literal["standard", "minmax", None] = None,
         Whether to apply scaling to the features. Options are:
         - "standard": apply standard scaling.
@@ -147,6 +155,9 @@ def preprocess_features(
         - a mapping from feature names to their original column names
     """
     df_copy = df.copy()
+
+    if drop_non_numeric_features:
+        df_copy = preprocess_non_numeric_features(df_copy, how="drop", verbose=verbose)
 
     # handle NA values
     if dropna != "none":
@@ -171,6 +182,34 @@ def preprocess_features(
             else:
                 myprint(
                     f"Dropped rows with NA values. Shape changed from {initial_shape} to {df_copy.shape}.",
+                    use_markdown=True,
+                )
+
+    # drop features with too many missing values
+    if allowed_missing_percentage is not None:
+        if allowed_missing_percentage < 0 or allowed_missing_percentage > 100:
+            raise ValueError(
+                "allowed_missing_percentage must be either None or between 0 and 100."
+            )
+        # Treat values between 0 and 1 as fractions
+        if allowed_missing_percentage <= 1:
+            allowed_missing_percentage *= 100
+
+        initial_shape = df_copy.shape
+        missing_pct_per_feature = df_copy.isna().mean() * 100
+        features_to_drop = missing_pct_per_feature[
+            missing_pct_per_feature > allowed_missing_percentage
+        ].index.tolist()
+        df_copy = df_copy.drop(columns=features_to_drop)
+        if verbose:
+            if len(features_to_drop) > 0:
+                myprint(
+                    f"Dropped {len(features_to_drop)} features with more than {allowed_missing_percentage}% missing values. Shape changed from {initial_shape} to {df_copy.shape}.",
+                    use_markdown=True,
+                )
+            else:
+                myprint(
+                    f"No features exceeded the allowed missing value percentage {allowed_missing_percentage}%. No columns were dropped.",
                     use_markdown=True,
                 )
 
@@ -233,4 +272,4 @@ def get_df_from_X(
     df = pd.DataFrame(
         X, columns=[feature_to_name[f"feature_{i}"] for i in range(X.shape[1])]
     )
-    return df
+    return df.astype(float)
