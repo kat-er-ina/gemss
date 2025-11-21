@@ -400,8 +400,7 @@ def display_feature_lists(
 
 
 def save_feature_lists_txt(
-    all_feature_dicts: List[Dict[str, List[str]]],
-    feature_dict_titles: List[str],
+    all_features_lists: Dict[str, Dict[str, List[str]]],
     filename: str,
 ) -> str:
     """Save multiple dictionaries of candidate feature lists to a plain text file.
@@ -415,12 +414,9 @@ def save_feature_lists_txt(
 
     Parameters
     ----------
-    all_feature_dicts : List[Dict[str, List[str]]]
-        A list where each element is a dictionary mapping component names to lists of
-        feature names (strings).
-    feature_dict_titles : List[str]
-        A list of titles describing each feature dictionary. Must be the same length
-        as ``all_feature_dicts``.
+    all_features_lists : Dict[str, Dict[str, List[str]]]
+        A dictionary mapping feature list titles to their corresponding feature lists. Structure:
+        { solution_type: {component1: [feat1, feat2], component2: [feat3]}, title2: {...}, ... }
     filename : str
         Path (or filename) of the text file to create.
 
@@ -445,15 +441,12 @@ def save_feature_lists_txt(
     >>> save_feature_lists_txt(dicts, titles, "solutions.txt")
     'Candidate solutions saved to file solutions.txt.'
     """
-    if not all_feature_dicts:
-        raise ValueError("'all_feature_dicts' is empty; nothing to save.")
-    if len(all_feature_dicts) != len(feature_dict_titles):
-        raise ValueError(
-            "Length mismatch: 'all_feature_dicts' and 'feature_dict_titles' must be equal."
-        )
+    if not all_features_lists:
+        raise ValueError("'all_features_lists' is empty; nothing to save.")
+
     try:
         with open(filename, "w", encoding="utf-8") as f:
-            for feature_dict, title in zip(all_feature_dicts, feature_dict_titles):
+            for title, feature_dict in all_features_lists.items():
                 f.write(f"### {title}\n\n")
                 for component, features in feature_dict.items():
                     f.write(f"{component.upper()}\n")
@@ -467,8 +460,7 @@ def save_feature_lists_txt(
 
 
 def save_feature_lists_json(
-    all_feature_dicts: List[Dict[str, List[str]]],
-    feature_dict_titles: List[str],
+    all_features_lists: Dict[str, List[str]],
     filename: str,
 ) -> str:
     """Save multiple dictionaries of candidate feature lists to a structured JSON file.
@@ -480,12 +472,9 @@ def save_feature_lists_json(
 
     Parameters
     ----------
-    all_feature_dicts : List[Dict[str, List[str]]]
-        A list where each element is a dictionary mapping component names to lists of
-        feature names (strings).
-    feature_dict_titles : List[str]
-        A list of titles describing each feature dictionary. Must be the same length
-        as ``all_feature_dicts``.
+    all_features_lists : Dict[str, Dict[str, List[str]]]
+        A dictionary mapping feature list titles to their corresponding feature lists. Structure:
+        { solution_type: {component1: [feat1, feat2], component2: [feat3]}, title2: {...}, ... }
     filename : str
         Path (or filename) of the JSON file to create.
 
@@ -497,20 +486,16 @@ def save_feature_lists_json(
     Raises
     ------
     ValueError
-        If ``all_feature_dicts`` and ``feature_dict_titles`` have different lengths
-        or if ``all_feature_dicts`` is empty.
+        If ``all_features_lists`` is empty.
     """
-    if not all_feature_dicts:
-        raise ValueError("'all_feature_dicts' is empty; nothing to save.")
-    if len(all_feature_dicts) != len(feature_dict_titles):
-        raise ValueError(
-            "Length mismatch: 'all_feature_dicts' and 'feature_dict_titles' must be equal."
-        )
+    if not all_features_lists:
+        raise ValueError("'all_features_lists' is empty; nothing to save.")
+
     if not isinstance(filename, str) or not filename.strip():
         raise ValueError("Filename must be a non-empty string.")
 
     sections: List[Dict[str, Any]] = []
-    for feature_dict, title in zip(all_feature_dicts, feature_dict_titles):
+    for title, feature_dict in all_features_lists.items():
         components_out: Dict[str, List[str]] = {}
         for component, features in feature_dict.items():
             # Ensure list of strings
@@ -532,12 +517,11 @@ def save_feature_lists_json(
 
 def load_feature_lists_json(
     filename: str,
-) -> tuple[List[Dict[str, List[str]]], List[str]]:
-    """Load candidate feature list sections saved by ``save_feature_lists_json``.
+) -> tuple[Dict[str, Dict[str, List[str]]], str]:
+    """Load the dictionary of all candidate solutions saved by ``save_feature_lists_json``.
 
     Reads the JSON file produced by ``save_feature_lists_json`` and reconstructs
-    the pair (all_feature_dicts, feature_dict_titles) suitable for re-use or
-    re-saving in a different format.
+    the dictionary mapping solution type titles to the dictionary of their components and feature lists.
 
     Parameters
     ----------
@@ -546,24 +530,31 @@ def load_feature_lists_json(
 
     Returns
     -------
-    tuple[List[Dict[str, List[str]]], List[str]]
-        A tuple containing:
-        - list of feature dictionaries (each mapping component -> list[str])
-        - list of titles for those dictionaries, in the same order.
+    (all_features_lists, message) : tuple[Dict[str, Dict[str, List[str]]], str]
+        ``all_features_lists`` with structure {
+            solution_type_A: {
+                component1: [feat1, feat2],
+                component2: [feat3],
+                ...
+            },
+            solution_type_B: {...},
+            ...
+        }
+        ``message`` summarizes load status (file name, number of sections).
 
     Raises
     ------
+    ValueError
+        If filename is invalid or JSON structure malformed.
     FileNotFoundError
         If the file does not exist.
-    ValueError
-        If the JSON structure is invalid or missing required keys.
     JSONDecodeError
         If the file content is not valid JSON.
 
     Examples
     --------
-    >>> dicts, titles = load_feature_lists_json("solutions.json")
-    >>> len(dicts) == len(titles)
+    >>> feature_lists, msg = load_feature_lists_json("solutions.json")
+    >>> isinstance(feature_lists, dict)
     True
     """
     if not isinstance(filename, str) or not filename.strip():
@@ -579,18 +570,19 @@ def load_feature_lists_json(
     sections = data.get("sections")
     if not isinstance(sections, list):
         raise ValueError("JSON missing 'sections' list.")
-    all_feature_dicts: List[Dict[str, List[str]]] = []
-    feature_dict_titles: List[str] = []
+
+    all_features_lists: Dict[str, Dict[str, List[str]]] = {}
     for i, section in enumerate(sections):
         if not isinstance(section, dict):
             raise ValueError(f"Section index {i} is not an object.")
         title = section.get("title")
         components = section.get("components")
-        if title is None or not isinstance(title, str):
+        if title is None or not isinstance(title, str) or not title.strip():
             raise ValueError(f"Section index {i} missing valid 'title'.")
         if not isinstance(components, dict):
             raise ValueError(f"Section '{title}' missing 'components' dict.")
-        feature_dict: Dict[str, List[str]] = {}
+
+        component_dict: Dict[str, List[str]] = {}
         for comp, feats in components.items():
             if not isinstance(comp, str):
                 raise ValueError(
@@ -600,10 +592,13 @@ def load_feature_lists_json(
                 raise ValueError(
                     f"Features for component '{comp}' in section '{title}' not a list."
                 )
-            feature_dict[comp] = [str(f) for f in feats]
-        feature_dict_titles.append(title)
-        all_feature_dicts.append(feature_dict)
-    return all_feature_dicts, feature_dict_titles
+            component_dict[comp] = [str(f) for f in feats]
+        all_features_lists[title] = component_dict
+
+    message = (
+        f"Feature lists loaded from '{filename}' | sections: {len(all_features_lists)}"
+    )
+    return all_features_lists, message
 
 
 def save_selector_history_json(history, filename) -> str:
