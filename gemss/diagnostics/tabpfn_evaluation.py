@@ -259,11 +259,14 @@ def tabpfn_evaluate(
 
         if task == "classification":
             model = TabPFNClassifier(
-                **(tabpfn_kwargs or {}), ignore_pretraining_limits=True
+                **(tabpfn_kwargs or {}),
+                balance_probabilities=True,
+                ignore_pretraining_limits=True,
             )
         else:
             model = TabPFNRegressor(
-                **(tabpfn_kwargs or {}), ignore_pretraining_limits=True
+                **(tabpfn_kwargs or {}),
+                ignore_pretraining_limits=True,
             )
 
         model.fit(X_train, y_train)
@@ -292,7 +295,7 @@ def tabpfn_evaluate(
             )
             explanations.append(shap_importance)
 
-    # Aggregate (average except confusion matrices)
+    # Aggregate (average except for confusion matrices)
     keys = [k for k in all_scores[0].keys() if k != "confusion_matrix"]
     avg_scores = {k: np.mean([s[k] for s in all_scores]) for k in keys}
     if "confusion_matrix" in all_scores[0]:
