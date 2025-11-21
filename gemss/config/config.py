@@ -78,36 +78,36 @@ class ConfigurationManager:
     # Parameter descriptions for display
     PARAM_DESCRIPTIONS = {
         # Artificial dataset generation (development/demo only)
-        "N_SAMPLES": "Number of samples (rows) in the synthetic dataset",
-        "N_FEATURES": "Number of features (columns) in the synthetic dataset",
-        "N_GENERATING_SOLUTIONS": "Number of distinct sparse solutions ('true' supports)",
-        "SPARSITY": "Number of nonzero features per solution (support size)",
-        "NOISE_STD": "Standard deviation of noise added to synthetic data",
-        "NAN_RATIO": "Proportion of missing values (NaNs) in the synthetic dataset",
-        "BINARIZE": "Whether to binarize the synthetic response variable",
-        "BINARY_RESPONSE_RATIO": "Proportion of synthetic samples assigned label 1",
-        "DATASET_SEED": "Random seed for synthetic data reproducibility",
+        "N_SAMPLES": "Number of samples (rows) in the synthetic dataset.",
+        "N_FEATURES": "Number of features (columns) in the synthetic dataset.",
+        "N_GENERATING_SOLUTIONS": "Number of distinct sparse solutions ('true' supports).",
+        "SPARSITY": "Number of nonzero features per solution (support size).",
+        "NOISE_STD": "Standard deviation of noise added to synthetic data.",
+        "NAN_RATIO": "Proportion of missing values (NaNs) in the synthetic dataset.",
+        "BINARIZE": "Whether to binarize the synthetic response variable.",
+        "BINARY_RESPONSE_RATIO": "Proportion of synthetic samples assigned label 1.",
+        "DATASET_SEED": "Random seed for synthetic data reproducibility.",
         # Algorithm settings
-        "N_CANDIDATE_SOLUTIONS": "Number of mixture components in variational posterior",
-        "N_ITER": "Number of optimization iterations",
+        "N_CANDIDATE_SOLUTIONS": "Number of mixture components in variational posterior.",
+        "N_ITER": "Number of optimization iterations.",
         "PRIOR_TYPE": "Prior type ('ss', 'sss', or 'student')",
         "PRIOR_SPARSITY": "Expected number of nonzero features per component. Used only in 'sss' prior",
         "SAMPLE_MORE_PRIORS_COEFF": "Coefficient for increased support sampling. Experimental use only.",
-        "STUDENT_DF": "Degrees of freedom for the Student-t prior",
-        "STUDENT_SCALE": "Scale parameter for the Student-t prior",
-        "VAR_SLAB": "Variance of the 'slab' component in the 'ss' or 'sss' prior",
-        "VAR_SPIKE": "Variance of the 'spike' component in the 'ss' or 'sss' prior",
-        "WEIGHT_SLAB": "Weight of the 'slab' component in the 'ss' prior",
-        "WEIGHT_SPIKE": "Weight of the 'spike' component in the 'ss' prior",
-        "IS_REGULARIZED": "Whether to use Jaccard similarity penalty",
-        "LAMBDA_JACCARD": "Regularization strength for Jaccard penalty",
-        "BATCH_SIZE": "Mini-batch size for optimization",
-        "LEARNING_RATE": "Learning rate for Adam optimizer",
+        "STUDENT_DF": "Degrees of freedom for the Student-t prior. Used only if PRIOR_TYPE is 'student'.",
+        "STUDENT_SCALE": "Scale parameter for the Student-t prior. Used only if PRIOR_TYPE is 'student'.",
+        "VAR_SLAB": "Variance of the 'slab' component in the 'ss' or 'sss' prior. Ignored for 'student' prior.",
+        "VAR_SPIKE": "Variance of the 'spike' component in the 'ss' or 'sss' prior. Ignored for 'student' prior.",
+        "WEIGHT_SLAB": "Weight of the 'slab' component in the 'ss' prior. Ignored for other priors.",
+        "WEIGHT_SPIKE": "Weight of the 'spike' component in the 'ss' prior. Ignored for other priors.",
+        "IS_REGULARIZED": "Whether to use Jaccard similarity penalty.",
+        "LAMBDA_JACCARD": "Regularization strength for Jaccard penalty.",
+        "BATCH_SIZE": "Mini-batch size for optimization.",
+        "LEARNING_RATE": "Learning rate for Adam optimizer.",
         # Postprocessing
-        "DESIRED_SPARSITY": "Desired number of features in final solution",
-        "MIN_MU_THRESHOLD": "Minimum mu threshold for feature selection",
-        "USE_MEDIAN_FOR_OUTLIER_DETECTION": "Whether to use median and MAD or mean and STD when selecting features by outlier detection",
-        "OUTLIER_DEVIATION_THRESHOLDS": "A list of thresholding values of either MAD or STD to be used to define outliers",
+        "DESIRED_SPARSITY": "Desired number of features in final solution.",
+        "MIN_MU_THRESHOLD": "Minimum mu threshold for feature selection.",
+        "USE_MEDIAN_FOR_OUTLIER_DETECTION": "Whether to use median and MAD or mean and STD when selecting features by outlier detection.",
+        "OUTLIER_DEVIATION_THRESHOLDS": "A list of thresholding values of either MAD or STD to be used to define outliers.",
     }
 
     def __init__(self):
@@ -272,6 +272,7 @@ def get_current_config(
     constant_type: Literal[
         "algorithm",
         "postprocessing",
+        "algorithm_and_postprocessing",
         "dataset",
         "all",
     ] = "all",
@@ -284,8 +285,8 @@ def get_current_config(
     constants : Dict[str, Any], optional
         Configuration parameters to display. If None, uses current config.
     constant_type : str
-        Parameter category to display: 'algorithm', 'postprocessing', 'dataset', 'all'
-
+        Parameter category to display:
+        'algorithm', 'postprocessing', 'algorithm_and_postprocessing', 'dataset', 'all'
     Returns
     -------
     str
@@ -344,6 +345,7 @@ def display_current_config(
     constant_type: Literal[
         "algorithm",
         "postprocessing",
+        "algorithm_and_postprocessing",
         "dataset",
         "all",
     ] = "all",
@@ -356,7 +358,8 @@ def display_current_config(
     constants : Dict[str, Any], optional
         Configuration parameters to display. If None, uses current config.
     constant_type : str
-        Parameter category to display: 'algorithm', 'postprocessing', 'dataset', 'all'
+        Parameter category to display:
+        'algorithm', 'postprocessing', 'algorithm_and_postprocessing', 'dataset', 'all'
     """
     try:
         from IPython.display import display, Markdown
@@ -377,6 +380,6 @@ def display_current_config(
     else:
         section_title = f"{constant_type} parameters"
 
-    display(Markdown(f"## Current configuration: {section_title}"))
+    display(Markdown(f"## Configuration: {section_title}"))
     display(Markdown(table_lines))
     return
