@@ -20,5 +20,8 @@ build/
 *.swp
 .DS_Store
 
+# Ignore results
+notebooks/results/
+
 # Ignore private files
 private/
