@@ -193,7 +193,7 @@ def show_overview_of_generated_data(
     )
 
     support_indices = parameters["support_indices"].sum()
-    support_features = [f"feature_{i}" for i in support_indices]
+    support_features = list(set(f"feature_{i}" for i in support_indices))
     display(
         Markdown(
             f"- **Nonzero features:** {len(support_features)}<br>{sorted(support_features)}"
