@@ -14,63 +14,98 @@ Traditional feature selection methods typically identify only a single solution 
 
 ## Features
 
-- **Multiple sparse solutions:** Identifies all distinct sparse supports that explain the data
-- **Native missing data handling:** Works directly with datasets containing missing values without imputation or sample dropping
-- **Flexible priors:** Spike-and-slab, structured spike-and-slab (SSS), and Student-t priors
-- **Variational inference:** Efficient optimization with PyTorch backend
-- **Diversity regularization:** Jaccard penalty to encourage component diversity
-- **Dual-purpose design:** Works with both synthetic data (development) and real datasets (production)
-- **Basic data preprocessing:** Automatic handling of categorical variables, scaling, and data quality checks
-- **Performance diagnostics:** Automated optimization analysis and parameter recommendations
-- **Recommendation system:** Intelligent suggestions for parameter adjustment
-- **Rich visualization:** Interactive plots for optimization history and results
-- **Modular configuration:** Clean separation of artificial dataset, algorithm, and postprocessing parameters
-- **Batch processing:** Parameter sweep scripts for systematic experimentation
-- **Automated testing:** Limited automated test suite for functionality validation
-- **Comprehensive output:** Detailed summaries, diagnostics, and solution tables
+- **Multiple sparse solutions:** Recovers diverse sparse feature 
+- **Missing data:** Native handling without imputation
+- **Flexible priors:** Structured spike-and-slab by default, with Student-t and vanilla spike-and-slab alternatives
+- **Variational inference:** PyTorch-based optimization
+- **Diversity regularization:** Jaccard-based penalty to promote greater diversity, if needed
+- **Diagnostics & recommendations [work in progress]:** Convergence checks, tuning hints
+- **Visualization:** Interactive plots of history and solutions
+- **Configuration:** Separate dataset/algorithm/postprocessing JSONs
+- **Batch processing & tests:** Sweeps, tiered suites, functionality tests
 
 ---
 
 ## Repository Structure
 
+High-level layout of the project with key responsibilities:
+
 ```
-gemss/                      # Core package
-  config/                   # Configuration package
-    config.py               # Configuration manager and parameter loading
-    constants.py            # Project constants and file paths
-    algorithm_settings.json                # Algorithm configuration
-    generated_dataset_parameters.json      # Synthetic dataset configuration
-    solution_postprocessing_settings.json  # Postprocessing configuration
-  data_handling/                     # Utilities to handle data
-    generate_artificial_dataset.py   # Synthetic dataset generator
-    data_processing.py               # Utilities to preprocess user-provided datasets
-  diagnostics/              # Diagnostics and testing package
-    performance_tests.py    # Performance diagnostics and testing
-    recommendations.py      # Parameter recommendation system
-    recommendation_messages.py  # Recommendation message templates
-    result_postprocessing.py    # Solution extraction and diagnostics
-    simple_regressions.py       # Simple regression solvers (logistic, linear)
-    visualizations.py           # Plotting and visualization functions
-  feature_selection/  # Core feature selection package
-    inference.py      # Main variational inference logic (BayesianFeatureSelector)
-    models.py         # Prior distributions and model components  
-  utils.py          # Utility functions for optimization settings
+gemss/                       # Project root (editable install target)
+  README.md                  # Project overview & usage guide
+  requirements.txt           # Python dependencies
+  setup.py                   # Package metadata for installation
+  TODO.md                    # Internal task notes
+  data/                      # (Optional) user-provided raw datasets
+  results/                   # Top-level results (if any script writes here)
+  tests/                     # Automated tests
+  scripts/                   # Experiment & sweep utilities
+    run_experiment.py        # Single headless experiment driver
+    run_sweep.ps1            # Parameter sweep across JSON configs
+    run_tiers.ps1            # Tiered artificial data benchmark launcher
+    run_sweep_with_tiers.ps1 # Combined sweep + tier logic
+    experiment_parameters.json        # Full 7-tier experimental design (110 experiments)
+    experiment_parameters_short.json  # Reduced tier set (quick checks)
+    results/                 # Structured logs + tier outputs
+      logs/                  # Execution summaries & error logs
+      tier1/ tier2/ ...      # Output text files per experiment combination
+      tierX/tier_summary_metrics.csv # Aggregated metrics for all runs in a tier
 
-notebooks/
-  demo.ipynb                     # Interactive demo with synthetic data
-  explore_custom_dataset.ipynb  # Example with real user dataset
+  notebooks/                 # Interactive exploration & evaluation
+    demo.ipynb               # Synthetic end-to-end demo
+    analyze_tier_results.ipynb # Visualization & analysis of CSV logs from tier runs
+    explore_custom_dataset.ipynb      # Workflow for user data
+    tabpfn_evaluation_example.ipynb   # TabPFN evaluation showcase
+    tabpfn_evaluate_custom_dataset_results.ipynb # Evaluation of saved solutions
+    results/                 # Notebook-specific artifacts
 
-scripts/
-  run_experiment.py         # Run single experiment (headless)
-  run_sweep.ps1            # PowerShell sweep script for batch experiments
-  run_tiers.ps1            # PowerShell script for tiered experimental runs
-  run_sweep_with_tiers.ps1 # Internal script for tier-based parameter sweeps
-  experiment_parameters.json       # Full experimental parameter definitions
-  experiment_parameters_short.json # Shortened tiers for quick testing
-
-tests/
-  test_missing_data_native.py  # Comprehensive test suite for missing data handling
+  gemss/                     # Core Python package
+    __init__.py
+    utils.py                 # Persistence & display helpers (save/load history, solutions)
+    config/                  # Modular configuration system
+      config.py              # Loader, caching, display utilities
+      constants.py           # Paths & global names
+      algorithm_settings.json
+      generated_dataset_parameters.json
+      solution_postprocessing_settings.json
+    data_handling/
+      data_processing.py     # Preprocessing (scaling, categorical handling)
+      generate_artificial_dataset.py  # Synthetic data with controlled sparsity & missingness
+    feature_selection/
+      inference.py           # Variational optimization
+      models.py              # Prior & model component definitions
+    diagnostics/
+      visualizations.py      # Plotting (ELBO, mu trajectories, alpha distributions)
+      result_postprocessing.py  # Solution recovery, metrics (SI/ASI) & summarization
+      simple_regressions.py  # Lightweight regression/classification evaluation
+      outliers.py            # Outlier-based feature set extraction
+      performance_tests.py   # Convergence & stability diagnostics
+      recommendations.py     # Parameter tuning heuristics
+      recommendation_messages.py # Message templates for recommendations
+      tabpfn_evaluation.py   # Nested CV + metrics + optional SHAP (TabPFN)
 ```
+
+
+### Artifacts
+
+- Feature selection runs (notebooks or `run_experiment.py`) typically save:
+  - `search_setup*.json` (constants/config used)
+  - `search_history_results*.json` (ELBO, mu, var, alpha trajectories)
+  - `all_candidate_solutions*.json` and `.txt` (components → feature lists)
+- Evaluation notebooks may additionally emit:
+  - `tabpfn_evaluation_average_scores.csv` (nested CV aggregate metrics)
+  - `tabpfn_feature_importances.csv` (SHAP fold-wise summaries)
+- Script tier runs create:
+  - Timestamped text reports under `scripts/results/tier*/`
+  - `tier_summary_metrics.csv` aggregating Recall, Precision, Success Index (SI), and Adjusted Success Index (ASI) for all runs in that tier
+
+
+### Key Utility Functions (from `utils.py`)
+- `save_feature_lists_json` / `load_feature_lists_json` — structured solution persistence, title keyed.
+- `save_selector_history_json` / `load_selector_history_json` — optimization trajectory round-trip with automatic array reconstruction.
+- `save_constants_json` / `load_constants_json` — exact configuration provenance.
+
+Use these together for full reproducibility: constants (inputs) + history (process) + solutions (outputs).
 
 ---
 
@@ -81,7 +116,7 @@ The project uses a modular configuration system with 3 JSON files located in `ge
 1. **generated_dataset_parameters.json**  
    Artificial dataset generation parameters (for development/demo only):
    - `N_SAMPLES`: Number of samples (rows)
-   - `N_FEATURES`: Number of features (columns) 
+   - `N_FEATURES`: Number of features (columns)
    - `N_GENERATING_SOLUTIONS`: Number of distinct sparse solutions that were explicitly constructed during data generation.
    - `SPARSITY`: Support size (nonzero features per solution)
    - `NOISE_STD`: Noise level
@@ -94,7 +129,7 @@ The project uses a modular configuration system with 3 JSON files located in `ge
    Core algorithm parameters (used for both synthetic and real data):
    - `N_CANDIDATE_SOLUTIONS`: Number of candidate solutions (Gaussian mixture components) to search for.
    - `PRIOR_TYPE`: Choice of the sparsifying prior distribution ('ss', 'sss', 'student').
-   - `N_ITER`: Numbe of optimization iterations, `LEARNING_RATE`, regularization, etc.
+   - `N_ITER`: Number of optimization iterations, `LEARNING_RATE`, regularization, etc.
 
 3. **solution_postprocessing_settings.json**  
    Solution extraction and analysis parameters:
@@ -109,171 +144,162 @@ The configuration system (`gemss.config`) provides:
 
 ---
 
-## Installation
+## Quick Start
 
-1. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. *(Optional)* Install the package in editable/development mode:
-   ```bash
-   pip install -e .
-   ```
+```powershell
+pip install -r requirements.txt
+pip install -e .  # optional, for development
+```
 
 ---
 
 ## Usage
 
-### A Single Demo Experiment
-
-1. **Configure parameters:**
-   - Edit `generated_dataset_parameters.json`, `algorithm_settings.json`, and `solution_postprocessing_settings.json` manually,
-     **or** let the sweep script generate them
-     **or** define them manually in your own notebook.
-
-2. **Run the experiment:**
-   ```bash
-   python scripts/run_experiment.py
-   ```
-   - Optionally, specify the output file name:
-     ```bash
-     python scripts/run_experiment.py --output my_results.txt
-     ```
-   - Results are saved in the `results/` directory.
+- **Demo notebook:** `notebooks\demo.ipynb` contains the complete walkthrough with synthetic data.
+- **Custom dataset notebook:** `notebooks\explore_custom_dataset.ipynb` guides you when using GEMSS on your own data.
+- **Scripted experiments, single or in batches:** all run the script `scripts\run_experiment.py` with parameters configured in corresponding JSON files. Batches of experiments can be run using PowerShell scripts.
 
 ---
 
 ### Custom dataset
 
-GEMSS provides a notebook to explore your own datasets. While basic preprocessing utilities are provided, it is advisable to provide cleaned data with only numerical values. Missing values are handled natively. Standard scaling is available.
+GEMSS provides a notebook to explore your own datasets. While basic preprocessing utilities are provided, it is advisable to provide cleaned data with only numerical values. Missing values are handled natively. Standard and minmax scaling is available.
 
 **Steps:**
 1. Copy your dataset in a .csv format in the `data` folder.
-2. Open the notebook `explore_custom_dataset.ipynb` and follow its structure.
+2. Open the notebook `explore_custom_dataset.ipynb` and follow the instructions.
 
 **Workflow in `explore_custom_dataset`:**
 1. Modify the data file name, choose the index and target value columns.
-2. Supervise data preprocessing: check out the cells output and possibly adjust parameters as desired.
+2. Supervise basic data preprocessing: check out the cells output and possibly adjust parameters as desired.
 3. Adjust the algorithm hyperparameters in the notebook.
 4. Run all remaining cells.
 5. Review the results. Check out the comprehensive diagnostics and visualizations.
 6. Iterate: adjust the hyperparameters based on convergence properties and desired outcome.
 
-**Advanced Data Processing Functions:**
-```python
-from gemss.data_handling.data_processing import (
-    load_data, 
-    preprocess_features, 
-    preprocess_non_numeric_features,
-    get_feature_name_mapping
-)
+**Advanced Postprocessing Functions:**
 
-# Load and preprocess your dataset
-df, response = load_data(
-    csv_dataset_name="your_dataset.csv",
-    index_column_name="sample_id", 
-    label_column_name="target"
-)
-
-# Get feature name mapping for interpretability
-feature_to_name = get_feature_name_mapping(df)
-
-# Handle categorical variables and scaling
-X_processed = preprocess_features(
-    df, 
-    drop_non_numeric_features=False,  # Encode instead of dropping
-    apply_standard_scaling=True
-)
-
-# Missing values are preserved and handled natively by the algorithm
-selector = BayesianFeatureSelector(
-    n_features=X_processed.shape[1], 
-    n_components=3, 
-    X=X_processed, 
-    y=response.values
-)
-```
-
----
-
-### Interactive Exploration
-
-- **Demo Notebook (`demo.ipynb`):**
-  ```bash
-  jupyter notebook notebooks/demo.ipynb
-  ```
-  - Complete walkthrough with synthetic data
-  - Data generation, model fitting, and diagnostics
-  - Performance testing and recommendations
-  - Handling missing data when setting `NAN_RATIO > 0` in configuration
-
-- **Real Data Notebook (`explore_custom_dataset.ipynb`):**
-  - Example workflow for user datasets
-  - Parameter tuning for real-world problems
-  - Best practices for unknown data exploration
 
 ---
 
 ## Missing Data Handling
 
 GEMSS natively supports datasets with missing feature values **without requiring imputation or sample removal**. The algorithm automatically detects missing data and handles them during likelihood computation. Only samples without a valid target value are dropped.
+In case of significant amount of missing data, it is advisable to increase the batch size.
 
-### Key Features:
-- **Automatic Detection:** Missing values (NaN) in feature matrix are automatically detected
-- **Per-Sample Masking:** Each sample uses only its observed features for likelihood computation
-- **Gradient Preservation:** Maintains proper gradient flow for optimization
-- **No Data Loss:** All samples are retained regardless of missing data patterns
-- **Statistical Rigor:** Uses only observed features per sample while preserving Bayesian inference properties
 
-### Usage Example:
-```python
-import numpy as np
-from gemss.feature_selection.inference import BayesianFeatureSelector
+## Persistence & Reproducibility
 
-# Create data with missing values
-X = np.random.randn(100, 20)
-X[np.random.rand(*X.shape) < 0.3] = np.nan  # 30% missing values
-y = np.random.randn(100)
+### Feature Lists
 
-# Algorithm automatically handles missing data
-selector = BayesianFeatureSelector(
-    n_features=20, 
-    n_components=3, 
-    X=X, 
-    y=y
-)
-history = selector.optimize()
-```
-
-### Generating Artificial Datasets with Missing Data:
-GEMSS can generate synthetic datasets with controlled missing data patterns for testing and development:
+The JSON format stores sections (solution types) each containing component → features mapping. Use a single dictionary keyed by solution titles.
 
 ```python
-from gemss.data_handling.generate_artificial_dataset import generate_artificial_dataset
+from gemss.utils import save_feature_lists_json, load_feature_lists_json
 
-# Generate dataset with 20% missing values
-data, response, solutions, parameters = generate_artificial_dataset(
-    n_samples=100,
-    n_features=20,
-    n_solutions=3,
-    sparsity=2,
-    nan_ratio=0.2,  # 20% missing values randomly distributed
-    random_seed=42
-)
+all_features_lists = {
+    "Top features": {"component_0": ["feat_a", "feat_b"], "component_1": ["feat_c"]},
+    "Full features": {"component_0": ["feat_a", "feat_b", "feat_d"], "component_1": ["feat_c", "feat_e"]},
+    "Outlier features (STD_2.0)": {"component_0": ["feat_a", "feat_b"], "component_1": ["feat_c", "feat_e"]},
+    "Outlier features (STD_3.0)": {"component_0": ["feat_a"], "component_1": ["feat_e"]},
+}
 
-# Missing values are introduced after structured generation
-# preserving the multiple sparse solutions structure
+msg = save_feature_lists_json(all_features_lists, "all_candidate_solutions.json")
+print(msg)
+
+loaded_feature_lists, msg = load_feature_lists_json("all_candidate_solutions.json")
+print(msg)
+print(list(loaded_feature_lists.keys()))  # {'Top features', 'Full features', ...}```
 ```
 
-The `NAN_RATIO` parameter in `generated_dataset_parameters.json` controls missing data generation:
-- `NAN_RATIO = 0.0` → No missing data (default for clean testing)
-- `NAN_RATIO = 0.1` → 10% missing values randomly distributed
+### Optimization History
+
+History contains per-iteration arrays (ELBO, mu, var, alpha). Arrays are stored as nested lists and automatically converted back to NumPy arrays when loading.
+
+```python
+from gemss.utils import save_selector_history_json, load_selector_history_json
+
+msg = save_selector_history_json(history, "search_history_results.json")
+print(msg)
+
+history_loaded, msg = load_selector_history_json("search_history_results.json")
+print(msg)  # iterations count and keys
+```
+
+### Configuration Constants
+
+Persist the exact hyperparameter setup used for a run.
+
+```python
+from gemss.utils import save_constants_json, load_constants_json
+
+msg = save_constants_json(constants, "search_setup.json")
+print(msg)
+
+constants_loaded, msg = load_constants_json("search_setup.json")
+print(msg, len(constants_loaded))
+```
+
+For reproducibility: pair `search_setup.json` (inputs), `search_history_results.json` (trajectory), and `all_candidate_solutions.json` (outputs).
+
 ---
 
-## Performance Diagnostics & Recommendations
+## Integrated Evaluation of Results
 
-The system provides comprehensive tools for analyzing optimization results and extracting meaningful solutions from the GEMSS feature selection algorithm. The basic functionalities are available through the result postprocessing module:
+### Logistic and Linear Regression
+
+Use lightweight baselines to quickly validate discovered feature sets. This utility automatically detects regression vs binary classification and reports metrics on the training data.
+
+```python
+from gemss.result_postprocessing import solve_any_regression
+
+# X_selected: pd.DataFrame or np.ndarray of selected features
+# y: target vector (continuous for regression, binary/0-1 for classification)
+results = solve_any_regression(
+  X_selected,
+  y,
+  scaling="standard",    # or "minmax" or None
+)
+```
+
+- Regression metrics: `r2_score`, `adjusted_r2`, `MSE`, `RMSE`, `MAE`, `MAPE` (if safe).
+- Classification metrics: `accuracy`, `balanced_accuracy`, `roc_auc` (binary), `f1_score`, per-class precision/recall.
+
+
+
+### TabPFN Evaluation
+
+The `tabpfn_evaluate` helper (in `gemss.diagnostics.tabpfn_evaluation`) offers quick performance estimation of discovered feature sets via nested (outer) cross-validation and optional SHAP explanations.
+
+```python
+from gemss.diagnostics.tabpfn_evaluation import tabpfn_evaluate
+
+results = tabpfn_evaluate(
+    X_selected,            # pd.DataFrame or np.ndarray
+    y,                     # target vector
+    apply_scaling="standard",  # or "minmax" or None
+    outer_cv_folds=3,
+    random_state=42,
+    explain=True,          # compute SHAP values (can be costly)
+    shap_sample_size=100,  # cap SHAP sample size
+)
+
+print(results["average_scores"])       # Dict of aggregated metrics
+print(results["fold_scores"][0])        # Per-fold metrics
+```
+
+For regression tasks metrics include: `r2_score`, `adjusted_r2`, `MSE`, `RMSE`, `MAE`, `MAPE` (if safe). For classification: `accuracy`, `balanced_accuracy`, `roc_auc` (binary), `f1_score`, per-class precision/recall, and confusion matrix.
+
+SHAP output (if `explain=True`) is available under `results['shap_explanations_per_fold']` as a list of dictionaries (mean absolute SHAP per feature per fold).
+
+Use cases:
+- Sanity check of explanatory power of aggregated discovered features.
+- Baseline comparison versus randomly selected feature sets of equal cardinality.
+- Rapid evaluation using a strong, nonlinear model.
+
+---
+
+## Diagnostics & Recommendations
 
 ```python
 from gemss.result_postprocessing import (
@@ -285,39 +311,14 @@ from gemss.result_postprocessing import (
 )
 ```
 
-### Core Analysis Functions
+### Core Functions
+- `recover_solutions`: extract sparse sets; compact vs full rankings; custom sparsity/thresholds
+- `show_algorithm_progress`: ELBO, mu, alpha trajectories; name mapping support
+- `solve_any_regression`: regression/classification validation; L1/L2/ElasticNet; per-component metrics
+- `display_features_overview`, `get_long_solutions_df`: ground truth comparison, tabular summaries
+- Plotting lives in `gemss.diagnostics.visualizations.py`
 
-**Solution Recovery:**
-- `recover_solutions()` - Extracts sparse feature sets from optimization history based on significance thresholds
-- Identifies features with high mean values (mu) in final iterations
-- Returns both compact solutions (top features) and comprehensive feature rankings
-- Supports custom sparsity targets and importance thresholds
-
-**Algorithm Progress Visualization:**
-- `show_algorithm_progress()` - Comprehensive optimization monitoring with interactive plots
-- ELBO convergence tracking to assess optimization quality
-- Mixture component means (mu) evolution over iterations  
-- Mixture weights (alpha) progression showing component importance
-- Support for original feature name mapping for interpretability
-
-**Predictive Performance Assessment:**
-- `solve_any_regression()` - Validates discovered solutions using supervised learning
-- Automatic detection of binary classification vs regression tasks
-- Support for L1 (Lasso), L2 (Ridge), and ElasticNet penalties
-- Component-wise performance metrics and coefficient analysis
-- Comprehensive results overview across all discovered solutions
-- Powered by `gemss.diagnostics.simple_regressions` module for logistic and linear regression utilities
-
-**Solution Comparison and Evaluation:**
-- `display_features_overview()` - Ground truth comparison (for synthetic data)
-- Missing vs extra features analysis with coverage statistics
-- `get_long_solutions_df()` - Structured solution comparison in tabular format
-
-All plotting functions are available in `gemss.diagnostics.visualization.py` module.
-
-### Advanced Diagnostics (Work in Progress)
-
-The system includes automated performance analysis to assess the algorithmic sensibility of discovered solutions and to aid with hyperparameter tuning:
+### Advanced (WIP)
 
 ```python
 from gemss.diagnostics.performance_tests import run_performance_diagnostics
@@ -336,9 +337,9 @@ display_recommendations(diagnostics=diagnostics, constants=C.as_dict())
 
 ---
 
-## Working with Configuration
+## Configuration
 
-All configuration is centralized in the `gemss/config/` package:
+All configuration is centralized in `gemss/config/`:
 
 ```
 gemss/config/
@@ -349,23 +350,16 @@ gemss/config/
 └── solution_postprocessing_settings.json # Postprocessing parameters
 ```
 
-The configuration package (`gemss.config`) loads all three files and exposes parameters as Python variables:
+The configuration package exposes parameters as Python variables:
 
 ```python
 import gemss.config as C
-print(C.N_SAMPLES, C.N_CANDIDATE_SOLUTIONS, C.PRIOR_TYPE)
-print(C.MIN_MU_THRESHOLD, C.DESIRED_SPARSITY)  # Postprocessing params
-
-# Access by category
-dataset_params = C.get_params_by_category('artificial_dataset')
-algorithm_params = C.get_params_by_category('algorithm') 
-core_params = C.get_core_algorithm_params()  # Excludes synthetic data params
 
 # Display in notebooks
 C.display_current_config(constants=C.as_dict(), constant_type='algorithm')
 ```
 
-**Parameter sweeps:**  
+**Parameter sweeps:**
 The sweep scripts automatically update the JSON configuration files:
 - Use `run_sweep.ps1` (root) or `scripts/run_sweep.ps1`
 - Scripts dynamically resolve file paths using `constants.py`
@@ -375,118 +369,87 @@ The sweep scripts automatically update the JSON configuration files:
 
 ## Output
 
-- Results of the script-based runs are saved in the `scripts/results/` directory as text files.
-- Filenames include timestamps and all key parameter values.
-- Each file contains:
-  - All run parameters
-  - True and discovered supports
-  - Solution tables for each mixture component
-  - Diagnostic information
+- Text reports under `scripts/results/` with timestamps and parameters
+- Includes run parameters, true/discovered supports, solution tables, diagnostics
 
----
 
-## Performance diagnostics
+## Tiered Artificial Data Experiments
 
-The repository includes basic diagnostic tests to validate functionalities, in particular the handling of missing data.
+The artificial data experiment framework provides a reproducible, 7-tier benchmark (110 total experiments) to stress, validate, and characterize GEMSS across regimes:
 
-### Running Tests:
-```bash
-# Test missing data handling
-python tests/test_missing_data_native.py
+- **Tier 1**: Basic validation (18 experiments) - baseline performance on clean data, N < P
+- **Tier 2**: High-dimensional stress test (9 experiments) - P ≥ 1000, N << P
+- **Tier 3**: Sample-rich scenarios (14 experiments) - N ≥ P control group
+- **Tier 4**: Robustness under adversity (22 experiments) - severe noise and missing data
+- **Tier 5**: Effect of Jaccard penalty (12 experiments) - diversity enforcement testing
+- **Tier 6**: Regression validation (29 experiments) - continuous response, mirrors Tiers 1, 2 and 4
+- **Tier 7**: Class imbalance (6 experiments) - unbalanced binary responses
 
-# Run with Python from project root
-cd gemss/
-python ../tests/test_missing_data_native.py
+It is driven by JSON parameter specifications and PowerShell orchestration scripts under `scripts/`.
+
+### Modes of Execution
+
+- Single run (quick check) using manually defined parameters:
+  ```powershell
+  python scripts\run_experiment.py
+  ```
+- Simple sweep (legacy) using parameters manually defined inside this script:
+  ```powershell
+  .\scripts\run_sweep.ps1
+  ```
+- Tiered suite (recommended):
+  ```powershell
+  cd scripts
+  .\run_tiers.ps1                    # Full suite (tiers 1–7)
+  .\run_tiers.ps1 -tiers @("1","4")  # Selected tiers only
+  .\run_tiers.ps1 -parametersFile experiment_parameters_short.json  # Using a custom file with parameter combinations
+  ```
+
+During execution you are prompted for confirmation (experiment count summary). Logs, errors, and a final execution summary are written to `scripts/results/logs/`.
+
+### Parameter Files
+
+Two JSON specifications exist:
+- `experiment_parameters.json` (full design, 110 experiments across 7 tiers)
+- `experiment_parameters_short.json` (condensed sanity grid)
+
+Both define:
+```text
+parameter_format = "N_SAMPLES,N_FEATURES,N_GENERATING_SOLUTIONS,SPARSITY,NOISE_STD,NAN_RATIO,N_CANDIDATE_SOLUTIONS,LAMBDA_JACCARD,BATCH_SIZE,BINARY_RESPONSE_RATIO"
 ```
 
-### Test Coverage:
-- **Native missing data handling:** Validates algorithm can process datasets with arbitrary missing patterns
-- **Gradient flow preservation:** Ensures optimization works correctly with missing data
-- **Statistical correctness:** Verifies likelihood computation with masked features
-- **Edge cases:** Tests various missing data patterns and sparsity levels
+Each comma-separated combination string populates the artificial dataset + core algorithm context for a run. Static `algorithm_parameters` inside every tier block set global optimizer / prior hyperparameters reused across that tier’s combinations.
 
-The test suite automatically generates synthetic datasets with controlled missing data patterns and validates that:
-1. Algorithm initialization succeeds with missing data
-2. Optimization converges properly
-3. Gradient computation is stable
-4. Results are statistically meaningful
+#### Combination Field Meanings
+- `N_SAMPLES`: Rows in synthetic dataset.
+- `N_FEATURES`: Total feature dimensionality (p).
+- `N_GENERATING_SOLUTIONS`: True sparse supports used to generate the response.
+- `SPARSITY`: Nonzero features per generating solution (k).
+- `NOISE_STD`: Gaussian noise standard deviation on generated response.
+- `NAN_RATIO`: Fraction of feature entries randomly set to NaN post-generation.
+- `N_CANDIDATE_SOLUTIONS`: Mixture components (candidate sparse solutions) optimized by GEMSS.
+- `LAMBDA_JACCARD`: Diversity penalty weight encouraging support dissimilarity.
+- `BATCH_SIZE`: Minibatch size for stochastic updates (dynamic with missingness—see below).
+- `BINARY_RESPONSE_RATIO`: Class proportion for binary tasks (ignored when regression).
 
----
+#### Algorithm Parameter Block (`algorithm_parameters` per tier)
+- `N_ITER`: Optimization iterations.
+- `PRIOR_TYPE`: Prior family (`sss` structured spike-and-slab, `student`, etc.).
+- `STUDENT_DF`, `STUDENT_SCALE`: Heavy-tailed prior shape (if Student-t active).
+- `VAR_SLAB`, `VAR_SPIKE`: Spike-and-slab variances.
+- `WEIGHT_SLAB`, `WEIGHT_SPIKE`: Prior mixture weights.
+- `IS_REGULARIZED`: Toggles diversity regularization pathway.
+- `LEARNING_RATE`: Optimizer step size.
+- `MIN_MU_THRESHOLD`: Postprocessing importance threshold baseline.
+- `BINARIZE`: Selects classification (True) vs regression (False) synthetic response.
 
-## Customization & Extending
+#### Dynamic Batch Size Logic
+For robustness under missing data, larger batches are used as `NAN_RATIO` increases. In the full design:
+```
+if NAN_RATIO == 0.0: BATCH_SIZE = 16
+else: BATCH_SIZE = int(16 * 1.5 / (1 - NAN_RATIO))
+```
 
-- **Add new priors:** Implement in `gemss/feature_selection/models.py` and update `BayesianFeatureSelector`
-- **Custom diagnostics:** Extend `gemss/diagnostics/performance_tests.py` with new test methods
-- **New recommendations:** Add message templates to `gemss/diagnostics/recommendation_messages.py`
-- **Visualization:** Create new plots in `gemss/diagnostics/visualizations.py`
-- **Configuration:** Modify JSON files or add new parameter categories
-- **Sweep parameters:** Edit `run_sweep.ps1` for custom batch experiments
-- **Real data workflows:** Follow `explore_custom_dataset.ipynb` as template
-- **Testing:** Add new test cases to `tests/` directory following `test_missing_data_native.py` pattern
-- **Data preprocessing:** Extend `gemss/data_handling/data_processing.py` for custom preprocessing pipelines
+### Analysis of experiment results
 
----
-
-## Experiments on Artificial Data
-
-GEMSS supports systematic testing of algorithm performance through tiered experiments with comprehensive logging and result tracking.
-
-**Basic Parameter Sweep:**
-- **On Windows:** Use the PowerShell script:
-   ```powershell
-   .\run_sweep.ps1
-   ```
-   - The script will:
-     - Iterate over each parameter combination (see `$combinations` in the script).
-     - Overwrite the JSON config files for each run.
-     - Call `run_experiment.py` and save output in `results/` with filenames including all parameter values.
-
-**Tiered Experimental Setup:**
-For systematic evaluation across multiple experimental conditions:
-   ```powershell
-   # Run all available experimental tiers
-   .\run_tiers.ps1
-   
-   # Run specific tiers only
-   .\run_tiers.ps1 -tiers @("1", "2", "3")
-   
-   # Use custom parameters file
-   .\run_tiers.ps1 -parametersFile "experiment_parameters_short.json"
-   ```
-
-The tiered system provides:
-- **Structured parameter exploration** across multiple experimental conditions
-- **Sequential execution** with comprehensive logging for each tier
-- **Progress tracking** with execution summaries and timing statistics  
-- **Error handling** and failure reporting for robust batch processing
-- **Flexible tier selection** for targeted experimental runs
-- **Detailed logs** saved in `results/logs/` directory for analysis
-
-> **Note:** The tiered experiments described here are designed for algorithm validation and benchmarking on artificial datasets. They are **not** intended for hyperparameter optimization. Each tier tests the algorithm's robustness, accuracy, and stability under different synthetic data scenarios, not for tuning model parameters for best performance.
-
-**Experimental Tiers:**
-- **Tier 1: Comprehensive Small-Scale Validation** - Extended proof of concept and algorithm verification (20-150 samples, 100-1000 features)
-- **Tier 2: Realistic Biomedical Scale** - Typical omics/biomedical scenarios representing the primary use case (50-200 samples, 1000-10000 features)
-- **Tier 3: Extreme High-Dimensional Stress Test** - Ultra-high-dimensional scenarios with ultra-sparse signal detection (30-300 samples, 10000-100000 features)
-- **Tier 4: Sample-Rich Scenarios** - Traditional ML problems where n ≥ p (500-5000 samples, 100-2000 features)
-- **Tier 5: Robustness Under Adversity** - Algorithm stability with data quality challenges (noise levels 0.1-2.0, missing data 0-50%)
-- **Tier 6: Regression Validation** - Regression scenarios covering key aspects with reduced scope (continuous response variables)
-
-Each tier represents a different experimental condition (e.g., different noise levels, feature counts, or algorithm parameters) defined in the parameters JSON file.
-
-- **On Linux/macOS:** Adapt the logic from `run_sweep.ps1` and `run_tiers.ps1` to Bash scripts as needed.
-
----
-
-## Requirements
-
-- Python 3.11+
-- numpy
-- pandas
-- torch
-- scikit-learn
-- plotly
-- jupyter
-- pyarrow
-
-(See `requirements.txt` for full details.)
+Use notebook `analyze_tier_results.ipynb` to explore results of the tiered experiments.
