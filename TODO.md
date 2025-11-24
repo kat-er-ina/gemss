@@ -3,6 +3,8 @@
 
 ## Fixes
 
+- **Tier 7** is intended to test the algorithm on noisy or unreliable responses. Current generation of artificial data does not allow to add noise or missclassifications to the response. Fix it in order to run this tier.
+- **tabpfn evaluation** uses only the outer_cv parameter but inner_cv is there too, redundant
 - **sparsity gap test** - an essential fix before release: overly pessimistic results, might require major changes.
 - **nan_ratio check in regression computations** - nan_ratio is sometimes in range 0 to 100 (instead of 0 - 1) for some components but it is not clear why.
 
@@ -62,5 +64,5 @@ The Jaccard penalty is a value between 0 and 1. Its effect is given by the corre
 
 ## Research & Development
 
-- **meta-learning** - learning/automatic setup optimal hyperparameters
+- **meta-learning** - learning/automatic setup of optimal hyperparameters
 
