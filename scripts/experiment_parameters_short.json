@@ -2,7 +2,7 @@
   "tiers": {
     "tier1": {
       "name": "Comprehensive Small-Scale Validation",
-      "description": "Extended proof of concept and algorithm verification on primary use case",
+      "description": "Establishes fundamental baselines for clean data. Tests minimal scenario (low n/p), high n \u226a p stress, max sparsity (k=10), and square matrix (n=p) control.",
       "algorithm_parameters": {
         "N_ITER": 4000,
         "PRIOR_TYPE": "sss",
@@ -13,23 +13,20 @@
         "WEIGHT_SLAB": 0.9,
         "WEIGHT_SPIKE": 0.1,
         "IS_REGULARIZED": true,
-        "BATCH_SIZE": 16,
         "LEARNING_RATE": 0.002,
         "MIN_MU_THRESHOLD": 0.2,
-        "BINARIZE": true,
-        "BINARY_RESPONSE_RATIO": 0.5
+        "BINARIZE": true
       },
       "combinations": [
-        "20,100,3,3,0.1,0.0,6,500",
-        "50,200,3,5,0.1,0.0,6,500",
-        "100,500,3,5,0.1,0.0,6,500",
-        "100,1000,3,5,0.1,0.0,8,500",
-        "100,100,3,5,0.1,0.0,6,500"
+        "20,100,3,3,0.1,0.0,6,500,16,0.5",
+        "20,500,3,5,0.1,0.0,6,500,16,0.5",
+        "50,200,3,10,0.1,0.0,6,500,16,0.5",
+        "100,100,3,5,0.1,0.0,6,500,16,0.5"
       ]
     },
     "tier2": {
-      "name": "Extreme High-Dimensional Stress Test (Realistic Biomedical Scale)",
-      "description": "Ultra-high-dimensional scenarios with ultra-sparse signal detection. Typical omics/biomedical scenarios.",
+      "name": "High-Dimensional Stress Test (Pushed limits)",
+      "description": "Tests scalability in extreme high-dimensional contexts (p \u2265 1000). Includes testing p=2000 boundary and the extreme p=5000 limit both with minimal and larger N (n=200).",
       "algorithm_parameters": {
         "N_ITER": 4000,
         "PRIOR_TYPE": "sss",
@@ -40,23 +37,20 @@
         "WEIGHT_SLAB": 0.9,
         "WEIGHT_SPIKE": 0.1,
         "IS_REGULARIZED": true,
-        "BATCH_SIZE": 16,
         "LEARNING_RATE": 0.002,
         "MIN_MU_THRESHOLD": 0.2,
-        "BINARIZE": true,
-        "BINARY_RESPONSE_RATIO": 0.5
+        "BINARIZE": true
       },
       "combinations": [
-        "20,1000,3,3,0.1,0.0,10,500",
-        "40,1000,3,3,0.1,0.0,10,500",
-        "40,2000,3,5,0.1,0.0,10,500",
-        "100,4000,3,10,0.1,0.0,10,500",
-        "100,10000,3,10,0.1,0.0,10,500"
+        "50,1000,3,3,0.1,0.0,10,500,16,0.5",
+        "100,2000,3,5,0.1,0.0,10,500,16,0.5",
+        "50,5000,3,5,0.1,0.0,10,500,16,0.5",
+        "200,5000,3,3,0.1,0.0,10,500,16,0.5"
       ]
     },
     "tier3": {
       "name": "Sample-Rich Scenarios",
-      "description": "Traditional ML problems where n ≥ p or n ~ p",
+      "description": "Tests performance in traditional ML regimes (n \u2265 p) as a control/comparison. Includes square matrix (n=p), high oversampling (n \u226b p), and max N/P scenarios.",
       "algorithm_parameters": {
         "N_ITER": 4000,
         "PRIOR_TYPE": "sss",
@@ -67,23 +61,20 @@
         "WEIGHT_SLAB": 0.9,
         "WEIGHT_SPIKE": 0.1,
         "IS_REGULARIZED": true,
-        "BATCH_SIZE": 16,
         "LEARNING_RATE": 0.002,
         "MIN_MU_THRESHOLD": 0.2,
-        "BINARIZE": true,
-        "BINARY_RESPONSE_RATIO": 0.5
+        "BINARIZE": true
       },
       "combinations": [
-        "60,40,3,2,0.1,0.0,6,500",
-        "250,100,3,3,0.1,0.0,6,500",
-        "500,500,3,3,0.1,0.0,10,500",
-        "1000,1000,3,5,0.1,0.0,10,500",
-        "2000,2000,3,5,0.1,0.0,10,500"
+        "200,200,3,5,0.1,0.0,6,500,16,0.5",
+        "1000,100,3,3,0.1,0.0,6,500,16,0.5",
+        "500,500,3,3,0.1,0.0,6,500,16,0.5",
+        "2000,500,3,5,0.1,0.0,6,500,16,0.5"
       ]
     },
     "tier4": {
       "name": "Robustness Under Adversity",
-      "description": "Algorithm stability with data quality challenges",
+      "description": "Tests algorithm stability under adverse data quality conditions. Selects core setups to test clean baseline, extreme noise, max NAN, and the combination of high N/Noise/NAN.",
       "algorithm_parameters": {
         "N_ITER": 4000,
         "PRIOR_TYPE": "sss",
@@ -94,23 +85,20 @@
         "WEIGHT_SLAB": 0.9,
         "WEIGHT_SPIKE": 0.1,
         "IS_REGULARIZED": true,
-        "BATCH_SIZE": 16,
         "LEARNING_RATE": 0.002,
         "MIN_MU_THRESHOLD": 0.2,
-        "BINARIZE": true,
-        "BINARY_RESPONSE_RATIO": 0.5
+        "BINARIZE": true
       },
       "combinations": [
-        "100,200,3,3,0.1,0.0,6,500",
-        "100,200,3,3,1.0,0.0,6,500",
-        "100,200,3,3,0.5,0.5,6,500",
-        "100,200,3,3,0.1,0.75,6,500",
-        "100,200,3,3,0.1,0.5,6,500"
+        "100,100,3,3,0.1,0.0,6,500,16,0.5",
+        "200,500,3,5,2.0,0.0,6,500,16,0.5",
+        "200,500,3,5,0.1,0.75,6,500,96,0.5",
+        "1000,500,3,5,1.0,0.75,6,500,96,0.5"
       ]
     },
     "tier5": {
       "name": "Effect of Jaccard Penalty",
-      "description": "Investigate the effect of regularization on diversity of candidate feature sets and thus coverage of solutions",
+      "description": "Tests the influence of the regularization parameter \u03bb on the diversity of solutions. Includes no penalty (\u03bb=0), baseline (\u03bb=500), intermediate (\u03bb=1000), and max penalty (\u03bb=5000).",
       "algorithm_parameters": {
         "N_ITER": 4000,
         "PRIOR_TYPE": "sss",
@@ -121,22 +109,20 @@
         "WEIGHT_SLAB": 0.9,
         "WEIGHT_SPIKE": 0.1,
         "IS_REGULARIZED": true,
-        "BATCH_SIZE": 16,
         "LEARNING_RATE": 0.002,
         "MIN_MU_THRESHOLD": 0.2,
-        "BINARIZE": true,
-        "BINARY_RESPONSE_RATIO": 0.5
+        "BINARIZE": true
       },
       "combinations": [
-        "100,200,3,3,0.1,0.0,6,0",
-        "100,200,3,3,0.1,0.0,6,500",
-        "100,200,3,3,0.1,0.0,6,1000",
-        "100,200,3,3,0.1,0.0,6,5000"
+        "100,100,3,3,0.1,0.0,6,0,16,0.5",
+        "100,100,3,5,0.1,0.0,6,500,16,0.5",
+        "200,500,3,5,0.1,0.0,6,1000,16,0.5",
+        "500,300,3,5,0.1,0.0,6,5000,16,0.5"
       ]
     },
     "tier6": {
-      "name": "Regression Validation (Parsimonious)",
-      "description": "Regression scenarios covering key aspects with reduced scope",
+      "name": "Regression Validation (Robustness Grid)",
+      "description": "Verifies core functionality for continuous response variables (regression). Selects clean baseline, high noise, high missing data, and maximum combined stress for regression scenarios.",
       "algorithm_parameters": {
         "N_ITER": 4000,
         "PRIOR_TYPE": "sss",
@@ -147,22 +133,43 @@
         "WEIGHT_SLAB": 0.9,
         "WEIGHT_SPIKE": 0.1,
         "IS_REGULARIZED": true,
-        "BATCH_SIZE": 16,
         "LEARNING_RATE": 0.002,
         "MIN_MU_THRESHOLD": 0.2,
-        "BINARIZE": false,
-        "BINARY_RESPONSE_RATIO": 0.5
+        "BINARIZE": false
       },
       "combinations": [
-        "20,100,3,3,0.1,0.0,6,500",
-        "50,200,3,5,0.1,0.0,6,500",
-        "100,500,3,5,0.1,0.0,6,500",
-        "100,1000,3,5,0.1,0.0,8,500",
-        "100,100,3,5,0.1,0.0,6,500"
+        "50,100,3,5,0.1,0.0,10,500,16,0.5",
+        "500,500,3,5,0.1,0.0,10,500,16,0.5",
+        "100,200,3,5,1.0,0.0,10,500,16,0.5",
+        "200,500,3,5,1.0,0.5,10,500,48,0.5"
+      ]
+    },
+    "tier7": {
+      "name": "Unreliable and Unbalanced Responses",
+      "description": "Tests stability when dealing with extreme unbalanced class ratios (0.1/0.2) and the combination of unbalanced data with noise and missing features.",
+      "algorithm_parameters": {
+        "N_ITER": 4000,
+        "PRIOR_TYPE": "sss",
+        "STUDENT_DF": 1,
+        "STUDENT_SCALE": 1.0,
+        "VAR_SLAB": 100.0,
+        "VAR_SPIKE": 0.1,
+        "WEIGHT_SLAB": 0.9,
+        "WEIGHT_SPIKE": 0.1,
+        "IS_REGULARIZED": true,
+        "LEARNING_RATE": 0.002,
+        "MIN_MU_THRESHOLD": 0.2,
+        "BINARIZE": true
+      },
+      "combinations": [
+        "100,100,3,5,0.1,0.0,10,500,16,0.1",
+        "200,500,3,5,0.5,0.0,10,500,16,0.1",
+        "100,100,3,5,0.1,0.2,10,500,30,0.5",
+        "200,500,3,5,0.1,0.1,10,500,26,0.5"
       ]
     }
   },
-  "parameter_format": "N_SAMPLES,N_FEATURES,N_GENERATING_SOLUTIONS,SPARSITY,NOISE_STD,NAN_RATIO,N_CANDIDATE_SOLUTIONS,LAMBDA_JACCARD",
+  "parameter_format": "N_SAMPLES,N_FEATURES,N_GENERATING_SOLUTIONS,SPARSITY,NOISE_STD,NAN_RATIO,N_CANDIDATE_SOLUTIONS,LAMBDA_JACCARD,BATCH_SIZE,BINARY_RESPONSE_RATIO",
   "fixed_parameters": {
     "DATASET_SEED": 42,
     "SAMPLE_MORE_PRIORS_COEFF": 1.0,
@@ -170,19 +177,9 @@
     "OUTLIER_DEVIATION_THRESHOLDS": [2.0, 2.5, 3.0]
   },
   "notes": {
-    "version": "5-tier shortened design",
-    "total_experiments": 25,
-    "selection_criteria": "Representative combinations covering key parameter ranges and research questions per tier",
-    "tier1_focus": "Progressive scale increase covering n≈p to n<<p with varying sparsity",
-    "tier2_focus": "Core biomedical scenarios from moderate to extreme high-dimensional cases",
-    "tier3_focus": "Sample-rich scenarios from n>>p to n=p covering traditional ML regime",
-    "tier4_focus": "Clean baseline, high noise, high missing data, extreme missing data, combined stress",
-    "tier5_focus": "Jaccard penalty effects from none (0) to extreme (5000) with intermediate values",
-    "design_principles": [
-      "Each tier addresses specific research question",
-      "Representative coverage of parameter space",
-      "Focus on ultra-sparse signals (2-20 features)",
-      "Binary classification throughout"
-    ]
+    "version": "7-tier condensed test version (Batch Size Included)",
+    "total_experiments": 28,
+    "selection_criteria": "4 most representative combinations selected per tier, focusing on baseline, extreme, and critical boundary conditions.",
+    "sparsity_focus": "Ultra-sparse signals: 3 and 5 features are dominant."
   }
 }

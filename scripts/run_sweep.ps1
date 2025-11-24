@@ -4,12 +4,12 @@
 # Each line in $combinations:
 #   N_SAMPLES, N_FEATURES, N_GENERATING_SOLUTIONS, SPARSITY, NOISE_STD, NAN_RATIO, N_CANDIDATE_SOLUTIONS, LAMBDA_JACCARD
 $combinations = @(
-    "30,60,3,3,0.1,0.0,6,500",      # Small scale, sparsity=3
-    "30,60,3,2,0.5,0.0,6,500",      # Same but sparsity=2, higher noise
-    "40,200,3,3,0.1,0.0,8,500",     # More features
-    "40,1200,3,3,0.1,0.0,8,500",    # High-dimensional
-    "50,200,3,5,0.1,0.0,10,500",    # Higher sparsity
-    "200,200,3,5,0.1,0.0,6,500"     # n ≈ p scenario
+    "30,60,3,3,0.1,0.0,6,500, 16, 0.5",      # Small scale, sparsity=3
+    "30,60,3,2,0.5,0.0,6,500, 16, 0.5",      # Same but sparsity=2, higher noise
+    "40,200,3,3,0.1,0.0,8,500, 16, 0.5",     # More features
+    "40,1200,3,3,0.1,0.0,8,500, 16, 0.5",    # High-dimensional
+    "50,200,3,5,0.1,0.0,10,500, 16, 0.5",    # Higher sparsity
+    "200,200,3,5,0.1,0.0,6,500, 16, 0.5"     # n ≈ p scenario
 )
 
 # --- Fixed parameters for the algorithm ---
@@ -22,11 +22,9 @@ $VAR_SPIKE = 0.1
 $WEIGHT_SLAB = 0.9
 $WEIGHT_SPIKE = 0.1
 $IS_REGULARIZED = $true
-$BATCH_SIZE = 16
 $LEARNING_RATE = 0.002
 $MIN_MU_THRESHOLD = 0.2
 $BINARIZE = $true
-$BINARY_RESPONSE_RATIO = 0.5
 $DATASET_SEED = 42 # Seed for generating the artificial dataset
 $SAMPLE_MORE_PRIORS_COEFF = 1.0  # Coefficient for sampling more priors
 
@@ -78,6 +76,8 @@ foreach ($combo in $combinations) {
     $NAN_RATIO = $parts[5]
     $N_CANDIDATE_SOLUTIONS = $parts[6]
     $LAMBDA_JACCARD = $parts[7]
+    $BATCH_SIZE = $parts[8]
+    $BINARY_RESPONSE_RATIO = $parts[9]
 
     # DESIRED_SPARSITY and PRIOR_SPARSITY shall always equal SPARSITY
     $DESIRED_SPARSITY = $SPARSITY

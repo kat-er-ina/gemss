@@ -6,8 +6,8 @@
 # Run specific tiers
 #     .\run_tiers.ps1 -tiers @("1", "2", "3")
 
-# Skip tier 6 (regression)
-#     .\run_tiers.ps1 -skipTier6
+# Skip tier 7 (unreliable and unbalanced responses) - tier under construction
+#     .\run_tiers.ps1 -skipTier7
 
 # Use custom parameters file
 #     .\run_tiers.ps1 -parametersFile "custom_experiments.json"
@@ -19,8 +19,8 @@
 
 param(
     [string]$parametersFile = "experiment_parameters.json",
-    [string[]]$tiers = @("1", "2", "3", "4", "5", "6"),
-    [switch]$skipTier6
+    [string[]]$tiers = @("1", "2", "3", "4", "5", "6", "7"),
+    [switch]$skipTier7
 )
 
 # --- Validate parameters file exists ---
@@ -48,10 +48,10 @@ foreach ($tier in $tiers) {
     }
 }
 
-# Remove tier 6 if skipTier6 is specified
-if ($skipTier6) {
-    $tiers = $tiers | Where-Object { $_ -ne "6" }
-    Write-Host "Skipping Tier 6 (regression) as requested."
+# Remove tier 7 if skipTier7 is specified
+if ($skipTier7) {
+    $tiers = $tiers | Where-Object { $_ -ne "7" }
+    Write-Host "Skipping Tier 7 (unreliable and unbalanced responses) as requested."
 }
 
 # --- Setup logging directory with better error handling ---
