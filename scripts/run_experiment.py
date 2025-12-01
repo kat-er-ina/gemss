@@ -7,6 +7,7 @@ This script provides a complete experiment pipeline including:
 - Solution recovery and analysis
 - Performance diagnostics
 - Comprehensive result reporting
+- CSV logging of experiment metrics
 
 Assumes:
 - gemss package is installed and available
@@ -14,9 +15,12 @@ Assumes:
 
 Outputs:
 - A text file with comprehensive experiment results in the "results" directory
+- A CSV file logging experiment metrics in the "results" directory
 """
 
+import csv
 import os
+import numpy as np
 import pandas as pd
 from pathlib import Path
 import argparse
@@ -495,6 +499,107 @@ def write_results(output_lines: List[str], output_path: Path) -> None:
     print(f"Experiment summary written to {output_path}")
 
 
+def calculate_coverage_metrics(
+    features_found: List[str] | Set[str],
+    true_support_features: List[str] | Set[str],
+    n_total_features: int,
+) -> dict:
+    """
+    Calculates coverage metrics based on the GEMSS Design of Experiments.
+
+    Parameters
+    ----------
+    features_found : List[str] | Set[str]
+        Set of feature names identified by the algorithm (F)
+    true_support_features : List[str] | Set[str]
+        Set of ground truth feature names (P_generating)
+    n_total_features : int
+        Total number of features in the dataset (p)
+    """
+    # Convert to sets if lists are provided
+    if isinstance(features_found, list):
+        features_found = set(features_found)
+    if isinstance(true_support_features, list):
+        true_support_features = set(true_support_features)
+
+    # Calculate counts [cite: 91]
+    f = len(features_found)
+    p_generating = len(true_support_features)
+    p = n_total_features
+
+    # Intersection (Correctly identified)
+    features_correct = features_found.intersection(true_support_features)
+    f_correct = len(features_correct)
+
+    # Missed (False Negatives)
+    features_missed = true_support_features - features_found
+    f_missed = len(features_missed)
+
+    # Extra (False Positives)
+    features_extra = features_found - true_support_features
+    f_extra = len(features_extra)
+
+    # --- Metrics Calculation  ---
+
+    # 1. Recall (Sensitivity)
+    recall = f_correct / p_generating if p_generating > 0 else None
+
+    # 2. Precision
+    precision = (
+        f_correct / f if f > 0 else None
+    )  # Default to 1 if nothing selected (conservative)
+
+    # 3. F1-score
+    if (precision + recall) > 0:
+        f1 = 2 * (precision * recall) / (precision + recall)
+    else:
+        f1 = None
+
+    # 4. Jaccard Similarity (Intersection over Union)
+    union_size = len(features_found.union(true_support_features))
+    jaccard = f_correct / union_size if union_size > 0 else None
+
+    # 5. Miss Rate
+    miss_rate = f_missed / p_generating if p_generating > 0 else None
+
+    # 6. False Discovery Rate (FDR)
+    fdr = f_extra / f if f > 0 else None
+
+    # 7. Global Miss Rate
+    global_miss_rate = f_missed / p if p > 0 else None
+
+    # 8. Global FDR
+    global_fdr = f_extra / p if p > 0 else None
+
+    # 9. Success Index (SI)
+    # Formula: (p * f_correct) / (p_generating^2)
+    if p_generating > 0:
+        si = (p * f_correct) / (p_generating**2)
+    else:
+        si = None
+
+    # 10. Adjusted Success Index (ASI)
+    # Formula: SI * Precision
+    asi = si * precision
+
+    return {
+        "n_features_found": f,
+        "n_correct": f_correct,
+        "n_missed": f_missed,
+        "n_extra": f_extra,
+        "Recall": recall,
+        "Precision": precision,
+        "F1_Score": f1,
+        "Jaccard": jaccard,
+        "Miss_Rate": miss_rate,
+        "FDR": fdr,
+        "Global_Miss_Rate": global_miss_rate,
+        "Global_FDR": global_fdr,
+        "Success_Index": si,
+        "Adjusted_Success_Index": asi,
+    }
+
+
 def main() -> None:
     """
     Main experiment pipeline for GEMSS sparse feature selection.
@@ -503,14 +608,30 @@ def main() -> None:
     1. Parse command line arguments
     2. Generate artificial dataset with known ground truth
     3. Run GEMSS optimization to find sparse solutions
-    4. Analyze feature discovery performance for all solution types
+    4. Analyze feature discovery performance for all solution types and compute metrics
     5. Generate comprehensive results report
-    6. Optionally run performance diagnostics
-    7. Write results to timestamped output file
-
-    The output file contains parameter settings, feature discovery analysis,
-    detailed solution breakdowns, and diagnostic information.
+    6. Run diagnostics if requested
+    7. Write text results to timestamped output file
+    8. Append results (parameters + coverage metrics) to a centralized CSV file
     """
+    # Define the global order for coverage metrics (for CSV consistency)
+    COVERAGE_METRIC_ORDER = [
+        "n_features_found",
+        "n_correct",
+        "n_missed",
+        "n_extra",
+        "Recall",
+        "Precision",
+        "F1_Score",
+        "Jaccard",
+        "Miss_Rate",
+        "FDR",
+        "Global_Miss_Rate",
+        "Global_FDR",
+        "Success_Index",
+        "Adjusted_Success_Index",
+    ]
+
     # Parse arguments
     args = parse_arguments()
     output_path = determine_output_path(args.output)
@@ -522,14 +643,20 @@ def main() -> None:
     selector, history, solution_data = run_feature_selection(df, y)
     full_solutions, top_solutions, outlier_solutions, final_parameters = solution_data
 
-    # Write experiment parameters
+    # Initialize row for CSV logging with all config parameters
+    experiment_results_row = C.as_dict().copy()
+
+    # --- Add Timestamp ---
+    experiment_results_row["timestamp"] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M")
+
+    # Write experiment parameters to text output
     output_lines = []
     output_lines.extend(format_parameters_section())
     output_lines.append(
         "\n----------------------------------------------------------------------\n"
     )
 
-    # Analyze results
+    # Analyze results for all solution types
     feature_discovery_analysis = {}
     all_solutions = {
         "full": full_solutions,
@@ -538,12 +665,37 @@ def main() -> None:
     for deviation, solutions in outlier_solutions.items():
         all_solutions[f"outlier ({deviation})"] = solutions
 
+    # Prepare ordered lists for CSV fieldnames
+    base_fields = list(C.as_dict().keys())  # Must match original definition order
+    metric_fields = []
+
     for solution_type, solutions in all_solutions.items():
+        # Get set of found features
         feature_discovery_analysis[solution_type] = analyze_feature_discovery(
             solutions, true_support_features
         )  # [found, missing, extra]
+        features_found_set = feature_discovery_analysis[solution_type][0]
+
+        # --- CALCULATE COVERAGE METRICS (Recall, SI, ASI, etc.) ---
+        metrics = calculate_coverage_metrics(
+            features_found=features_found_set,
+            true_support_features=set(true_support_features),
+            n_total_features=C.N_FEATURES,
+        )
+
+        # --- ADD METRICS TO TEXT OUTPUT ---
         output_lines.extend(format_solution_type_header(solution_type))
-        # Overview of discovered and missed features
+
+        # Add Coverage Metrics Table
+        metrics_df = pd.DataFrame([metrics]).T
+        metrics_df.columns = ["Value"]
+        output_lines.extend(
+            dataframe_to_ascii_table(
+                metrics_df, title=f"Coverage Metrics for {solution_type}"
+            )
+        )
+
+        # Add Feature Discovery Overview
         output_lines.extend(
             format_feature_discovery_overview(
                 solution_type,
@@ -551,6 +703,7 @@ def main() -> None:
                 true_support_features,
             )
         )
+
         # Detailed features in components
         summary_df = get_solution_summary_df(solutions)
         output_lines.extend(
@@ -565,7 +718,7 @@ def main() -> None:
             solutions=solutions,
             df=df,
             response=y,
-            use_standard_scaler=True,
+            apply_scaling="standard",
             penalty="l2",
             verbose=False,
             use_markdown=False,
@@ -585,6 +738,17 @@ def main() -> None:
             "\n----------------------------------------------------------------------\n"
         )
 
+        # --- ACCUMULATE METRICS FOR CSV LOG ---
+        # Prefix keys with solution type to avoid column collision
+        clean_type = solution_type.replace(" ", "_").replace("(", "").replace(")", "")
+        for metric_name in COVERAGE_METRIC_ORDER:
+            field_name = f"{clean_type}_{metric_name}"
+            # Use the calculated value from the metrics dictionary
+            experiment_results_row[field_name] = metrics.get(metric_name, np.nan)
+            # Build the ordered list of field names once
+            if field_name not in metric_fields:
+                metric_fields.append(field_name)
+
     # Run diagnostics once for the entire optimization, if requested
     if args.diagnostics:
         performance_results = run_diagnostics(history)
@@ -593,8 +757,35 @@ def main() -> None:
             "\n----------------------------------------------------------------------\n"
         )
 
-    # Write results
+    # Write text results
     write_results(output_lines, output_path)
+
+    # --- WRITE CSV SUMMARY ---
+    summary_csv_path = output_path.parent / "tier_summary_metrics.csv"
+
+    # Add output filename to row for reference
+    experiment_results_row["output_file"] = output_path.name
+
+    # Construct the final ordered list of fieldnames for the CSV writer
+    # [Config Params] + [Timestamp] + [Output File] + [Metric Fields (Ordered)]
+    final_fields = base_fields + ["timestamp", "output_file"] + metric_fields
+
+    # We must ensure the experiment_results_row contains all the necessary fieldnames
+    # This is implicitly done above, but let's confirm padding for non-metric fields
+    for field in final_fields:
+        if field not in experiment_results_row:
+            experiment_results_row[field] = np.nan  # Use np.nan for consistency
+
+    file_exists = summary_csv_path.exists()
+    try:
+        with open(summary_csv_path, "a", newline="") as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=final_fields)
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow(experiment_results_row)
+        print(f"Metrics summary appended to {summary_csv_path}")
+    except Exception as e:
+        print(f"Failed to write CSV summary: {e}")
 
 
 if __name__ == "__main__":
