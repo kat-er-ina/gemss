@@ -45,11 +45,9 @@ $VAR_SPIKE = $algorithmParams.VAR_SPIKE
 $WEIGHT_SLAB = $algorithmParams.WEIGHT_SLAB
 $WEIGHT_SPIKE = $algorithmParams.WEIGHT_SPIKE
 $IS_REGULARIZED = $algorithmParams.IS_REGULARIZED
-$BATCH_SIZE = $algorithmParams.BATCH_SIZE
 $LEARNING_RATE = $algorithmParams.LEARNING_RATE
 $MIN_MU_THRESHOLD = $algorithmParams.MIN_MU_THRESHOLD
 $BINARIZE = $algorithmParams.BINARIZE
-$BINARY_RESPONSE_RATIO = $algorithmParams.BINARY_RESPONSE_RATIO
 
 # --- Load fixed parameters ---
 $DATASET_SEED = $fixedParams.DATASET_SEED
@@ -62,7 +60,6 @@ Write-Host " - N_ITER: $N_ITER"
 Write-Host " - PRIOR_TYPE: $PRIOR_TYPE" 
 Write-Host " - BINARIZE: $BINARIZE"
 Write-Host " - LEARNING_RATE: $LEARNING_RATE"
-Write-Host " - BATCH_SIZE: $BATCH_SIZE"
 Write-Host " - IS_REGULARIZED: $IS_REGULARIZED"
 Write-Host ""
 
@@ -98,8 +95,11 @@ if (-not (Test-Path $tierResultsDir)) {
 Write-Host "Results will be saved in: $tierResultsDir"
 
 $iteration_counter = 0
+$total_experiments = $combinations.Count
+
 foreach ($combo in $combinations) {
     $iteration_counter = $iteration_counter + 1
+    
     if ([string]::IsNullOrWhiteSpace($combo)) { continue }
     $parts = $combo.Split(",")
     $N_SAMPLES = $parts[0]
@@ -110,6 +110,14 @@ foreach ($combo in $combinations) {
     $NAN_RATIO = $parts[5]
     $N_CANDIDATE_SOLUTIONS = $parts[6]
     $LAMBDA_JACCARD = $parts[7]
+    $BATCH_SIZE = $parts[8]
+    $BINARY_RESPONSE_RATIO = $parts[9]
+
+    # --- PROGRESS BAR UPDATE ---
+    $percentComplete = [int](($iteration_counter / $total_experiments) * 100)
+    $statusMsg = "Experiment $iteration_counter of $total_experiments"
+    $currentOp = "n=$N_SAMPLES, p=$N_FEATURES, k=$SPARSITY, batch=$BATCH_SIZE"
+    Write-Progress -Activity "Running Tier $tier Experiments" -Status $statusMsg -PercentComplete $percentComplete -CurrentOperation $currentOp
 
     # DESIRED_SPARSITY and PRIOR_SPARSITY shall always equal SPARSITY
     $DESIRED_SPARSITY = $SPARSITY
@@ -168,6 +176,7 @@ foreach ($combo in $combinations) {
     Write-Host "NAN_RATIO = $NAN_RATIO, "
     Write-Host "N_CANDIDATE_SOLUTIONS = $N_CANDIDATE_SOLUTIONS, "
     Write-Host "LAMBDA_JACCARD = $LAMBDA_JACCARD"
+    Write-Host "BATCH_SIZE = $BATCH_SIZE"
     Write-Host "BINARIZE = $BINARIZE"
     Write-Host "DATASET_SEED = $DATASET_SEED"
     Write-Host "====================================================================================="
@@ -192,10 +201,14 @@ foreach ($combo in $combinations) {
 
     python $RUN_SCRIPT --output $output_file
 }
+
+# Clear the progress bar when done
+Write-Progress -Activity "Running Tier $tier Experiments" -Completed
+
 Write-Host "====================================================================================="
 Write-Host "All Tier $tier experiments finished. Check the results/tier$tier/ directory for outputs."
 Write-Host "Tier summary:"
 Write-Host " - Name: $($selectedTier.name)"
 Write-Host " - Total experiments: $($combinations.Count)"
 Write-Host " - Response type: $(if ($BINARIZE) { 'Binary Classification' } else { 'Regression' })"
-Write-Host " - Algorithm: N_ITER=$N_ITER, LR=$LEARNING_RATE, BATCH=$BATCH_SIZE"
+Write-Host " - Algorithm: N_ITER=$N_ITER, LR=$LEARNING_RATE"
