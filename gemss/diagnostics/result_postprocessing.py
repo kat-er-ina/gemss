@@ -15,10 +15,6 @@ from gemss.diagnostics.visualizations import (
     plot_alpha,
     compare_parameters,
 )
-from gemss.diagnostics.simple_regressions import (
-    solve_with_logistic_regression,
-    solve_with_linear_regression,
-)
 from gemss.diagnostics.outliers import (
     detect_outlier_features,
     show_outlier_info,
@@ -648,3 +644,5 @@ def show_final_parameter_comparison(
     for i, alpha in enumerate(final_parameters["final alpha"]):
         display(Markdown(f"- **Component {i}:** {alpha:.3f}"))
     return
+
+
