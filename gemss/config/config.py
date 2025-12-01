@@ -26,7 +26,7 @@ Usage:
 
 import json
 from pathlib import Path
-from typing import Dict, Any, Literal, Optional
+from typing import Dict, Any, Literal, Optional, OrderedDict
 from functools import lru_cache
 
 from .constants import CONFIG_FILES, PROJECT_NAME
@@ -38,7 +38,7 @@ class ConfigurationManager:
     """
 
     # Parameter category definitions
-    ARTIFICIAL_DATASET_PARAMS = {
+    ARTIFICIAL_DATASET_PARAMS = [
         "N_SAMPLES",
         "N_FEATURES",
         "N_GENERATING_SOLUTIONS",
@@ -48,9 +48,9 @@ class ConfigurationManager:
         "BINARIZE",
         "BINARY_RESPONSE_RATIO",
         "DATASET_SEED",
-    }
+    ]
 
-    ALGORITHM_PARAMS = {
+    ALGORITHM_PARAMS = [
         "N_CANDIDATE_SOLUTIONS",
         "N_ITER",
         "PRIOR_TYPE",
@@ -66,14 +66,14 @@ class ConfigurationManager:
         "LAMBDA_JACCARD",
         "BATCH_SIZE",
         "LEARNING_RATE",
-    }
+    ]
 
-    POSTPROCESSING_PARAMS = {
+    POSTPROCESSING_PARAMS = [
         "DESIRED_SPARSITY",
         "MIN_MU_THRESHOLD",
         "USE_MEDIAN_FOR_OUTLIER_DETECTION",
         "OUTLIER_DEVIATION_THRESHOLDS",
-    }
+    ]
 
     # Parameter descriptions for display
     PARAM_DESCRIPTIONS = {
@@ -130,29 +130,61 @@ class ConfigurationManager:
     def get_artificial_dataset_params(self) -> Dict[str, Any]:
         """Get artificial dataset generation parameters (for development/demo only)."""
         params = self._load_json_file(CONFIG_FILES["ARTIFICIAL_DATASET"])
-        # Only keep relevant keys
-        return {k: params[k] for k in self.ARTIFICIAL_DATASET_PARAMS if k in params}
+        # Use explicit order defined by ARTIFICIAL_DATASET_PARAMS list
+        ordered_params = OrderedDict()
+        for k in self.ARTIFICIAL_DATASET_PARAMS:
+            if k in params:
+                ordered_params[k] = params[k]
+        return dict(ordered_params)
 
     @lru_cache(maxsize=None)
     def get_algorithm_params(self) -> Dict[str, Any]:
         """Get algorithm parameters."""
         params = self._load_json_file(CONFIG_FILES["ALGORITHM"])
-        return {k: params[k] for k in self.ALGORITHM_PARAMS if k in params}
+        # Use explicit order defined by ALGORITHM_PARAMS list
+        ordered_params = OrderedDict()
+        for k in self.ALGORITHM_PARAMS:
+            if k in params:
+                ordered_params[k] = params[k]
+        return dict(ordered_params)
 
     @lru_cache(maxsize=None)
     def get_postprocessing_params(self) -> Dict[str, Any]:
         """Get postprocessing parameters."""
         params = self._load_json_file(CONFIG_FILES["POSTPROCESSING"])
-        return {k: params[k] for k in self.POSTPROCESSING_PARAMS if k in params}
+        # Use explicit order defined by POSTPROCESSING_PARAMS list
+        ordered_params = OrderedDict()
+        for k in self.POSTPROCESSING_PARAMS:
+            if k in params:
+                ordered_params[k] = params[k]
+        return dict(ordered_params)
 
     @lru_cache(maxsize=1)
     def get_all_params(self) -> Dict[str, Any]:
-        """Get all parameters in a single dictionary."""
-        all_params = {}
-        all_params.update(self.get_artificial_dataset_params())
-        all_params.update(self.get_algorithm_params())
-        all_params.update(self.get_postprocessing_params())
-        return all_params
+        """Get all parameters in a single dictionary, preserving fixed order."""
+        all_params = OrderedDict()
+
+        # 1. Add Artificial Dataset Params
+        dataset_params = self.get_artificial_dataset_params()
+        for k in self.ARTIFICIAL_DATASET_PARAMS:
+            if k in dataset_params:
+                all_params[k] = dataset_params[k]
+
+        # 2. Add Algorithm Params
+        algorithm_params = self.get_algorithm_params()
+        for k in self.ALGORITHM_PARAMS:
+            if k in algorithm_params:
+                all_params[k] = algorithm_params[k]
+
+        # 3. Add Postprocessing Params
+        postprocessing_params = self.get_postprocessing_params()
+        for k in self.POSTPROCESSING_PARAMS:
+            if k in postprocessing_params:
+                all_params[k] = postprocessing_params[k]
+
+        # Return as a regular dict (which retains order in Python 3.7+),
+        # but the order is explicitly set by the OrderedDict logic above.
+        return dict(all_params)
 
     def get_params_by_category(self, category: str) -> Dict[str, Any]:
         """Get parameters filtered by category (efficient, uses cached dicts)."""
@@ -246,7 +278,17 @@ def get_core_algorithm_params() -> Dict[str, Any]:
     """
     algorithm_params = _config_manager.get_params_by_category("algorithm")
     postprocessing_params = _config_manager.get_params_by_category("postprocessing")
-    return {**algorithm_params, **postprocessing_params}
+
+    # Merge, maintaining the order defined in the class lists
+    core_params = OrderedDict()
+    for k in ConfigurationManager.ALGORITHM_PARAMS:
+        if k in algorithm_params:
+            core_params[k] = algorithm_params[k]
+    for k in ConfigurationManager.POSTPROCESSING_PARAMS:
+        if k in postprocessing_params:
+            core_params[k] = postprocessing_params[k]
+
+    return dict(core_params)
 
 
 def get_params_by_category(category: str) -> Dict[str, Any]:
@@ -321,7 +363,7 @@ def get_current_config(
         "|-----------|---------------|-------------|",
     ]
 
-    for param_name in sorted(constants.keys()):
+    for param_name in constants.keys():
         param_value = constants[param_name]
         description = ConfigurationManager.PARAM_DESCRIPTIONS.get(
             param_name, "Configuration parameter"
