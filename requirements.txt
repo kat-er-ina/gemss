@@ -6,3 +6,5 @@ plotly
 seaborn
 scikit-learn
 jupyter
+tqdm
+ipywidgets

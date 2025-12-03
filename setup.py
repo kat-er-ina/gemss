@@ -15,6 +15,8 @@ setup(
         "scikit-learn>=1.3.0,<2.0.0",
         "jupyter>=1.0.0,<2.0.0",
         "pyarrow>=22.0.0",
+        "tqdm>=4.65.0",
+        "ipywidgets>=8.0.0",
     ],
     python_requires=">=3.11",
 )
