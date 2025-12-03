@@ -21,111 +21,84 @@ results/                            # Output directory for experiment results an
   tier4/                            # Output files for tier 4 experiments
   tier5/                            # Output files for tier 5 experiments
   tier6/                            # Output files for tier 6 experiments
+  tier7/                            # Output files for tier 7 experiments
 ```
 
 ## Experimental Design Overview
 
-The experiment suite follows a **6-tier design** addressing different research questions and use cases:
+The experiment suite uses a **7-tier design** (110 experiments in full, 28 in short version). Each tier targets a specific scenario:
 
-### Tier 1: Comprehensive Small-Scale Validation (64 experiments)
-- **Purpose**: Extended proof of concept and algorithm verification on primary use case
-- **Focus**: Progressive scale increase from n≈p to n<<p scenarios
-- **Parameter ranges**: 20-150 samples, 100-1000 features, 3-20 sparsity levels
-- **Response type**: Binary classification
-- **Key scenarios**: Small to medium-scale problems with varying dimensionality
+### Tier 1: Basic Validation (18 experiments)
+- **Purpose:** Baseline performance on almost clean data (NOISE_STD=0.1, NAN_RATIO=0.0)
+- **Description:** Systematically varies the number of samples and features to cover the n << p transition zone. Tests two low sparsity levels. Verifies core algorithm correctness and stability in ideal conditions.
+- **Parameter ranges:** N_SAMPLES: 25 – 200, N_FEATURES: 100 – 500, SPARSITY: 3 or 5, N_CANDIDATE_SOLUTIONS: 6 or 9.
+- **Response:** Binary classification
 
-### Tier 2: Extreme High-Dimensional Stress Test (36 experiments)
-- **Purpose**: Ultra-high-dimensional scenarios with ultra-sparse signal detection
-- **Focus**: Realistic biomedical/omics scenarios
-- **Parameter ranges**: 50-200 samples, 1000-10000 features, 3-20 sparsity levels
-- **Response type**: Binary classification
-- **Key scenarios**: Typical genomics/proteomics data characteristics
+### Tier 2: High-Dimensional Stress Test (9 experiments)
+- **Purpose:** Scalability and performance when P ≥ 1000 and N << P
+- **Description:** Pushes the algorithm into high-dimensional regimes typical of omics/biomedical data. Uses moderate sample sizes with fixed ultra sparsity. Assesses support recovery and convergence in ultra-sparse, high-p settings.
+- **Parameter ranges:** N_SAMPLES: 50 – 200, N_FEATURES: 1000 – 5000, SPARSITY: 5, N_CANDIDATE_SOLUTIONS: 12.
+- **Response:** Binary classification
 
-### Tier 3: Sample-Rich Scenarios (144 experiments)
-- **Purpose**: Traditional ML problems where n ≥ p or n ~ p
-- **Focus**: Well-powered statistical scenarios
-- **Parameter ranges**: 60-2000 samples, 40-2000 features, 2-10 sparsity levels
-- **Response type**: Binary classification
-- **Key scenarios**: Classical machine learning regime with adequate sample sizes
+### Tier 3: Sample-Rich Scenarios (14 experiments)
+- **Purpose:** Control group for convergence when information is abundant (N ≥ P)
+- **Description:** Traditional ML regime with abundant samples relative to features. Tests two sparsity levels. Ensures the algorithm converges and recovers supports when data is plentiful, serving as a baseline for comparison with harder tiers.
+- **Parameter ranges:** N_SAMPLES: 100 – 1000, N_FEATURES: 100 – 500, SPARSITY: 3 or 5, N_CANDIDATE_SOLUTIONS: 6 or 9.
+- **Response:** Binary classification
 
-### Tier 4: Robustness Under Adversity (48 experiments)
-- **Purpose**: Algorithm stability with data quality challenges
-- **Focus**: Noise robustness and missing data handling
-- **Parameter variations**: Noise levels (0.1-1.0), missing data ratios (0.0-0.9)
-- **Response type**: Binary classification
-- **Key scenarios**: Real-world data quality issues
+### Tier 4: Robustness Under Adversity (22 experiments)
+- **Purpose:** Test stability under severe noise and missing data
+- **Description:** Uses fixed configurations [N=100, P=200] and [N=200, P=500] with systematic variation of data quality. Tests high noise and high missing data ratios. Batch size dynamically increases (16 → 24 → 48) with missing data ratio. Evaluates robustness to real-world data quality issues.
+- **Parameter ranges:** N_SAMPLES: 100 or 200, N_FEATURES: 200 or 500, NOISE_STD: 0.1–1.0, NAN_RATIO: 0.0 – 0.5, BATCH_SIZE: 16 – 48
+- **Response:** Binary classification
 
-### Tier 5: Effect of Jaccard Penalty (48 experiments)
-- **Purpose**: Investigate regularization effects on feature set diversity
-- **Focus**: Jaccard penalty parameter exploration
-- **Parameter variations**: Lambda values from 0 (no penalty) to 5000 (extreme penalty)
-- **Response type**: Binary classification
-- **Key scenarios**: Solution diversity and coverage analysis
+### Tier 5: Effect of Jaccard Penalty (12 experiments)
+- **Purpose:** Investigate the effect of diversity regularization (LAMBDA_JACCARD)
+- **Description:** Uses clean data on representative problem sizes with both sparsity levels. In addition to standard penalty setting, this tier tests three more penalty regimes to analyze how Jaccard regularization influences solution diversity and support overlap.
+- **Parameter ranges:** N_SAMPLES: 100, N_FEATURES: 200 or 500, SPARSITY: 3 or 5, LAMBDA_JACCARD: 0 or 1000 or 5000
+- **Response:** Binary classification
 
-### Tier 6: Regression Validation (32 experiments)
-- **Purpose**: Regression scenarios covering key aspects with reduced scope
-- **Focus**: Continuous response prediction under challenging conditions
-- **Parameter ranges**: 50-100 samples, 1000-10000 features, 5-10 sparsity levels
-- **Parameter variations**: Moderate to high noise (0.5-1.0), missing data (0.1-0.3)
-- **Response type**: **Continuous regression** (BINARIZE = false)
-- **Key scenarios**: High-dimensional regression with data quality challenges
+### Tier 6: Regression Validation (29 experiments)
+- **Purpose:** Validate performance on continuous response (regression)
+- **Description:** Comprehensive testing of regression settings. It mirrors (with a single sparsity setup) Tier 1 (basic configuration), Tier 2 (high dimensions), and Tier 4 (robustness tests) but it uses a continuous response.
+- **Parameter ranges:** N_SAMPLES: 25 – 200, N_FEATURES: 100 – 5000, SPARSITY: 5, NOISE_STD: 0.1 – 1.0, NAN_RATIO: 0.0 – 0.5
+- **Response:** Continuous regression
 
-## Parameter Format
+### Tier 7: Class Imbalance (6 experiments)
+- **Purpose:** Test stability with unbalanced binary responses
+- **Description:** Tests severe class imbalance with minority class ratios of 10%, 20%, and 30%. Assesses algorithm robustness to label imbalance across different sample sizes.
+- **Parameter ranges:** N_SAMPLES: 100 or 200, N_FEATURES: 200 or 500, SPARSITY: 5, BINARY_RESPONSE_RATIO: 0.1 – 0.3
+- **Response:** Binary classification
 
-All experiment combinations follow the format:
-```
-N_SAMPLES,N_FEATURES,N_GENERATING_SOLUTIONS,SPARSITY,NOISE_STD,NAN_RATIO,N_CANDIDATE_SOLUTIONS,LAMBDA_JACCARD
-```
+**Parameter format:**
+`N_SAMPLES,N_FEATURES,N_GENERATING_SOLUTIONS,SPARSITY,NOISE_STD,NAN_RATIO,N_CANDIDATE_SOLUTIONS,LAMBDA_JACCARD,BATCH_SIZE,BINARY_RESPONSE_RATIO`
 
-## Algorithm Configuration
+**Common algorithm parameters:**
+- N_GENERATING_SOLUTIONS: 3
+- N_ITER: 3500–4500 (see tier)
+- PRIOR_TYPE: sss, VAR_SLAB: 100.0, VAR_SPIKE: 0.1
+- IS_REGULARIZED: true
+- LEARNING_RATE: 0.002
+- MIN_MU_THRESHOLD: 0.2
+- DATASET_SEED: 42
 
-**Common parameters across all tiers:**
-- **Iterations**: 4000
-- **Prior type**: Spike-and-Slab (sss)
-- **Student-t parameters**: DF=1, Scale=1.0
-- **Variance parameters**: Slab=100.0, Spike=0.1
-- **Prior weights**: Slab=0.9, Spike=0.1
-- **Regularization**: Enabled
-- **Training**: Batch size=16, Learning rate=0.002
-
-**Response type differences:**
-- **Tiers 1-5**: Binary classification (BINARIZE=true, ratio=0.5)
-- **Tier 6**: Continuous regression (BINARIZE=false)
-
-## How to Run Experiments
-
-### Single experiment:
+**How to run:**
 ```powershell
+# Single experiment
 python run_experiment.py
+
+# Full suite (all tiers, 110 experiments)
+.\run_tiers.ps1 -parametersFile "experiment_parameters.json"
+
+# Short suite (28 experiments)
+.\run_tiers.ps1 -parametersFile "experiment_parameters_short.json"
+
+# Selected tiers
+.\run_tiers.ps1 -tiers @("1","4") -parametersFile "experiment_parameters.json"
 ```
 
-### Batch sweep (all combinations):
-```powershell
-.un_sweep.ps1
-```
-
-### Tiered experiments:
-- **Run all tiers** (476 experiments):
-```powershell
-.un_tiers.ps1
-```
-
-- **Run specific tiers** with custom parameter file:
-```powershell
-.un_tiers.ps1 -tiers @("1", "2", "6") -parametersFile experiment_parameters.json
-```
-
-- **Run shortened validation** (30 experiments):
-```powershell
-.un_tiers.ps1 -parametersFile experiment_parameters_short.json
-```
-
-- **Run only regression experiments** (Tier 6):
-```powershell
-.un_tiers.ps1 -tiers @("6") -parametersFile experiment_parameters.json
-```
-
-All results and logs are automatically saved in the `results/` directory with tier-specific organization for later analysis.
+**Results:**
+Saved in `results/` with tier-specific subfolders and logs.
 
 ## Design Notes
 
@@ -136,9 +109,10 @@ All results and logs are automatically saved in the `results/` directory with ti
   - Tier 3: 144 experiments
   - Tier 4: 48 experiments
   - Tier 5: 48 experiments
-  - Tier 6: 32 experiments (NEW - regression focus)
-- **Focus**: Ultra-sparse signals (2-20 features across all scenarios)
-- **Response types**: Binary classification (Tiers 1-5) + Continuous regression (Tier 6)
+  - Tier 6: 32 experiments
+  - Tier 7: 6 experiments
+- **Focus**: Ultra-sparse signals (3-5 features across all scenarios)
+- **Response types**: Binary classification (Tiers 1-5, 7) + Continuous regression (Tier 6)
 - **Data generation**: Seeded (DATASET_SEED=42) for reproducibility
 - **Evaluation**: Fixed outlier detection thresholds [2.0, 2.5, 3.0]
 
@@ -146,4 +120,4 @@ All results and logs are automatically saved in the `results/` directory with ti
 
 - Experimental design does not account for stochastic effects throughout the algorithm and regression evaluation, as seeding is not fully supported for every included statistical component.
 - Artificial dataset generation is properly seeded for reproducibility.
-- Tier 6 introduces continuous regression scenarios while Tiers 1-5 focus on binary classification.
+- Tier 6 introduces continuous regression scenarios while Tiers 1-5 and 7 focus on binary classification.
