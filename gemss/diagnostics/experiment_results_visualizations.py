@@ -520,3 +520,69 @@ def plot_heatmap(
     fig.update_layout(height=500, yaxis_autorange="reversed")
     fig.show(config={"displayModeBar": False})
     return
+
+
+def plot_metric_vs_hyperparam(
+    df_grouped: pd.DataFrame,
+    hyperparam: str,
+    solution_options: List[str],
+) -> None:
+    """
+    Add a line for each solution and each metric that ranges [0,1], colored by
+        1. solution type
+        2. metric type
+
+    Parameters:
+    -----------
+    df_grouped : pd.DataFrame
+        DataFrame containing grouped results data.
+    hyperparam : str
+        The hyperparameter to plot on the x-axis.
+    solution_options : List[str]
+        List of solution types to include in the plot.
+    """
+    select_metrics = [
+        "Recall",
+        "Precision",
+        "F1_Score",
+        "Jaccard",
+    ]  # only metrics with range [0,1]
+    fig = go.Figure()
+    for sol in solution_options:
+        for metric in select_metrics:
+            col_name = f"{sol}_{metric}"
+            if col_name in df_grouped.columns:
+                fig.add_trace(
+                    go.Scatter(
+                        x=df_grouped.index,
+                        y=df_grouped[col_name],
+                        mode="lines+markers",
+                        name=f"{sol} - {metric}",
+                        line=dict(
+                            color=px.colors.qualitative.Plotly[
+                                solution_options.index(sol)
+                            ],
+                            dash=(
+                                "solid"
+                                if metric == select_metrics[0]
+                                else (
+                                    "dash"
+                                    if metric == select_metrics[1]
+                                    else (
+                                        "dot"
+                                        if metric == select_metrics[2]
+                                        else "longdash"
+                                    )
+                                )
+                            ),
+                        ),
+                    )
+                )
+    fig.update_layout(
+        title=f"Effect of {hyperparam} on metrics",
+        xaxis_title=hyperparam,
+        yaxis_title="Metric value",
+        yaxis=dict(range=[-0.1, 1.1]),
+        height=600,
+    ).show(config={"displayModeBar": False})
+    return
