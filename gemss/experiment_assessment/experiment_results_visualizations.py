@@ -6,6 +6,16 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
 
+from gemss.experiment_assessment.experiment_results_analysis import (
+    COVERAGE_METRICS,
+    DEFAULT_ASI_SI_COMPARISON_THRESHOLDS,
+    DEFAULT_F1SCORE_THRESHOLDS,
+    DEFAULT_PRECISION_THRESHOLDS,
+    DEFAULT_RECALL_THRESHOLDS,
+    THRESHOLDS_FOR_METRIC,
+    DEFAULT_AGGREGATION_FUNC,
+)
+
 # Define order and colors for any threshold-based categories
 CATEGORY_ORDER = ["Excellent", "Good", "Moderate", "Poor", "Unknown"]
 CATEGORY_COLORS = {
@@ -14,35 +24,6 @@ CATEGORY_COLORS = {
     "Moderate": "lightyellow",
     "Poor": "lightcoral",
     "Unknown": "gray",
-}
-# ASI vs SI comparison thresholds
-DEFAULT_ASI_SI_COMPARISON_THRESHOLDS = {
-    "Excellent": 0.85,
-    "Good": 0.5,
-    "Moderate": 0.1,
-}
-# anything below 'Moderate' is 'Poor'
-DEFAULT_RECALL_THRESHOLDS = {
-    "Excellent": 0.9,
-    "Good": 0.8,
-    "Moderate": 0.65,
-}
-DEFAULT_PRECISION_THRESHOLDS = {
-    "Excellent": 0.9,
-    "Good": 0.7,
-    "Moderate": 0.5,
-}
-DEFAULT_F1SCORE_THRESHOLDS = {
-    "Excellent": 0.85,  # corresponds to Precision = 0.8, Recall = 0.9
-    "Good": 0.71,  # average between moderate and excellent
-    "Moderate": 0.565,  # corresponds to Precision = 0.5, Recall = 0.65
-}
-THRESHOLDS_FOR_METRIC = {
-    "Recall": DEFAULT_RECALL_THRESHOLDS,
-    "Precision": DEFAULT_PRECISION_THRESHOLDS,
-    "F1_Score": DEFAULT_F1SCORE_THRESHOLDS,
-    "Success_Index": None,
-    "Adjusted_Success_Index": None,
 }
 
 
@@ -75,17 +56,11 @@ def plot_solution_grouped(
     hover_params : List[str]
         List of parameters to show on hover in the plot.
     """
-    df = df[df["TIER_ID"].isin(tier)]
+    df_plot = df[df["TIER_ID"].isin(tier)]
+    df_plot = df_plot[df_plot["solution_type"] == solution_type].copy()
 
-    # Construct the full column name
-    # The solution types in CSV usually look like: "full", "top", "outlier_STD_2.5"
-    full_metric_col = f"{solution_type}_{metric_name}"
-
-    if full_metric_col not in df.columns:
-        print(
-            f"Column '{full_metric_col}' not found in dataframe. Available columns similar to '{metric_name}':"
-        )
-        print([c for c in df.columns if metric_name in c])
+    if metric_name not in df.columns:
+        print(f"Column '{metric_name}' not found in dataframe.")
         return
 
     # Create title
@@ -94,7 +69,6 @@ def plot_solution_grouped(
         title += f", grouped by {color_by}"
 
     # Convert group_by to string for discrete coloring if needed
-    df_plot = df.copy()
     if color_by != "None":
         df_plot[color_by] = df_plot[color_by].astype(str)
 
@@ -118,7 +92,7 @@ def plot_solution_grouped(
             # Create hover template
             hovertemplate = (
                 f"{x_axis}: %{{x}}<br>"
-                f"{full_metric_col}: %{{y}}<br>"
+                f"{metric_name}: %{{y}}<br>"
                 f"{color_by}: {group_val}<br><br>"
                 + "<br>".join(
                     [
@@ -132,7 +106,7 @@ def plot_solution_grouped(
             fig.add_trace(
                 go.Scatter(
                     x=group_data[x_axis],
-                    y=group_data[full_metric_col].round(3),
+                    y=group_data[metric_name].round(3),
                     mode="markers",
                     marker=dict(size=10, opacity=0.7, color=colors[i % len(colors)]),
                     name=str(group_val),
@@ -144,7 +118,7 @@ def plot_solution_grouped(
         # No grouping - single trace
         hovertemplate = (
             f"{x_axis}: %{{x}}<br>"
-            f"{full_metric_col}: %{{y}}<br><br>"
+            f"{metric_name}: %{{y}}<br><br>"
             + "<br>".join(
                 [
                     f"{param}: %{{customdata[{j}]}}"
@@ -157,7 +131,7 @@ def plot_solution_grouped(
         fig.add_trace(
             go.Scatter(
                 x=df_plot[x_axis],
-                y=df_plot[full_metric_col],
+                y=df_plot[metric_name],
                 mode="markers",
                 marker=dict(size=10, opacity=0.7),
                 name=solution_type,
@@ -211,27 +185,24 @@ def plot_solution_comparison(
 
     fig = go.Figure()
     for solution_type in solution_types:
-        full_metric_col = f"{solution_type}_{metric_name}"
-        if full_metric_col not in df.columns:
-            print(
-                f"Column '{full_metric_col}' not found in dataframe. Available columns similar to '{metric_name}':"
-            )
-            print([c for c in df.columns if metric_name in c])
+        df_solution = df[df["solution_type"] == solution_type]
+        if metric_name not in df.columns:
+            print(f"Column '{metric_name}' not found in dataframe.")
             continue
 
         other_solution_metrics = [
-            col for col in df.columns if solution_type in col and col != full_metric_col
+            col for col in df.columns if col in COVERAGE_METRICS and col != metric_name
         ]
         fig.add_trace(
             go.Scatter(
-                x=df[x_axis],
-                y=df[full_metric_col].round(3),
+                x=df_solution[x_axis],
+                y=df_solution[metric_name].round(3),
                 mode="markers",
                 marker={"size": 10, "opacity": 0.7},
                 name=solution_type,
                 hovertemplate=(
                     f"{x_axis}: %{{x}}<br>"
-                    f"{full_metric_col}: %{{y}}<br><br>"
+                    f"{metric_name}: %{{y}}<br><br>"
                     + "<br>".join(
                         [
                             f"{param}: %{{customdata[{i}]}}"
@@ -284,23 +255,22 @@ def plot_si_asi_scatter(
     hover_params : List[str]
         List of parameters to show on hover in the plot.
     """
-    df = df[df["TIER_ID"].isin(tier)]
+    df_plot = df[df["TIER_ID"].isin(tier)]
+    df_plot = df_plot[df_plot["solution_type"] == solution_type].copy()
 
-    si_col = f"{solution_type}_Success_Index"
-    asi_col = f"{solution_type}_Adjusted_Success_Index"
+    si_col = f"Success_Index"
+    asi_col = f"Adjusted_Success_Index"
 
     if si_col not in df.columns:
         print(f"Metrics not found for {solution_type}")
         return
 
     # Convert color column to string for categorical coloring
-    df_plot = df.copy()
     if color_by != "None":
         df_plot[color_by] = df_plot[color_by].astype(str)
 
     # Add diagonal line for reference (Ideal: ASI = SI)
-    max_val = max(df[si_col].max(), df[asi_col].max()) * 1.1
-
+    max_val = max(df_plot[si_col].max(), df_plot[asi_col].max()) * 1.1
     fig = px.scatter(
         df_plot,
         x=si_col,
@@ -379,7 +349,8 @@ def analyze_metric_results(
         Dictionary defining the lower bounds for performance categories.
         Defaults to THRESHOLDS_FOR_METRIC for the given metric.
     """
-    df = df[df["TIER_ID"].isin(tier)]
+    df_plot = df[df["TIER_ID"].isin(tier)]
+    df_plot = df_plot[df_plot["solution_type"] == solution_type]
 
     # Categorize performance
     def categorize_metric_higher_is_better(val):
@@ -404,12 +375,6 @@ def analyze_metric_results(
             return "Moderate"
         return "Poor"
 
-    metric_col = f"{solution_type}_{metric_name}"
-
-    if metric_col not in df.columns:
-        print(f"{metric_name} metric not found for {solution_type}")
-        return
-
     # Get default thresholds, if defined
     if thresholds is None:
         thresholds = THRESHOLDS_FOR_METRIC.get(metric_name, None)
@@ -425,9 +390,9 @@ def analyze_metric_results(
         "Success_Index",
         "Adjusted_Success_Index",
     ]:
-        categories = df[metric_col].apply(categorize_metric_higher_is_better)
+        categories = df[metric_name].apply(categorize_metric_higher_is_better)
     else:
-        categories = df[metric_col].apply(categorize_metric_lower_is_better)
+        categories = df[metric_name].apply(categorize_metric_lower_is_better)
 
     # Count occurrences in each category
     counts = categories.value_counts()
@@ -461,8 +426,8 @@ def analyze_metric_results(
 
     # Print summary stats
     display(Markdown(f"### Analysis for {solution_type} solutions:"))
-    display(Markdown(f"**Mean {metric_name}:** {df[metric_col].mean():.3f}"))
-    display(Markdown(f"**Median {metric_name}:** {df[metric_col].median():.3f}\n"))
+    display(Markdown(f"**Mean {metric_name}:** {df[metric_name].mean():.3f}"))
+    display(Markdown(f"**Median {metric_name}:** {df[metric_name].median():.3f}\n"))
     return
 
 
@@ -473,6 +438,7 @@ def plot_heatmap(
     metric_name: str,
     x_axis: str,
     y_axis: str,
+    aggregation_func: Literal["mean", "median"] = DEFAULT_AGGREGATION_FUNC,
 ) -> None:
     """
     Plot a heatmap showing the interaction of two parameters on a metric.
@@ -487,25 +453,36 @@ def plot_heatmap(
         The solution type to analyze.
     metric_name : str
         The metric to plot as color.
+    aggregation_func : Literal["mean", "median"], optional
+        The aggregation function to use when multiple entries exist
+        for the same (x_axis, y_axis) pair. DEFAULT_AGGREGATION_FUNC by default.
     x_axis : str
         Parameter for x-axis.
     y_axis : str
         Parameter for y-axis.
     """
-    df = df[df["TIER_ID"].isin(tier)]
+    df_plot = df[df["TIER_ID"].isin(tier)]
+    df_plot = df_plot[df_plot["solution_type"] == solution_type].copy()
 
-    full_metric_col = f"{solution_type}_{metric_name}"
+    if metric_name not in df_plot.columns:
+        print(f"Column '{metric_name}' not found in dataframe.")
+        return
 
-    if full_metric_col not in df.columns:
+    if aggregation_func == "mean":
+        agg_func = pd.Series.mean
+    elif aggregation_func == "median":
+        agg_func = pd.Series.median
+    else:
+        print(f"Unsupported aggregation function: {aggregation_func}")
         return
 
     # Aggregate: there might be multiple runs for the same grid point
-    heatmap_data = df.groupby([y_axis, x_axis])[full_metric_col].mean().reset_index()
+    heatmap_data = (
+        df_plot.groupby([y_axis, x_axis])[metric_name].agg(agg_func).reset_index()
+    )
 
     # Pivot for heatmap format
-    pivot_table = heatmap_data.pivot(
-        index=y_axis, columns=x_axis, values=full_metric_col
-    )
+    pivot_table = heatmap_data.pivot(index=y_axis, columns=x_axis, values=metric_name)
 
     fig = px.imshow(
         pivot_table,
@@ -517,7 +494,7 @@ def plot_heatmap(
             "RdBu_r" if "Miss" in metric_name or "FDR" in metric_name else "Viridis"
         ),
     )
-    fig.update_layout(height=500, yaxis_autorange="reversed")
+    fig.update_layout(height=500)
     fig.show(config={"displayModeBar": False})
     return
 
