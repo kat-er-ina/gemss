@@ -29,13 +29,13 @@ DEFAULT_RECALL_THRESHOLDS = {
 }
 DEFAULT_PRECISION_THRESHOLDS = {
     "Excellent": 0.9,
-    "Good": 0.8,
-    "Moderate": 0.65,
+    "Good": 0.7,
+    "Moderate": 0.5,
 }
 DEFAULT_F1SCORE_THRESHOLDS = {
-    "Excellent": 0.9,
-    "Good": 0.8,
-    "Moderate": 0.65,
+    "Excellent": 0.85,  # corresponds to Precision = 0.8, Recall = 0.9
+    "Good": 0.71,  # average between moderate and excellent
+    "Moderate": 0.565,  # corresponds to Precision = 0.5, Recall = 0.65
 }
 THRESHOLDS_FOR_METRIC = {
     "Recall": DEFAULT_RECALL_THRESHOLDS,
