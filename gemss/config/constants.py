@@ -14,9 +14,12 @@ CONFIG_FILES: Final = {
     "ALGORITHM": "algorithm_settings.json",
     "POSTPROCESSING": "solution_postprocessing_settings.json",
 }
-ROOT_DIR = Path(__file__).resolve().parent.parent
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Project metadata
 PROJECT_NAME: Final = "Gaussian Ensemble for Multiple Sparse Solutions"
 PROJECT_ABBREV: Final = "GEMSS"
 CONFIG_PACKAGE_NAME: Final = "gemss.config"
+
+# Experiment results directory
+EXPERIMENT_RESULTS_DIR: Final = ROOT_DIR / "scripts" / "results"
