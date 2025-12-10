@@ -71,7 +71,7 @@
       "name": "Sample-rich scenarios",
       "description": "Traditional ML regimes where N >= P. Serves as a control group to verify convergence when information is abundant.",
       "algorithm_parameters": {
-        "N_ITER": 3500,
+        "N_ITER": 4000,
         "PRIOR_TYPE": "sss",
         "STUDENT_DF": 1,
         "STUDENT_SCALE": 1.0,
@@ -85,20 +85,20 @@
         "BINARIZE": true
       },
       "combinations": [
-        "100,100,3,3,0.1,0.0,6,1000,16,0.5",
-        "200,100,3,3,0.1,0.0,6,1000,16,0.5",
-        "500,100,3,3,0.1,0.0,6,1000,16,0.5",
-        "200,200,3,3,0.1,0.0,6,1000,16,0.5",
-        "500,200,3,3,0.1,0.0,6,1000,32,0.5",
-        "500,500,3,3,0.1,0.0,6,1000,32,0.5",
-        "1000,500,3,3,0.1,0.0,9,1000,32,0.5",
-        "100,100,3,5,0.1,0.0,6,1000,16,0.5",
-        "200,100,3,5,0.1,0.0,6,1000,16,0.5",
-        "500,100,3,5,0.1,0.0,6,1000,32,0.5",
-        "200,200,3,5,0.1,0.0,6,1000,16,0.5",
-        "500,200,3,5,0.1,0.0,6,1000,32,0.5",
-        "500,500,3,5,0.1,0.0,9,1000,32,0.5",
-        "1000,500,3,5,0.1,0.0,9,1000,32,0.5"
+        "100,100,3,3,0.1,0.0,6,1000,64,0.5",
+        "200,100,3,3,0.1,0.0,6,1000,64,0.5",
+        "500,100,3,3,0.1,0.0,6,1000,64,0.5",
+        "200,200,3,3,0.1,0.0,6,1000,64,0.5",
+        "500,200,3,3,0.1,0.0,6,1000,64,0.5",
+        "500,500,3,3,0.1,0.0,6,1000,64,0.5",
+        "1000,500,3,3,0.1,0.0,9,1000,64,0.5",
+        "100,100,3,5,0.1,0.0,6,1000,64,0.5",
+        "200,100,3,5,0.1,0.0,6,1000,64,0.5",
+        "500,100,3,5,0.1,0.0,6,1000,64,0.5",
+        "200,200,3,5,0.1,0.0,6,1000,64,0.5",
+        "500,200,3,5,0.1,0.0,6,1000,64,0.5",
+        "500,500,3,5,0.1,0.0,9,1000,64,0.5",
+        "1000,500,3,5,0.1,0.0,9,1000,64,0.5"
       ]
     },
     "tier4": {
@@ -145,7 +145,7 @@
     },
     "tier5": {
       "name": "Effect of Jaccard penalty",
-      "description": "Tests diversity enforcement using 4 representative combinations with varying lambda.",
+      "description": "Tests diversity enforcement using 4 representative combinations with varying lambda. 4 tests with baseline lambda=500 is added from Tier 1 to the final summary metrics.",
       "algorithm_parameters": {
         "N_ITER": 4000,
         "PRIOR_TYPE": "sss",
@@ -177,7 +177,7 @@
     },
     "tier6": {
       "name": "Regression validation",
-      "description": "Continuous response. Mirrors Tier 1 + Tier 2 plus half of robustness checks from Tier 4.",
+      "description": "Continuous response. Mirrors Tier 1 + 2 + 4.",
       "algorithm_parameters": {
         "N_ITER": 4500,
         "PRIOR_TYPE": "sss",
@@ -245,9 +245,11 @@
         "100,200,3,5,0.1,0.0,6,500,64,0.1",
         "100,200,3,5,0.1,0.0,6,500,64,0.2",
         "100,200,3,5,0.1,0.0,6,500,64,0.3",
+        "100,200,3,5,0.1,0.0,6,500,64,0.4",
         "200,500,3,5,0.1,0.0,9,500,64,0.1",
         "200,500,3,5,0.1,0.0,9,500,64,0.2",
-        "200,500,3,5,0.1,0.0,9,500,64,0.3"
+        "200,500,3,5,0.1,0.0,9,500,64,0.3",
+        "200,500,3,5,0.1,0.0,9,500,64,0.4"
       ]
     }
   },
@@ -257,8 +259,5 @@
     "SAMPLE_MORE_PRIORS_COEFF": 1.0,
     "USE_MEDIAN_FOR_OUTLIER_DETECTION": false,
     "OUTLIER_DEVIATION_THRESHOLDS": [2.0, 2.5, 3.0]
-  },
-  "notes": {
-    "total_experiments": 110
   }
 }
