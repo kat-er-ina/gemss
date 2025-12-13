@@ -80,6 +80,15 @@ CASE_DESCRIPTION[46] = (
     "Regression vs. classification: effect of both noise and NaNs (Tiers 3 + 6)"
 )
 
+CASE_RANGES = {
+    "basic": range(1, 16),
+    "robustness": range(16, 23),
+    "jaccard": range(23, 28),
+    "unbalanced": range(28, 31),
+    "regression": range(31, 42),
+    "reg_vs_class": range(42, 47),
+}
+
 
 def get_df_cases(df: pd.DataFrame) -> Dict[int, pd.DataFrame]:
     """
