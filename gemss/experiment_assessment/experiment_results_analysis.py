@@ -232,7 +232,9 @@ def pivot_df_by_solution_type(df: pd.DataFrame) -> pd.DataFrame:
     df_pivot = pd.DataFrame()
     for solution in SOLUTION_OPTIONS:
         solution_cols = [col for col in df.columns if solution in col]
-        df_solution = df[["TIER_ID"] + varied_params + solution_cols].copy()
+        df_solution = df[
+            ["TIER_ID", "EXPERIMENT_ID"] + varied_params + solution_cols
+        ].copy()
         df_solution["TIER_ID"] = df_solution["TIER_ID"].astype(str)
         df_solution.rename(
             columns={col: col.replace(f"{solution}_", "") for col in solution_cols},
@@ -381,7 +383,7 @@ def choose_best_solution_per_group(
     metric: Optional[str] = DEFAULT_METRIC,
     aggregation_func: Literal["mean", "median"] = "mean",
     verbose: bool = False,
-) -> dict:
+) -> Dict[str, str]:
     """
     Wrapper function to get the best solution types per group (e.g., 'TIER_ID' or 'CASE_ID')
     based on a chosen performance metric.
@@ -402,7 +404,7 @@ def choose_best_solution_per_group(
 
     Returns
     -------
-    dict
+    Dict[str, str]
         A dictionary where keys are group identifiers and values are the best
         solution type based on the chosen performance metric.
     """
@@ -420,3 +422,65 @@ def choose_best_solution_per_group(
         verbose=verbose,
     )
     return best_solution_per_group
+
+
+def filter_df_best_solutions(
+    df: pd.DataFrame,
+    best_solutions: Dict[str, str],
+    group_identifier: str = "TIER_ID",
+    verbose: bool = False,
+) -> pd.DataFrame:
+    """
+    Filter the DataFrame to include only the best solution types per group.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing experiment results with performance metrics.
+    best_solutions : Dict[str, str]
+        A dictionary where keys are group identifiers and values are the best
+        solution type based on the chosen performance metric.
+    group_identifier : str, optional
+        Column name to group by (e.g., 'TIER_ID' or 'CASE_ID'), by default 'TIER_ID'.
+    verbose : bool, optional
+        If True, display information of the filtered DataFrame, by default False.
+
+    Returns
+    -------
+    pd.DataFrame
+        Filtered DataFrame containing only the best solution types per group.
+    """
+    df_filtered = pd.DataFrame()
+    for group, sol_type in best_solutions.items():
+        group_value = group.split(" = ")[1]
+        df_group = df[
+            (df[group_identifier] == int(group_value))
+            & (df["solution_type"] == sol_type)
+        ]
+        df_filtered = pd.concat([df_filtered, df_group], ignore_index=True)
+
+    if verbose:
+        display(
+            Markdown(
+                f"### Filtered data with best solutions per **{group_identifier}**"
+            )
+        )
+        display(Markdown(f"- Total number of records: {len(df_filtered)}"))
+        display(Markdown(f"- Solution types included:"))
+        display((pd.Series(best_solutions.values()).value_counts().to_frame()))
+
+        display(
+            Markdown(
+                f"- Number of **{group_identifier}**s: {df_filtered[group_identifier].nunique()}"
+            )
+        )
+
+        display(Markdown(f"- Number of experiments per **{group_identifier}**:"))
+        exp_count = (
+            df_filtered[group_identifier]
+            .value_counts()
+            .to_frame()
+            .rename(columns={"count": "number of experiments"})
+        )
+        display(exp_count.sort_index(ascending=True))
+    return df_filtered

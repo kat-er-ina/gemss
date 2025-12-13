@@ -27,6 +27,7 @@ from gemss.experiment_assessment.experiment_results_visualizations import (
 
 def show_interactive_performance_overview(
     df_pivot: pd.DataFrame,
+    group_identifier: Literal["TIER_ID", "CASE_ID"] = "TIER_ID",
     metrics_list: List[str] = ["Recall", "Precision", "F1_Score"],
     show_metric_thresholds: bool = True,
 ) -> None:
@@ -38,7 +39,9 @@ def show_interactive_performance_overview(
     -----------
     df_pivot : pd.DataFrame
         The pivoted DataFrame containing experiment results.
-        Must contain 'solution_type' and 'TIER_ID' columns.
+        Must contain 'solution_type' and group_identifier columns.
+    group_identifier : Literal["TIER_ID", "CASE_ID"], optional
+        The column name used to group the data. Default is "TIER_ID".
     metrics_list : List[str], optional
         List of metrics available for analysis. Default includes
         "Recall", "Precision", and "F1_Score".
@@ -50,8 +53,10 @@ def show_interactive_performance_overview(
     --------
     None
     """
-    tier_ids = df_pivot["TIER_ID"].unique().tolist()
-    solution_options = sorted(df_pivot["solution_type"].unique().tolist())
+    group_ids = df_pivot[group_identifier].unique().tolist()
+    solution_options = sorted(df_pivot["solution_type"].unique().tolist()) + [
+        "all types"
+    ]
 
     if show_metric_thresholds:
         df_thresholds = pd.DataFrame()
@@ -61,18 +66,26 @@ def show_interactive_performance_overview(
         display(Markdown(f"### Performance thresholds for selected metrics"))
         display(df_thresholds)
 
+    if group_identifier == "TIER_ID":
+        group_identifier_description = "Tier:"
+    elif group_identifier == "CASE_ID":
+        group_identifier_description = "Test case:"
+    else:
+        group_identifier_description = group_identifier + ":"
+
     display(Markdown(f"### Quick performance overview"))
     interact(
         analyze_metric_results,
         df=fixed(df_pivot),
-        tier=widgets.SelectMultiple(
-            options=tier_ids,
-            value=tier_ids,
-            description="Tier:",
+        identifiers_list=widgets.SelectMultiple(
+            options=group_ids,
+            value=group_ids,
+            description=group_identifier_description,
         ),
+        group_identifier=fixed(group_identifier),
         solution_type=widgets.Dropdown(
-            options=sorted(solution_options),
-            value=DEFAULT_SOLUTION,
+            options=solution_options,
+            value=("all types" if group_identifier == "CASE_ID" else DEFAULT_SOLUTION),
             description="Solution:",
         ),
         metric_name=widgets.Dropdown(
@@ -80,6 +93,7 @@ def show_interactive_performance_overview(
             value=DEFAULT_METRIC,
             description="Metric:",
         ),
+        custom_title=fixed(None),
         thresholds=fixed(None),
     )
     return

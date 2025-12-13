@@ -1,6 +1,6 @@
 """ """
 
-from typing import List, Dict, Literal, Tuple
+from typing import List, Dict, Literal, Optional, Tuple
 from IPython.display import display, Markdown
 import pandas as pd
 import plotly.express as px
@@ -14,6 +14,7 @@ from gemss.experiment_assessment.experiment_results_analysis import (
     DEFAULT_RECALL_THRESHOLDS,
     THRESHOLDS_FOR_METRIC,
     DEFAULT_AGGREGATION_FUNC,
+    DEFAULT_METRIC,
 )
 
 # Define order and colors for any threshold-based categories
@@ -316,8 +317,9 @@ def plot_si_asi_scatter(
 
 def analyze_metric_results(
     df: pd.DataFrame,
-    tier: Tuple[str],
-    solution_type: str,
+    identifiers_list: List[str],
+    group_identifier: Optional[str] = "TIER_ID",
+    solution_type: Optional[str] = "all types",
     metric_name: Literal[
         "Recall",
         "Precision",
@@ -329,8 +331,9 @@ def analyze_metric_results(
         "FDR",
         "Global_Miss_Rate",
         "Global_FDR",
-    ],
+    ] = DEFAULT_METRIC,
     thresholds: Dict[str, float] = None,
+    custom_title: Optional[str] = None,
 ) -> None:
     """
     Analyze and visualize the distribution of a specified metric for a given solution type.
@@ -339,18 +342,36 @@ def analyze_metric_results(
     -----------
     df : pd.DataFrame
         DataFrame containing the results data.
-    tier : Tuple[str]
-        The tier identifiers to filter the data.
-    metric_name : str
-        The metric to analyze (e.g., "Recall", "Precision").
-    solution_type : str
+    identifiers_list : List[str]
+        The unique identifier values to filter the data (e.g., tier IDs).
+    group_identifier : Optional[str]
+        The column name used to group the data (e.g., "TIER_ID" or "CASE_ID").
+        "TIER_ID" by default.
+    solution_type : Optional[str]
         The solution type to analyze (e.g., "full", "top", "outlier_STD_2.5").
-    thresholds : Dict[str, float], optional
+        If None, analyzes all solution types together.
+    metric_name : Optional[Literal[
+        "Recall",
+        "Precision",
+        "F1_Score",
+        "Success_Index",
+        "Adjusted_Success_Index",
+        "Jaccard",
+        "Miss_Rate",
+        "FDR",
+        "Global_Miss_Rate",
+        "Global_FDR",
+    ]] = DEFAULT_METRIC,
+        The metric to analyze (e.g., "Recall", "Precision"). DEFAULT_METRIC by default.
+    thresholds : Optional[Dict[str, float]]
         Dictionary defining the lower bounds for performance categories.
         Defaults to THRESHOLDS_FOR_METRIC for the given metric.
     """
-    df_plot = df[df["TIER_ID"].isin(tier)]
-    df_plot = df_plot[df_plot["solution_type"] == solution_type]
+    df_plot = df[df[group_identifier].isin(identifiers_list)]
+    if solution_type != "all types":
+        df_plot = df_plot[df_plot["solution_type"] == solution_type]
+    else:
+        solution_type = "all"  # for display purposes
 
     # Categorize performance
     def categorize_metric_higher_is_better(val):
@@ -390,9 +411,9 @@ def analyze_metric_results(
         "Success_Index",
         "Adjusted_Success_Index",
     ]:
-        categories = df[metric_name].apply(categorize_metric_higher_is_better)
+        categories = df_plot[metric_name].apply(categorize_metric_higher_is_better)
     else:
-        categories = df[metric_name].apply(categorize_metric_lower_is_better)
+        categories = df_plot[metric_name].apply(categorize_metric_lower_is_better)
 
     # Count occurrences in each category
     counts = categories.value_counts()
@@ -405,14 +426,23 @@ def analyze_metric_results(
         }
     )
 
-    # Create visualization
+    # Print summary stats
+    display(Markdown(f"#### Statistics:"))
+    display(Markdown(f"- **Mean {metric_name}:** {df[metric_name].mean():.3f}"))
+    display(Markdown(f"- **Median {metric_name}:** {df[metric_name].median():.3f}\n"))
+
+    if custom_title is not None:
+        title = custom_title
+    else:
+        title = f"{metric_name} performance for {solution_type} solutions,<br>{group_identifier} = {identifiers_list}"
+
     fig = px.bar(
         plot_data,
         x="Category",
         y="Count",
         color="Category",
         color_discrete_map=CATEGORY_COLORS,
-        title=f"{metric_name} Performance Distribution for {solution_type} solutions",
+        title=title,
         text="Count",
     )
 
@@ -423,11 +453,6 @@ def analyze_metric_results(
         width=600,
     )
     fig.show(config={"displayModeBar": False})
-
-    # Print summary stats
-    display(Markdown(f"### Analysis for {solution_type} solutions:"))
-    display(Markdown(f"**Mean {metric_name}:** {df[metric_name].mean():.3f}"))
-    display(Markdown(f"**Median {metric_name}:** {df[metric_name].median():.3f}\n"))
     return
 
 
