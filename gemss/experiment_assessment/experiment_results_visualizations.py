@@ -30,12 +30,13 @@ CATEGORY_COLORS = {
 
 def plot_solution_grouped(
     df: pd.DataFrame,
-    tier: Tuple[str],
-    solution_type: str,
     metric_name: str,
     x_axis: str,
     color_by: str,
     hover_params: List[str],
+    group_identifier: Literal["TIER_ID", "CASE_ID", None],
+    identifiers_list: Optional[List[str]] = None,
+    solution_type: Optional[str] = "all types",
 ) -> None:
     """
     Plot a metric for a given solution type, grouped by a specified parameter.
@@ -44,10 +45,6 @@ def plot_solution_grouped(
     -----------
     df : pd.DataFrame
         DataFrame containing the results data.
-    tier : Tuple[str]
-        The tier identifiers to filter the data.
-    solution_type : str
-        The type of solution to plot (e.g., "full", "top", "outlier_STD_2.5").
     metric_name : str
         The base name of the metric to plot (e.g., "Recall", "Precision").
     x_axis : str
@@ -56,9 +53,31 @@ def plot_solution_grouped(
         The parameter to group the lines by (or "None" for no grouping).
     hover_params : List[str]
         List of parameters to show on hover in the plot.
+    group_identifier : Literal["TIER_ID", "CASE_ID", None]
+        The column name used to group the data, or None to use all data.
+    identifiers_list : Optional[List[str]] = None
+        The identifier values to filter the data (e.g., tier IDs or case IDs).
+        If None, all unique identifiers are used.
+        Ignored if group_identifier is None.
+    solution_type : Optional[str] = "all types"
+        The type of solution to plot (e.g., "full", "top", "outlier_STD_2.5").
+        Input "all types" to include all solution types.
+
     """
-    df_plot = df[df["TIER_ID"].isin(tier)]
-    df_plot = df_plot[df_plot["solution_type"] == solution_type].copy()
+    if group_identifier is not None:
+        # if no identifiers provided, use all unique identifiers
+        if identifiers_list is None:
+            identifiers_list = df[group_identifier].unique().tolist()
+        # filter dataframe
+        df_plot = df[df[group_identifier].isin(identifiers_list)]
+    else:
+        df_plot = df
+
+    if solution_type != "all types":
+        df_plot = df_plot[df_plot["solution_type"] == solution_type]
+    else:
+        solution_type = "all"  # for display purposes
+    df_plot = df_plot.copy()
 
     if metric_name not in df.columns:
         print(f"Column '{metric_name}' not found in dataframe.")
@@ -157,11 +176,12 @@ def plot_solution_grouped(
 
 def plot_solution_comparison(
     df: pd.DataFrame,
-    tier: Tuple[str],
     solution_types: List[str],
     metric_name: str,
     x_axis: str,
     hover_params: List[str],
+    group_identifier: Literal["TIER_ID", "CASE_ID", None],
+    identifiers_list: Optional[List[str]] = None,
 ) -> None:
     """
     Plot a comparison of a metric across different solution types.
@@ -171,8 +191,6 @@ def plot_solution_comparison(
     -----------
     df : pd.DataFrame
         DataFrame containing the results data.
-    tier : Tuple[str]
-        The tier identifiers to filter the data.
     solution_types : List[str]
         List of solution types to compare (e.g., ["full", "top", "outlier_STD_2.5"]).
     metric_name : str
@@ -181,8 +199,21 @@ def plot_solution_comparison(
         The parameter to plot on the x-axis.
     hover_params : List[str]
         List of parameters to show on hover in the plot.
+    group_identifier : Literal["TIER_ID", "CASE_ID", None]
+        The column name used to group the data, or None to use all data.
+    identifiers_list : Optional[List[str]] = None
+        The identifier values to filter the data (e.g., tier IDs or case IDs).
+        If None, all unique identifiers are used.
+        Ignored if group_identifier is None.
     """
-    df = df[df["TIER_ID"].isin(tier)]
+    if group_identifier is not None:
+        # if no identifiers provided, use all unique identifiers
+        if identifiers_list is None:
+            identifiers_list = df[group_identifier].unique().tolist()
+        # filter dataframe
+        df = df[df[group_identifier].isin(identifiers_list)]
+    else:
+        df = df
 
     fig = go.Figure()
     for solution_type in solution_types:
@@ -235,29 +266,50 @@ def plot_solution_comparison(
 
 def plot_si_asi_scatter(
     df: pd.DataFrame,
-    tier: Tuple[str],
-    solution_type: str,
     color_by: str,
     hover_params: List[str],
+    group_identifier: Literal["TIER_ID", "CASE_ID", None],
+    identifiers_list: Optional[List[str]] = None,
+    solution_type: Optional[str] = "all types",
 ) -> None:
     """
     Plot a scatter plot of Adjusted Success Index (ASI) vs Success Index (SI).
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     df : pd.DataFrame
         DataFrame containing the results data.
-    tier : Tuple[str]
-        The tier identifiers to filter the data.
-    solution_type : str
-        The type of solution to plot (e.g., "full", "top", "outlier_STD_2.5").
     color_by : str
         The parameter to color the points by (or "None" for no coloring).
     hover_params : List[str]
         List of parameters to show on hover in the plot.
+    group_identifier : Literal["TIER_ID", "CASE_ID", None]
+        The column name used to group the data, or None to use all data.
+    identifiers_list : Optional[List[str]] = None
+        The identifier values to filter the data (e.g., tier IDs or case IDs).
+        If None, all unique identifiers are used.
+        Ignored if group_identifier is None.
+    solution_type : Optional[str] = "all types"
+        The type of solution to plot (e.g., "full", "top", "outlier_STD_2.5").
+        Input "all types" to include all solution types.
+
+    Returns
+    -------
+    None
     """
-    df_plot = df[df["TIER_ID"].isin(tier)]
-    df_plot = df_plot[df_plot["solution_type"] == solution_type].copy()
+    if group_identifier is not None:
+        # if no identifiers provided, use all unique identifiers
+        if identifiers_list is None:
+            identifiers_list = df[group_identifier].unique().tolist()
+        # filter dataframe
+        df_plot = df[df[group_identifier].isin(identifiers_list)]
+    else:
+        df_plot = df
+    if solution_type != "all types":
+        df_plot = df_plot[df_plot["solution_type"] == solution_type]
+    else:
+        solution_type = "all"  # for display purposes
+    df_plot = df_plot.copy()
 
     si_col = f"Success_Index"
     asi_col = f"Adjusted_Success_Index"
@@ -317,8 +369,8 @@ def plot_si_asi_scatter(
 
 def analyze_metric_results(
     df: pd.DataFrame,
-    identifiers_list: List[str],
-    group_identifier: Optional[str] = "TIER_ID",
+    group_identifier: Literal["TIER_ID", "CASE_ID", None],
+    identifiers_list: Optional[List[str]] = None,
     solution_type: Optional[str] = "all types",
     metric_name: Literal[
         "Recall",
@@ -342,14 +394,15 @@ def analyze_metric_results(
     -----------
     df : pd.DataFrame
         DataFrame containing the results data.
-    identifiers_list : List[str]
+    group_identifier : Literal["TIER_ID", "CASE_ID", None]
+        The column name used to group the data, or None to use all data.
+    identifiers_list : Optional[List[str]] = None
         The unique identifier values to filter the data (e.g., tier IDs).
-    group_identifier : Optional[str]
-        The column name used to group the data (e.g., "TIER_ID" or "CASE_ID").
-        "TIER_ID" by default.
+        If None, all unique identifiers are used.
+        Ignored if group_identifier is None.
     solution_type : Optional[str]
         The solution type to analyze (e.g., "full", "top", "outlier_STD_2.5").
-        If None, analyzes all solution types together.
+        Input "all types" (default) to include all solution types.
     metric_name : Optional[Literal[
         "Recall",
         "Precision",
@@ -367,7 +420,15 @@ def analyze_metric_results(
         Dictionary defining the lower bounds for performance categories.
         Defaults to THRESHOLDS_FOR_METRIC for the given metric.
     """
-    df_plot = df[df[group_identifier].isin(identifiers_list)]
+    if group_identifier is not None:
+        # if no identifiers provided, use all unique identifiers
+        if identifiers_list is None:
+            identifiers_list = df[group_identifier].unique().tolist()
+        # filter dataframe
+        df_plot = df[df[group_identifier].isin(identifiers_list)]
+    else:
+        df_plot = df
+
     if solution_type != "all types":
         df_plot = df_plot[df_plot["solution_type"] == solution_type]
     else:
@@ -458,36 +519,57 @@ def analyze_metric_results(
 
 def plot_heatmap(
     df: pd.DataFrame,
-    tier: Tuple[str],
-    solution_type: str,
     metric_name: str,
     x_axis: str,
     y_axis: str,
+    group_identifier: Literal["TIER_ID", "CASE_ID", None],
+    identifiers_list: Optional[List[str]] = None,
+    solution_type: Optional[str] = "all types",
     aggregation_func: Literal["mean", "median"] = DEFAULT_AGGREGATION_FUNC,
 ) -> None:
     """
     Plot a heatmap showing the interaction of two parameters on a metric.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     df : pd.DataFrame
         DataFrame containing the results data.
-    tier : Tuple[str]
-        The tier identifiers to filter the data.
-    solution_type : str
-        The solution type to analyze.
+    x_axis : str
+        Parameter for x-axis.
+    y_axis : str
+        Parameter for y-axis.
+    group_identifier : Literal["TIER_ID", "CASE_ID", None]
+        The column name used to group the data, or None to use all data.
+    identifiers_list : Optional[List[str]] = None
+        The identifier values to filter the data (e.g., tier IDs or case IDs).
+        If None, all unique identifiers are used.
+        Ignored if group_identifier is None.
+    solution_type : Optional[str] = "all types"
+        The solution type to analyze. Input "all types" to include all solution types.
     metric_name : str
         The metric to plot as color.
     aggregation_func : Literal["mean", "median"], optional
         The aggregation function to use when multiple entries exist
         for the same (x_axis, y_axis) pair. DEFAULT_AGGREGATION_FUNC by default.
-    x_axis : str
-        Parameter for x-axis.
-    y_axis : str
-        Parameter for y-axis.
+
+    Returns
+    -------
+    None
     """
-    df_plot = df[df["TIER_ID"].isin(tier)]
-    df_plot = df_plot[df_plot["solution_type"] == solution_type].copy()
+    if group_identifier is not None:
+        # if no identifiers provided, use all unique identifiers
+        if identifiers_list is None:
+            identifiers_list = df[group_identifier].unique().tolist()
+        # filter dataframe
+        df_plot = df[df[group_identifier].isin(identifiers_list)]
+    else:
+        df_plot = df
+
+    if solution_type != "all types":
+        df_plot = df_plot[df_plot["solution_type"] == solution_type]
+    else:
+        solution_type = "all"  # for display purposes
+    df_plot = df_plot.copy()
 
     if metric_name not in df_plot.columns:
         print(f"Column '{metric_name}' not found in dataframe.")
@@ -534,14 +616,18 @@ def plot_metric_vs_hyperparam(
         1. solution type
         2. metric type
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     df_grouped : pd.DataFrame
         DataFrame containing grouped results data.
     hyperparam : str
         The hyperparameter to plot on the x-axis.
     solution_options : List[str]
         List of solution types to include in the plot.
+
+    Returns
+    -------
+    None
     """
     select_metrics = [
         "Recall",
