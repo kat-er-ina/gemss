@@ -26,7 +26,7 @@ from gemss.experiment_assessment.experiment_results_visualizations import (
 
 
 def show_interactive_performance_overview(
-    df_pivot: pd.DataFrame,
+    df: pd.DataFrame,
     group_identifier: Literal["TIER_ID", "CASE_ID"] = "TIER_ID",
     metrics_list: List[str] = ["Recall", "Precision", "F1_Score"],
     show_metric_thresholds: bool = True,
@@ -37,7 +37,7 @@ def show_interactive_performance_overview(
 
     Parameters:
     -----------
-    df_pivot : pd.DataFrame
+    df : pd.DataFrame
         The pivoted DataFrame containing experiment results.
         Must contain 'solution_type' and group_identifier columns.
     group_identifier : Literal["TIER_ID", "CASE_ID"], optional
@@ -53,10 +53,8 @@ def show_interactive_performance_overview(
     --------
     None
     """
-    group_ids = df_pivot[group_identifier].unique().tolist()
-    solution_options = sorted(df_pivot["solution_type"].unique().tolist()) + [
-        "all types"
-    ]
+    group_ids = df[group_identifier].unique().tolist()
+    solution_options = sorted(df["solution_type"].unique().tolist()) + ["all types"]
 
     if show_metric_thresholds:
         df_thresholds = pd.DataFrame()
@@ -76,7 +74,7 @@ def show_interactive_performance_overview(
     display(Markdown(f"### Quick performance overview"))
     interact(
         analyze_metric_results,
-        df=fixed(df_pivot),
+        df=fixed(df),
         identifiers_list=widgets.SelectMultiple(
             options=group_ids,
             value=group_ids,
@@ -100,7 +98,7 @@ def show_interactive_performance_overview(
 
 
 def show_interactive_solution_comparison(
-    df_pivot: pd.DataFrame,
+    df: pd.DataFrame,
     group_identifier: Literal["TIER_ID", "CASE_ID"] = "TIER_ID",
     show_average_metrics: bool = False,
 ) -> None:
@@ -109,7 +107,7 @@ def show_interactive_solution_comparison(
 
     Parameters:
     -----------
-    df_pivot : pd.DataFrame
+    df : pd.DataFrame
         The pivoted DataFrame containing experiment results.
         Must contain 'solution_type' and group_identifier columns.
     group_identifier : Literal["TIER_ID", "CASE_ID"], optional
@@ -125,13 +123,13 @@ def show_interactive_solution_comparison(
     # interactive solution comparison
     display(Markdown("### Solution comparison"))
 
-    group_ids = df_pivot[group_identifier].unique().tolist()
-    solution_options = sorted(df_pivot["solution_type"].unique().tolist())
+    group_ids = df[group_identifier].unique().tolist()
+    solution_options = sorted(df["solution_type"].unique().tolist())
     varied_params = [
-        p for p in ALL_PARAMETERS if p in df_pivot.columns and df_pivot[p].nunique() > 1
+        p for p in ALL_PARAMETERS if p in df.columns and df[p].nunique() > 1
     ]
     unvaried_params = [
-        p for p in ALL_PARAMETERS if p in df_pivot.columns and p not in varied_params
+        p for p in ALL_PARAMETERS if p in df.columns and p not in varied_params
     ]
 
     if group_identifier == "TIER_ID":
@@ -143,7 +141,7 @@ def show_interactive_solution_comparison(
 
     interact(
         plot_solution_comparison,
-        df=fixed(df_pivot),
+        df=fixed(df),
         identifiers_list=widgets.SelectMultiple(
             options=group_ids,
             value=group_ids,
@@ -168,7 +166,7 @@ def show_interactive_solution_comparison(
     if show_average_metrics:
         display(Markdown("### Average values for selected metrics"))
         display(
-            df_pivot[[group_identifier, "solution_type"] + COVERAGE_METRICS]
+            df[[group_identifier, "solution_type"] + COVERAGE_METRICS]
             .groupby([group_identifier, "solution_type"])
             .mean()
         )
@@ -176,7 +174,7 @@ def show_interactive_solution_comparison(
 
 
 def show_interactive_comparison_with_grouping(
-    df_pivot: pd.DataFrame,
+    df: pd.DataFrame,
     group_identifier: Literal["TIER_ID", "CASE_ID"] = "TIER_ID",
 ) -> None:
     """
@@ -185,7 +183,7 @@ def show_interactive_comparison_with_grouping(
 
     Parameters:
     -----------
-    df_pivot : pd.DataFrame
+    df : pd.DataFrame
         The pivoted DataFrame containing experiment results.
         Must contain 'solution_type' and group_identifier columns.
     group_identifier : Literal["TIER_ID", "CASE_ID"], optional
@@ -196,13 +194,13 @@ def show_interactive_comparison_with_grouping(
     None
     """
 
-    group_ids = df_pivot[group_identifier].unique().tolist()
-    solution_options = sorted(df_pivot["solution_type"].unique().tolist())
+    group_ids = df[group_identifier].unique().tolist()
+    solution_options = sorted(df["solution_type"].unique().tolist())
     varied_params = [
-        p for p in ALL_PARAMETERS if p in df_pivot.columns and df_pivot[p].nunique() > 1
+        p for p in ALL_PARAMETERS if p in df.columns and df[p].nunique() > 1
     ]
     unvaried_params = [
-        p for p in ALL_PARAMETERS if p in df_pivot.columns and p not in varied_params
+        p for p in ALL_PARAMETERS if p in df.columns and p not in varied_params
     ]
 
     if group_identifier == "TIER_ID":
@@ -214,7 +212,7 @@ def show_interactive_comparison_with_grouping(
 
     interact(
         plot_solution_grouped,
-        df=fixed(df_pivot),
+        df=fixed(df),
         identifiers_list=widgets.SelectMultiple(
             options=group_ids,
             value=group_ids,
@@ -247,7 +245,7 @@ def show_interactive_comparison_with_grouping(
 
 
 def show_interactive_heatmap(
-    df_pivot: pd.DataFrame,
+    df: pd.DataFrame,
     group_identifier: Literal["TIER_ID", "CASE_ID"] = "TIER_ID",
 ) -> None:
     """
@@ -255,7 +253,7 @@ def show_interactive_heatmap(
 
     Parameters:
     -----------
-    df_pivot : pd.DataFrame
+    df : pd.DataFrame
         The pivoted DataFrame containing experiment results.
     group_identifier : Literal["TIER_ID", "CASE_ID"], optional
         The column name used to group the data. Default is "TIER_ID".
@@ -264,13 +262,13 @@ def show_interactive_heatmap(
     --------
     None
     """
-    group_ids = df_pivot[group_identifier].unique().tolist()
-    solution_options = sorted(df_pivot["solution_type"].unique().tolist())
+    group_ids = df[group_identifier].unique().tolist()
+    solution_options = sorted(df["solution_type"].unique().tolist())
     varied_params = [
-        p for p in ALL_PARAMETERS if p in df_pivot.columns and df_pivot[p].nunique() > 1
+        p for p in ALL_PARAMETERS if p in df.columns and df[p].nunique() > 1
     ]
     unvaried_params = [
-        p for p in ALL_PARAMETERS if p in df_pivot.columns and p not in varied_params
+        p for p in ALL_PARAMETERS if p in df.columns and p not in varied_params
     ]
 
     if group_identifier == "TIER_ID":
@@ -282,7 +280,7 @@ def show_interactive_heatmap(
 
     interact(
         plot_heatmap,
-        df=fixed(df_pivot),
+        df=fixed(df),
         identifiers_list=widgets.SelectMultiple(
             options=group_ids,
             value=group_ids,
@@ -319,7 +317,7 @@ def show_interactive_heatmap(
 
 
 def show_interactive_si_asi_comparison(
-    df_pivot: pd.DataFrame,
+    df: pd.DataFrame,
     group_identifier: Literal["TIER_ID", "CASE_ID"] = "TIER_ID",
 ) -> None:
     """
@@ -327,7 +325,7 @@ def show_interactive_si_asi_comparison(
 
     Parameters:
     -----------
-    df_pivot : pd.DataFrame
+    df : pd.DataFrame
         The pivoted DataFrame containing experiment results.
     group_identifier : Literal["TIER_ID", "CASE_ID"], optional
         The column name used to group the data. Default is "TIER_ID".
@@ -336,10 +334,10 @@ def show_interactive_si_asi_comparison(
     --------
     None
     """
-    group_ids = df_pivot[group_identifier].unique().tolist()
-    solution_options = sorted(df_pivot["solution_type"].unique().tolist())
+    group_ids = df[group_identifier].unique().tolist()
+    solution_options = sorted(df["solution_type"].unique().tolist())
     varied_params = [
-        p for p in ALL_PARAMETERS if p in df_pivot.columns and df_pivot[p].nunique() > 1
+        p for p in ALL_PARAMETERS if p in df.columns and df[p].nunique() > 1
     ]
 
     if group_identifier == "TIER_ID":
@@ -351,7 +349,7 @@ def show_interactive_si_asi_comparison(
 
     interact(
         plot_si_asi_scatter,
-        df=fixed(df_pivot),
+        df=fixed(df),
         identifiers_list=widgets.SelectMultiple(
             options=group_ids,
             value=group_ids,
