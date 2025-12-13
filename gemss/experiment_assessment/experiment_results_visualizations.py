@@ -33,16 +33,16 @@ def plot_solution_grouped(
     metric_name: str,
     x_axis: str,
     color_by: str,
-    hover_params: List[str],
     group_identifier: Literal["TIER_ID", "CASE_ID", None],
     identifiers_list: Optional[List[str]] = None,
     solution_type: Optional[str] = "all types",
+    hover_params: Optional[List[str]] = None,
 ) -> None:
     """
     Plot a metric for a given solution type, grouped by a specified parameter.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     df : pd.DataFrame
         DataFrame containing the results data.
     metric_name : str
@@ -51,8 +51,6 @@ def plot_solution_grouped(
         The parameter to plot on the x-axis.
     color_by : str
         The parameter to group the lines by (or "None" for no grouping).
-    hover_params : List[str]
-        List of parameters to show on hover in the plot.
     group_identifier : Literal["TIER_ID", "CASE_ID", None]
         The column name used to group the data, or None to use all data.
     identifiers_list : Optional[List[str]] = None
@@ -62,7 +60,13 @@ def plot_solution_grouped(
     solution_type : Optional[str] = "all types"
         The type of solution to plot (e.g., "full", "top", "outlier_STD_2.5").
         Input "all types" to include all solution types.
+    hover_params : Optional[List[str]]
+        List of parameters to show on hover in the plot.
+        If None, defaults to ["EXPERIMENT_ID"]. "EXPERIMENT_ID" is always included.
 
+    Returns
+    -------
+    None
     """
     if group_identifier is not None:
         # if no identifiers provided, use all unique identifiers
@@ -84,7 +88,7 @@ def plot_solution_grouped(
         return
 
     # Create title
-    title = f"{metric_name} vs. {x_axis} (Solution: {solution_type})"
+    title = f"{metric_name} for {x_axis} (solution: {solution_type})"
     if color_by != "None":
         title += f", grouped by {color_by}"
 
@@ -97,6 +101,13 @@ def plot_solution_grouped(
     if color_by != "None":
         sort_cols.insert(0, color_by)
     df_plot = df_plot.sort_values(by=sort_cols)
+
+    # Ensure EXPERIMENT_ID is always shown upon hover
+    if (color_by != "EXPERIMENT_ID") & (x_axis != "EXPERIMENT_ID"):
+        if hover_params is None:
+            hover_params = ["EXPERIMENT_ID"]
+        elif "EXPERIMENT_ID" not in hover_params:
+            hover_params = ["EXPERIMENT_ID"] + hover_params
 
     # Create figure
     fig = go.Figure()
@@ -163,7 +174,7 @@ def plot_solution_grouped(
     # Update layout
     fig.update_layout(
         title=title,
-        height=600,
+        height=450,
         xaxis_title=x_axis,
         yaxis_title=metric_name,
         yaxis_type="log" if "Success_Index" in metric_name else "linear",
@@ -179,9 +190,9 @@ def plot_solution_comparison(
     solution_types: List[str],
     metric_name: str,
     x_axis: str,
-    hover_params: List[str],
     group_identifier: Literal["TIER_ID", "CASE_ID", None],
     identifiers_list: Optional[List[str]] = None,
+    hover_params: Optional[List[str]] = None,
 ) -> None:
     """
     Plot a comparison of a metric across different solution types.
@@ -197,14 +208,15 @@ def plot_solution_comparison(
         The base name of the metric to plot (e.g., "Recall", "Precision").
     x_axis : str
         The parameter to plot on the x-axis.
-    hover_params : List[str]
-        List of parameters to show on hover in the plot.
     group_identifier : Literal["TIER_ID", "CASE_ID", None]
         The column name used to group the data, or None to use all data.
     identifiers_list : Optional[List[str]] = None
         The identifier values to filter the data (e.g., tier IDs or case IDs).
         If None, all unique identifiers are used.
         Ignored if group_identifier is None.
+    hover_params : Optional[List[str]]
+        List of parameters to show on hover in the plot.
+        If None, defaults to ["EXPERIMENT_ID"]. "EXPERIMENT_ID" is always included.
     """
     if group_identifier is not None:
         # if no identifiers provided, use all unique identifiers
@@ -214,6 +226,13 @@ def plot_solution_comparison(
         df = df[df[group_identifier].isin(identifiers_list)]
     else:
         df = df
+
+    # Ensure EXPERIMENT_ID is always shown upon hover
+    if x_axis != "EXPERIMENT_ID":
+        if hover_params is None:
+            hover_params = ["EXPERIMENT_ID"]
+        elif "EXPERIMENT_ID" not in hover_params:
+            hover_params = ["EXPERIMENT_ID"] + hover_params
 
     fig = go.Figure()
     for solution_type in solution_types:
@@ -225,6 +244,7 @@ def plot_solution_comparison(
         other_solution_metrics = [
             col for col in df.columns if col in COVERAGE_METRICS and col != metric_name
         ]
+
         fig.add_trace(
             go.Scatter(
                 x=df_solution[x_axis],
@@ -241,6 +261,7 @@ def plot_solution_comparison(
                             for i, param in enumerate(hover_params)
                         ]
                     )
+                    + "<br>"
                     + "<br>".join(
                         [
                             f"{metric}: %{{customdata[{len(hover_params) + j}]}}"
@@ -254,7 +275,7 @@ def plot_solution_comparison(
         )
 
     fig.update_layout(
-        title=f"{metric_name} vs. {x_axis}",
+        title=f"{metric_name} for {x_axis}",
         height=600,
         xaxis_title=x_axis,
         yaxis_title=metric_name,
@@ -330,7 +351,7 @@ def plot_si_asi_scatter(
         y=asi_col,
         color=color_by if color_by != "None" else None,
         hover_data=hover_params,
-        title=f"Quality vs Quantity: ASI vs SI for {solution_type} solution",
+        title=f"Quality vs. quantity: ASI vs SI for {solution_type} solution",
         height=600,
     )
 
@@ -489,8 +510,11 @@ def analyze_metric_results(
 
     # Print summary stats
     display(Markdown(f"#### Statistics:"))
-    display(Markdown(f"- **Mean {metric_name}:** {df[metric_name].mean():.3f}"))
-    display(Markdown(f"- **Median {metric_name}:** {df[metric_name].median():.3f}\n"))
+    display(Markdown(f"- **Total experiments:** {len(df_plot)}"))
+    display(Markdown(f"- **Mean {metric_name}:** {df_plot[metric_name].mean():.3f}"))
+    display(
+        Markdown(f"- **Median {metric_name}:** {df_plot[metric_name].median():.3f}\n")
+    )
 
     if custom_title is not None:
         title = custom_title
@@ -509,7 +533,7 @@ def analyze_metric_results(
 
     fig.update_traces(textposition="outside")
     fig.update_layout(
-        yaxis_title="Number of Experiments",
+        yaxis_title="Number of experiments",
         showlegend=False,
         width=600,
     )
@@ -633,7 +657,6 @@ def plot_metric_vs_hyperparam(
         "Recall",
         "Precision",
         "F1_Score",
-        "Jaccard",
     ]  # only metrics with range [0,1]
     fig = go.Figure()
     for sol in solution_options:
