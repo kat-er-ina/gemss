@@ -21,6 +21,12 @@ COVERAGE_METRICS = [
     "Adjusted_Success_Index",
 ]
 
+CORE_METRICS = [
+    "F1_Score",
+    "Recall",
+    "Precision",
+]
+
 IMPORTANT_METRICS = [
     "F1_Score",
     "Recall",
