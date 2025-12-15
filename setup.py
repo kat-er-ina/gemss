@@ -17,6 +17,8 @@ setup(
         "pyarrow>=22.0.0",
         "tqdm>=4.65.0",
         "ipywidgets>=8.0.0",
+        "tabpfn>=1.1.0",
+        "shap>=0.48.0",
     ],
     python_requires=">=3.11",
 )

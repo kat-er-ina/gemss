@@ -8,3 +8,5 @@ scikit-learn
 jupyter
 tqdm
 ipywidgets
+tabpfn
+shap
