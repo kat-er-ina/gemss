@@ -17,7 +17,7 @@ from gemss.experiment_assessment.experiment_results_analysis import (
     DEFAULT_METRIC,
 )
 from gemss.experiment_assessment.experiment_results_visualizations import (
-    analyze_metric_results,
+    plot_metric_analysis_overview,
     plot_solution_comparison,
     plot_solution_grouped,
     plot_heatmap,
@@ -67,13 +67,13 @@ def show_interactive_performance_overview(
     if group_identifier == "TIER_ID":
         group_identifier_description = "Tier:"
     elif group_identifier == "CASE_ID":
-        group_identifier_description = "Test case:"
+        group_identifier_description = "Case ID:"
     else:
         group_identifier_description = group_identifier + ":"
 
     display(Markdown(f"### Quick performance overview"))
     interact(
-        analyze_metric_results,
+        plot_metric_analysis_overview,
         df=fixed(df),
         identifiers_list=widgets.SelectMultiple(
             options=group_ids,
@@ -93,6 +93,7 @@ def show_interactive_performance_overview(
         ),
         custom_title=fixed(None),
         thresholds=fixed(None),
+        verbose=fixed(True),
     )
     return
 
@@ -135,7 +136,7 @@ def show_interactive_solution_comparison(
     if group_identifier == "TIER_ID":
         group_identifier_description = "Tier:"
     elif group_identifier == "CASE_ID":
-        group_identifier_description = "Test case:"
+        group_identifier_description = "Case ID:"
     else:
         group_identifier_description = group_identifier + ":"
 
@@ -206,7 +207,7 @@ def show_interactive_comparison_with_grouping(
     if group_identifier == "TIER_ID":
         group_identifier_description = "Tier:"
     elif group_identifier == "CASE_ID":
-        group_identifier_description = "Test case:"
+        group_identifier_description = "Case ID:"
     else:
         group_identifier_description = group_identifier + ":"
 
@@ -274,7 +275,7 @@ def show_interactive_heatmap(
     if group_identifier == "TIER_ID":
         group_identifier_description = "Tier:"
     elif group_identifier == "CASE_ID":
-        group_identifier_description = "Test case:"
+        group_identifier_description = "Case ID:"
     else:
         group_identifier_description = group_identifier + ":"
 
@@ -343,7 +344,7 @@ def show_interactive_si_asi_comparison(
     if group_identifier == "TIER_ID":
         group_identifier_description = "Tier:"
     elif group_identifier == "CASE_ID":
-        group_identifier_description = "Test case:"
+        group_identifier_description = "Case ID:"
     else:
         group_identifier_description = group_identifier + ":"
 
