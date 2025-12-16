@@ -86,9 +86,10 @@ CASE_DESCRIPTION[47] = (
 SUMMARY_CASES = [c for c in range(1, 48) if "overall" in CASE_DESCRIPTION[c].lower()]
 CASE_SET_RANGES = {
     # basic = baseline, scalability, sample-rich classification scenarios without adversities
-    "baseline": range(1, 17),
+    "basic": range(1, 17),
+    "baseline": range(1, 4),
     "scalability": range(4, 10),
-    "samplerich": range(11, 16),
+    "samplerich": range(11, 17),
     "adversity": range(17, 24),
     "jaccard": range(24, 29),
     "unbalanced": range(29, 32),
@@ -103,24 +104,24 @@ COLORING_PARAM_PER_CASESET = {
     "baseline": "N_FEATURES",
     "scalability": "N_FEATURES",
     "samplerich": "N_FEATURES",
-    "adversity": "[NOISE_STD, NAN_RATIO] COMBINATION",
+    "adversity": "NAN_RATIO",
     "jaccard": "LAMBDA_JACCARD",
     "unbalanced": "BINARY_RESPONSE_RATIO",
     "reg_baseline": "N_FEATURES",
     "reg_scalability": "N_FEATURES",
-    "reg_adversity": "[NOISE_STD, NAN_RATIO] COMBINATION",
+    "reg_adversity": "NOISE_STD",
     "reg_vs_class": "BINARIZE",
 }
 SYMBOL_PARAM_PER_CASESET = {
     "baseline": "SAMPLE_VS_FEATURE_RATIO",
     "scalability": "SAMPLE_VS_FEATURE_RATIO",
     "samplerich": "SAMPLE_VS_FEATURE_RATIO",
-    "adversity": "SAMPLE_VS_FEATURE_RATIO",
+    "adversity": "NOISE_STD",
     "jaccard": "SAMPLE_VS_FEATURE_RATIO",
     "unbalanced": None,
     "reg_baseline": "SAMPLE_VS_FEATURE_RATIO",
     "reg_scalability": "SAMPLE_VS_FEATURE_RATIO",
-    "reg_adversity": "SAMPLE_VS_FEATURE_RATIO",
+    "reg_adversity": "NOISE_STD",
     "reg_vs_class": "SAMPLE_VS_FEATURE_RATIO",
 }
 
