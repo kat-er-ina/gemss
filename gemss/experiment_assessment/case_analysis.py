@@ -101,15 +101,27 @@ CASE_SET_RANGES = {
 }
 COLORING_PARAM_PER_CASESET = {
     "baseline": "N_FEATURES",
-    "scalability": "SAMPLE_VS_FEATURE_RATIO",
+    "scalability": "N_FEATURES",
     "samplerich": "N_FEATURES",
     "adversity": "[NOISE_STD, NAN_RATIO] COMBINATION",
     "jaccard": "LAMBDA_JACCARD",
     "unbalanced": "BINARY_RESPONSE_RATIO",
     "reg_baseline": "N_FEATURES",
-    "reg_scalability": "SAMPLE_VS_FEATURE_RATIO",
+    "reg_scalability": "N_FEATURES",
     "reg_adversity": "[NOISE_STD, NAN_RATIO] COMBINATION",
     "reg_vs_class": "BINARIZE",
+}
+SYMBOL_PARAM_PER_CASESET = {
+    "baseline": "SAMPLE_VS_FEATURE_RATIO",
+    "scalability": "SAMPLE_VS_FEATURE_RATIO",
+    "samplerich": "SAMPLE_VS_FEATURE_RATIO",
+    "adversity": "SAMPLE_VS_FEATURE_RATIO",
+    "jaccard": "SAMPLE_VS_FEATURE_RATIO",
+    "unbalanced": None,
+    "reg_baseline": "SAMPLE_VS_FEATURE_RATIO",
+    "reg_scalability": "SAMPLE_VS_FEATURE_RATIO",
+    "reg_adversity": "SAMPLE_VS_FEATURE_RATIO",
+    "reg_vs_class": "SAMPLE_VS_FEATURE_RATIO",
 }
 
 

@@ -236,9 +236,18 @@ def show_interactive_comparison_with_grouping(
             description="X-Axis:",
         ),
         color_by=widgets.Dropdown(
-            options=["None"] + varied_params,
-            value="NAN_RATIO" if "NAN_RATIO" in varied_params else "None",
-            description="Group By:",
+            options=[None] + varied_params,
+            value=(
+                "SAMPLE_VS_FEATURE_RATIO"
+                if "SAMPLE_VS_FEATURE_RATIO" in varied_params
+                else None
+            ),
+            description="Color by:",
+        ),
+        symbol_by=widgets.Dropdown(
+            options=[None] + varied_params,
+            value=None,
+            description="Symbol by:",
         ),
         hover_params=fixed(varied_params + unvaried_params),
     )
@@ -363,8 +372,8 @@ def show_interactive_si_asi_comparison(
             description="Solution:",
         ),
         color_by=widgets.Dropdown(
-            options=["None"] + varied_params,
-            value="NOISE_STD" if "NOISE_STD" in varied_params else "None",
+            options=[None] + varied_params,
+            value="NOISE_STD" if "NOISE_STD" in varied_params else None,
             description="Color By:",
         ),
         hover_params=fixed(varied_params),

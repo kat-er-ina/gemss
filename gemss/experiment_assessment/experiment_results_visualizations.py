@@ -33,7 +33,8 @@ def plot_solution_grouped(
     df: pd.DataFrame,
     metric_name: str,
     x_axis: str,
-    color_by: str,
+    color_by: Optional[str],
+    symbol_by: Optional[str],
     group_identifier: Literal["TIER_ID", "CASE_ID", None],
     identifiers_list: Optional[List[str]] = None,
     solution_type: Optional[str] = "all types",
@@ -50,8 +51,10 @@ def plot_solution_grouped(
         The base name of the metric to plot (e.g., "Recall", "Precision").
     x_axis : str
         The parameter to plot on the x-axis.
-    color_by : str
-        The parameter to group the lines by (or "None" for no grouping).
+    color_by : Optional[str]
+        The parameter to group the lines by (or None for no grouping).
+    symbol_by : Optional[str]
+        The parameter to differentiate point symbols by (or None for no differentiation).
     group_identifier : Literal["TIER_ID", "CASE_ID", None]
         The column name used to group the data, or None to use all data.
     identifiers_list : Optional[List[str]] = None
@@ -89,19 +92,28 @@ def plot_solution_grouped(
         return
 
     # Create title
-    title = f"{metric_name} for {x_axis} (solution: {solution_type})"
-    if color_by != "None":
+    title = f"{metric_name} for {x_axis}"
+    if color_by is not None:
         title += f", grouped by {color_by}"
-
-    # Convert group_by to string for discrete coloring if needed
-    if color_by != "None":
-        df_plot[color_by] = df_plot[color_by].astype(str)
+    if symbol_by is not None:
+        title += f", symbol by {symbol_by}"
 
     # Sort for cleaner line plots
     sort_cols = [x_axis]
-    if color_by != "None":
-        sort_cols.insert(0, color_by)
-    df_plot = df_plot.sort_values(by=sort_cols)
+    if color_by is not None:
+        sort_cols.append(color_by)
+    if symbol_by is not None:
+        sort_cols.append(symbol_by)
+    df_plot = df_plot.sort_values(
+        by=sort_cols,
+        ascending=True,
+    )
+
+    # Convert group_by to string for discrete coloring if needed
+    if color_by is not None:
+        df_plot[color_by] = df_plot[color_by].astype(str)
+    if symbol_by is not None:
+        df_plot[symbol_by] = df_plot[symbol_by].astype(str)
 
     # Ensure EXPERIMENT_ID is always shown upon hover
     if (color_by != "EXPERIMENT_ID") & (x_axis != "EXPERIMENT_ID"):
@@ -113,39 +125,104 @@ def plot_solution_grouped(
     # Create figure
     fig = go.Figure()
 
-    if color_by != "None":
+    if color_by is not None:
         # Group by the specified parameter and create separate traces
         unique_groups = df_plot[color_by].unique()
         colors = px.colors.qualitative.Plotly
 
-        for i, group_val in enumerate(unique_groups):
-            group_data = df_plot[df_plot[color_by] == group_val]
+        # If symbol_by is specified, create traces for each combination of color_by and symbol_by
+        if symbol_by is not None:
+            available_symbols = [
+                "circle",
+                "square",
+                "diamond",
+                "cross",
+                "x",
+                "triangle-up",
+                "triangle-down",
+                "pentagon",
+                "hexagon",
+                "star",
+            ]
+            unique_symbol_values = df_plot[symbol_by].unique()
+            symbol_map = {
+                val: available_symbols[j % len(available_symbols)]
+                for j, val in enumerate(unique_symbol_values)
+            }
 
-            # Create hover template
-            hovertemplate = (
-                f"{x_axis}: %{{x}}<br>"
-                f"{metric_name}: %{{y}}<br>"
-                f"{color_by}: {group_val}<br><br>"
-                + "<br>".join(
-                    [
-                        f"{param}: %{{customdata[{j}]}}"
-                        for j, param in enumerate(hover_params)
-                    ]
-                )
-                + "<extra></extra>"
-            )
+            for i, group_val in enumerate(unique_groups):
+                group_data = df_plot[df_plot[color_by] == group_val]
 
-            fig.add_trace(
-                go.Scatter(
-                    x=group_data[x_axis],
-                    y=group_data[metric_name].round(3),
-                    mode="markers",
-                    marker=dict(size=10, opacity=0.7, color=colors[i % len(colors)]),
-                    name=str(group_val),
-                    hovertemplate=hovertemplate,
-                    customdata=group_data[hover_params].round(3).values,
+                for k, symbol_val in enumerate(unique_symbol_values):
+                    symbol_data = group_data[group_data[symbol_by] == symbol_val]
+
+                    if len(symbol_data) == 0:
+                        continue
+
+                    hovertemplate = (
+                        f"{x_axis}: %{{x}}<br>"
+                        f"{metric_name}: %{{y}}<br>"
+                        f"{color_by}: {group_val}<br>"
+                        f"{symbol_by}: {symbol_val}<br><br>"
+                        + "<br>".join(
+                            [
+                                f"{param}: %{{customdata[{j}]}}"
+                                for j, param in enumerate(hover_params)
+                            ]
+                        )
+                        + "<extra></extra>"
+                    )
+
+                    fig.add_trace(
+                        go.Scatter(
+                            x=symbol_data[x_axis],
+                            y=symbol_data[metric_name].round(3),
+                            mode="markers",
+                            marker=dict(
+                                size=10,
+                                opacity=0.7,
+                                color=colors[i % len(colors)],
+                                symbol=symbol_map[symbol_val],
+                            ),
+                            name=f"{group_val} ({symbol_val})",
+                            hovertemplate=hovertemplate,
+                            customdata=symbol_data[hover_params].round(3).values,
+                        )
+                    )
+        else:
+            # No symbol differentiation, group only by color_by
+            for i, group_val in enumerate(unique_groups):
+                group_data = df_plot[df_plot[color_by] == group_val]
+
+                hovertemplate = (
+                    f"{x_axis}: %{{x}}<br>"
+                    f"{metric_name}: %{{y}}<br>"
+                    f"{color_by}: {group_val}<br><br>"
+                    + "<br>".join(
+                        [
+                            f"{param}: %{{customdata[{j}]}}"
+                            for j, param in enumerate(hover_params)
+                        ]
+                    )
+                    + "<extra></extra>"
                 )
-            )
+
+                fig.add_trace(
+                    go.Scatter(
+                        x=group_data[x_axis],
+                        y=group_data[metric_name].round(3),
+                        mode="markers",
+                        marker=dict(
+                            size=10,
+                            opacity=0.7,
+                            color=colors[i % len(colors)],
+                            symbol="circle",
+                        ),
+                        name=str(group_val),
+                        hovertemplate=hovertemplate,
+                        customdata=group_data[hover_params].round(3).values,
+                    )
+                )
     else:
         # No grouping - single trace
         hovertemplate = (
@@ -172,6 +249,10 @@ def plot_solution_grouped(
             )
         )
 
+    # Create legend title
+    legend = f"color: {color_by}" if color_by is not None else ""
+    legend += f"<br> (symbol: {symbol_by})" if symbol_by is not None else ""
+
     # Update layout
     fig.update_layout(
         title=title,
@@ -179,7 +260,7 @@ def plot_solution_grouped(
         xaxis_title=x_axis,
         yaxis_title=metric_name,
         yaxis_type="log" if "Success_Index" in metric_name else "linear",
-        legend_title=color_by if color_by != "None" else "",
+        legend_title=legend,
     )
 
     fig.show(config={"displayModeBar": False})
