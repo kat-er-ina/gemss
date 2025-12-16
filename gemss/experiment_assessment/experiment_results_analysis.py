@@ -4,6 +4,7 @@ from IPython.display import display, Markdown
 import pandas as pd
 
 from gemss.config.constants import EXPERIMENT_RESULTS_DIR
+from gemss.experiment_assessment.case_analysis import CASE_DESCRIPTION, case2set
 
 # Identify metric columns (those containing the base name of coverage metrics)
 # List synchronized with keys returned by calculate_coverage_metrics in run_experiment.py
@@ -481,12 +482,33 @@ def filter_df_best_solutions(
             )
         )
 
-        display(Markdown(f"- Number of experiments per **{group_identifier}**:"))
+        display(Markdown(f"- Number of **experiments per {group_identifier}**:"))
         exp_count = (
             df_filtered[group_identifier]
             .value_counts()
             .to_frame()
             .rename(columns={"count": "number of experiments"})
         )
+        # add case descriptions if grouping by CASE_ID
+        if group_identifier == "CASE_ID":
+            exp_count["CASE_DESCRIPTION"] = exp_count.index.map(
+                lambda x: CASE_DESCRIPTION.get(x, "N/A")
+            )
+            # order columns
+            exp_count = exp_count[["CASE_DESCRIPTION", "number of experiments"]]
+
         display(exp_count.sort_index(ascending=True))
+
+        # count the number of experiments per case range
+        if group_identifier == "CASE_ID":
+            display(Markdown(f"- Number of **experiments per case set**:"))
+            exp_count["CASE_SET"] = exp_count.index.map(lambda x: case2set(x))
+            set_count = (
+                exp_count["CASE_SET"]
+                .value_counts()
+                .to_frame()
+                .rename(columns={"CASE_SET": "number of experiments"})
+            )
+            display(set_count)
+
     return df_filtered
