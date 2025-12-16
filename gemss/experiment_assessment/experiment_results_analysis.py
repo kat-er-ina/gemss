@@ -6,6 +6,9 @@ import pandas as pd
 from gemss.config.constants import EXPERIMENT_RESULTS_DIR
 from gemss.experiment_assessment.case_analysis import CASE_DESCRIPTION, case2set
 
+# Define order for any threshold-based categories
+CATEGORY_ORDER = ["Excellent", "Good", "Moderate", "Poor", "Unknown"]
+
 # Identify metric columns (those containing the base name of coverage metrics)
 # List synchronized with keys returned by calculate_coverage_metrics in run_experiment.py
 # All coverage metrics are numeric (possibly None)
@@ -287,7 +290,7 @@ def get_average_metrics_per_group(
     verbose: bool = False,
 ) -> Dict[str, pd.DataFrame]:
     """
-    Calculate mean or median performance metrics per group (e.g., per tier or test case).
+    Calculate mean or median performance metrics per group (e.g., per tier or case).
 
     Parameters
     ----------
@@ -512,3 +515,220 @@ def filter_df_best_solutions(
             display(set_count)
 
     return df_filtered
+
+
+def analyze_metric_results(
+    df: pd.DataFrame,
+    group_identifier: Literal["TIER_ID", "CASE_ID", None],
+    identifiers_list: Optional[List[str]] = None,
+    solution_type: Optional[str] = "all types",
+    metric_name: Literal[
+        "Recall",
+        "Precision",
+        "F1_Score",
+        "Success_Index",
+        "Adjusted_Success_Index",
+        "Jaccard",
+        "Miss_Rate",
+        "FDR",
+        "Global_Miss_Rate",
+        "Global_FDR",
+    ] = DEFAULT_METRIC,
+    thresholds: Dict[str, float] = None,
+    verbose: Optional[bool] = True,
+) -> None:
+    """
+    Analyze the distribution of a specified metric for a given solution type.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        DataFrame containing the results data.
+    group_identifier : Literal["TIER_ID", "CASE_ID", None]
+        The column name used to group the data, or None to use all data.
+    identifiers_list : Optional[List[str]] = None
+        The unique identifier values to filter the data (e.g., tier IDs).
+        If None, all unique identifiers are used. Ignored if group_identifier is None.
+    solution_type : Optional[str]
+        The solution type to analyze (e.g., "full", "top", "outlier_STD_2.5").
+        Input "all types" (default) to include all solution types.
+    metric_name : Optional[Literal[
+        "Recall",
+        "Precision",
+        "F1_Score",
+        "Success_Index",
+        "Adjusted_Success_Index",
+        "Jaccard",
+        "Miss_Rate",
+        "FDR",
+        "Global_Miss_Rate",
+        "Global_FDR",
+    ]] = DEFAULT_METRIC,
+        One of the coverage metrics to be analyze (e.g., "Recall", "Precision").
+        DEFAULT_METRIC by default.
+    thresholds : Optional[Dict[str, float]]
+        Dictionary defining the lower bounds for performance categories.
+        Defaults to THRESHOLDS_FOR_METRIC for the given metric.
+    """
+    if group_identifier is not None:
+        # if no identifiers provided, use all unique identifiers
+        if identifiers_list is None:
+            identifiers_list = df[group_identifier].unique().tolist()
+        # filter dataframe
+        df_plot = df[df[group_identifier].isin(identifiers_list)]
+    else:
+        df_plot = df
+
+    if solution_type != "all types":
+        df_plot = df_plot[df_plot["solution_type"] == solution_type]
+    else:
+        solution_type = "all"  # for display purposes
+
+    # Categorize performance
+    def categorize_metric_higher_is_better(val):
+        if pd.isna(val):
+            return "Unknown"
+        if val >= thresholds["Excellent"]:
+            return "Excellent"
+        if val >= thresholds["Good"]:
+            return "Good"
+        if val >= thresholds["Moderate"]:
+            return "Moderate"
+        return "Poor"
+
+    def categorize_metric_lower_is_better(val):
+        if pd.isna(val):
+            return "Unknown"
+        if val <= thresholds["Excellent"]:
+            return "Excellent"
+        if val <= thresholds["Good"]:
+            return "Good"
+        if val <= thresholds["Moderate"]:
+            return "Moderate"
+        return "Poor"
+
+    # Get default thresholds, if defined
+    if thresholds is None:
+        thresholds = THRESHOLDS_FOR_METRIC.get(metric_name, None)
+    if thresholds is None:
+        print(f"No thresholds defined for {metric_name}. Skipping analysis.")
+        return
+
+    # Categorize based on whether higher or lower values are better
+    if metric_name in [
+        "Recall",
+        "Precision",
+        "F1_Score",
+        "Success_Index",
+        "Adjusted_Success_Index",
+    ]:
+        categories = df_plot[metric_name].apply(categorize_metric_higher_is_better)
+    else:
+        categories = df_plot[metric_name].apply(categorize_metric_lower_is_better)
+
+    # Count occurrences in each category
+    counts = categories.value_counts()
+
+    # Ensure all categories are present for consistent plotting
+    df_category_counts = pd.DataFrame(
+        {
+            "Category": CATEGORY_ORDER,
+            "Count": [counts.get(cat, 0) for cat in CATEGORY_ORDER],
+        }
+    )
+
+    # Print summary stats
+    if verbose:
+        display(Markdown(f"#### Statistics:"))
+        display(Markdown(f"- **Total experiments:** {len(df_plot)}"))
+        display(
+            Markdown(f"- **Mean {metric_name}:** {df_plot[metric_name].mean():.3f}")
+        )
+        display(
+            Markdown(
+                f"- **Median {metric_name}:** {df_plot[metric_name].median():.3f}\n"
+            )
+        )
+    return df_category_counts
+
+
+def compute_performance_overview(
+    df_cases: pd.DataFrame,
+    select_metrics: List[str],
+) -> pd.DataFrame:
+
+    df_performance_overview = pd.DataFrame()
+
+    for select_metric in select_metrics:
+        df_performance_overview_metric = {}
+
+        for c in CASE_DESCRIPTION.keys():
+            result_df = analyze_metric_results(
+                df_cases,
+                group_identifier="CASE_ID",
+                identifiers_list=[c],
+                metric_name=select_metric,
+                verbose=False,
+            )
+
+            # Extract the count column (or whichever column you want)
+            # Assuming the DataFrame has a 'Count' column - adjust column name as needed
+            df_performance_overview_metric[f"CASE_ID = {c}"] = result_df.set_index(
+                "Category"
+            )["Count"]
+
+        # Convert to DataFrame where rows are cases and columns are categories
+        df_performance_overview_metric = pd.DataFrame(df_performance_overview_metric).T
+        df_performance_overview_metric = df_performance_overview_metric.rename(
+            columns={
+                col: col + f" {select_metric}"
+                for col in df_performance_overview_metric.columns
+            }
+        )
+
+        # Optional: add summary statistics
+        df_performance_overview_metric[f"Mean {select_metric}"] = (
+            df_performance_overview_metric.mean(axis=1)
+        )
+        df_performance_overview_metric[f"Median {select_metric}"] = (
+            df_performance_overview_metric.median(axis=1)
+        )
+        df_performance_overview = pd.concat(
+            [df_performance_overview, df_performance_overview_metric], axis=1
+        )
+
+    # Drop all the "Unknown ..." columns
+    df_performance_overview = df_performance_overview.drop(
+        columns=[col for col in df_performance_overview.columns if "Unknown" in col]
+    )
+
+    # add case descriptions as the first column
+    df_performance_overview.insert(
+        0,
+        "Case description",
+        [CASE_DESCRIPTION[c] for c in range(1, len(df_performance_overview.index) + 1)],
+    )
+    return df_performance_overview
+
+
+def show_performance_overview(
+    df_performance_overview: pd.DataFrame,
+    select_metrics: List[str],
+):
+    # Show each metric block separately for better readability
+    for select_metric in select_metrics:
+        metric_cols = [
+            col
+            for col in df_performance_overview.columns
+            if ((select_metric in col) & ("Mean" not in col) & ("Median" not in col))
+        ]
+        display(Markdown(f"### **Performance overview:** {select_metric}"))
+        display(df_performance_overview[["Case description"] + metric_cols])
+
+    display(Markdown("---"))
+
+    # Show the aggregated metric values for each case
+    for agg in ["Median", "Mean"]:
+        agg_cols = [col for col in df_performance_overview.columns if agg in col]
+        display(Markdown(f"### **{agg} metric values** per CASE"))
+        display(df_performance_overview[["Case description"] + agg_cols])

@@ -7,6 +7,7 @@ import plotly.express as px
 import plotly.graph_objs as go
 
 from gemss.experiment_assessment.experiment_results_analysis import (
+    CATEGORY_ORDER,
     COVERAGE_METRICS,
     DEFAULT_ASI_SI_COMPARISON_THRESHOLDS,
     DEFAULT_F1SCORE_THRESHOLDS,
@@ -15,10 +16,10 @@ from gemss.experiment_assessment.experiment_results_analysis import (
     THRESHOLDS_FOR_METRIC,
     DEFAULT_AGGREGATION_FUNC,
     DEFAULT_METRIC,
+    analyze_metric_results,
 )
 
-# Define order and colors for any threshold-based categories
-CATEGORY_ORDER = ["Excellent", "Good", "Moderate", "Poor", "Unknown"]
+# Define colors for any threshold-based categories
 CATEGORY_COLORS = {
     "Excellent": "green",
     "Good": "lightgreen",
@@ -388,7 +389,44 @@ def plot_si_asi_scatter(
     return
 
 
-def analyze_metric_results(
+def plot_category_counts(
+    df_category_counts: pd.DataFrame,
+    title: Optional[str] = None,
+) -> None:
+    """
+    Visualize the distribution of performance categories as a bar chart.
+
+    Parameters
+    ----------
+    df_category_counts : pd.DataFrame
+        DataFrame containing counts of experiments in each performance category.
+    title : Optional[str] = None
+        Title for the plot, optional.
+
+    Returns
+    -------
+    None
+    """
+    fig = px.bar(
+        df_category_counts,
+        x="Category",
+        y="Count",
+        color="Category",
+        color_discrete_map=CATEGORY_COLORS,
+        title=title,
+        text="Count",
+    )
+    fig.update_traces(textposition="outside")
+    fig.update_layout(
+        yaxis_title="Number of experiments",
+        showlegend=False,
+        width=600,
+    )
+    fig.show(config={"displayModeBar": False})
+    return
+
+
+def plot_metric_analysis_overview(
     df: pd.DataFrame,
     group_identifier: Literal["TIER_ID", "CASE_ID", None],
     identifiers_list: Optional[List[str]] = None,
@@ -407,6 +445,7 @@ def analyze_metric_results(
     ] = DEFAULT_METRIC,
     thresholds: Dict[str, float] = None,
     custom_title: Optional[str] = None,
+    verbose: Optional[bool] = True,
 ) -> None:
     """
     Analyze and visualize the distribution of a specified metric for a given solution type.
@@ -437,83 +476,22 @@ def analyze_metric_results(
         "Global_FDR",
     ]] = DEFAULT_METRIC,
         The metric to analyze (e.g., "Recall", "Precision"). DEFAULT_METRIC by default.
+    custom_title : Optional[str] = None
+        Custom title for the plot. If None, a default title is generated.
     thresholds : Optional[Dict[str, float]]
         Dictionary defining the lower bounds for performance categories.
         Defaults to THRESHOLDS_FOR_METRIC for the given metric.
+    verbose : Optional[bool] = True
+        Whether to print summary statistics.
     """
-    if group_identifier is not None:
-        # if no identifiers provided, use all unique identifiers
-        if identifiers_list is None:
-            identifiers_list = df[group_identifier].unique().tolist()
-        # filter dataframe
-        df_plot = df[df[group_identifier].isin(identifiers_list)]
-    else:
-        df_plot = df
-
-    if solution_type != "all types":
-        df_plot = df_plot[df_plot["solution_type"] == solution_type]
-    else:
-        solution_type = "all"  # for display purposes
-
-    # Categorize performance
-    def categorize_metric_higher_is_better(val):
-        if pd.isna(val):
-            return "Unknown"
-        if val >= thresholds["Excellent"]:
-            return "Excellent"
-        if val >= thresholds["Good"]:
-            return "Good"
-        if val >= thresholds["Moderate"]:
-            return "Moderate"
-        return "Poor"
-
-    def categorize_metric_lower_is_better(val):
-        if pd.isna(val):
-            return "Unknown"
-        if val <= thresholds["Excellent"]:
-            return "Excellent"
-        if val <= thresholds["Good"]:
-            return "Good"
-        if val <= thresholds["Moderate"]:
-            return "Moderate"
-        return "Poor"
-
-    # Get default thresholds, if defined
-    if thresholds is None:
-        thresholds = THRESHOLDS_FOR_METRIC.get(metric_name, None)
-    if thresholds is None:
-        print(f"No thresholds defined for {metric_name}. Skipping analysis.")
-        return
-
-    # Categorize based on whether higher or lower values are better
-    if metric_name in [
-        "Recall",
-        "Precision",
-        "F1_Score",
-        "Success_Index",
-        "Adjusted_Success_Index",
-    ]:
-        categories = df_plot[metric_name].apply(categorize_metric_higher_is_better)
-    else:
-        categories = df_plot[metric_name].apply(categorize_metric_lower_is_better)
-
-    # Count occurrences in each category
-    counts = categories.value_counts()
-
-    # Ensure all categories are present for consistent plotting
-    plot_data = pd.DataFrame(
-        {
-            "Category": CATEGORY_ORDER,
-            "Count": [counts.get(cat, 0) for cat in CATEGORY_ORDER],
-        }
-    )
-
-    # Print summary stats
-    display(Markdown(f"#### Statistics:"))
-    display(Markdown(f"- **Total experiments:** {len(df_plot)}"))
-    display(Markdown(f"- **Mean {metric_name}:** {df_plot[metric_name].mean():.3f}"))
-    display(
-        Markdown(f"- **Median {metric_name}:** {df_plot[metric_name].median():.3f}\n")
+    df_category_counts = analyze_metric_results(
+        df=df,
+        group_identifier=group_identifier,
+        identifiers_list=identifiers_list,
+        solution_type=solution_type,
+        metric_name=metric_name,
+        thresholds=thresholds,
+        verbose=verbose,
     )
 
     if custom_title is not None:
@@ -521,23 +499,10 @@ def analyze_metric_results(
     else:
         title = f"{metric_name} performance for {solution_type} solutions,<br>{group_identifier} = {identifiers_list}"
 
-    fig = px.bar(
-        plot_data,
-        x="Category",
-        y="Count",
-        color="Category",
-        color_discrete_map=CATEGORY_COLORS,
+    plot_category_counts(
+        df_category_counts=df_category_counts,
         title=title,
-        text="Count",
     )
-
-    fig.update_traces(textposition="outside")
-    fig.update_layout(
-        yaxis_title="Number of experiments",
-        showlegend=False,
-        width=600,
-    )
-    fig.show(config={"displayModeBar": False})
     return
 
 
