@@ -502,6 +502,7 @@ def plot_category_counts(
         yaxis_title="Number of experiments",
         showlegend=False,
         width=600,
+        height=400,
     )
     fig.show(config={"displayModeBar": False})
     return
@@ -671,7 +672,7 @@ def plot_heatmap(
             "RdBu_r" if "Miss" in metric_name or "FDR" in metric_name else "Viridis"
         ),
     )
-    fig.update_layout(height=500)
+    fig.update_layout(height=600)
     fig.show(config={"displayModeBar": False})
     return
 
