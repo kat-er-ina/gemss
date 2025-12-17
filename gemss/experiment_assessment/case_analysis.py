@@ -85,17 +85,16 @@ CASE_DESCRIPTION[47] = (
 
 SUMMARY_CASES = [c for c in range(1, 48) if "overall" in CASE_DESCRIPTION[c].lower()]
 CASE_SET_RANGES = {
-    # basic = baseline, scalability, sample-rich classification scenarios without adversities
-    "basic": range(1, 17),
-    "baseline": range(1, 4),
-    "scalability": range(4, 10),
-    "samplerich": range(11, 17),
+    # all classification cases = baseline + scalability + samplerich + adversity + jaccard + unbalanced
+    "baseline": [1, 2, 3, 16],
+    "scalability": range(4, 11),
+    "samplerich": range(11, 16),
     "adversity": range(17, 24),
     "jaccard": range(24, 29),
     "unbalanced": range(29, 32),
     # all regression cases = reg_baseline + reg_scalability + reg_adversity
     "reg_baseline": range(32, 34),
-    "reg_scalability": range(33, 40),
+    "reg_scalability": range(34, 40),
     "reg_adversity": range(40, 43),
     # comparing regression vs. classification
     "reg_vs_class": range(43, 48),
