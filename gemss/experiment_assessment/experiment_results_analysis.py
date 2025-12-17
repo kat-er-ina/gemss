@@ -13,9 +13,9 @@ CATEGORY_ORDER = ["Excellent", "Good", "Moderate", "Poor", "Unknown"]
 # List synchronized with keys returned by calculate_coverage_metrics in run_experiment.py
 # All coverage metrics are numeric (possibly None)
 COVERAGE_METRICS = [
+    "F1_Score",
     "Recall",
     "Precision",
-    "F1_Score",
     "Jaccard",
     "Miss_Rate",
     "FDR",
@@ -27,15 +27,13 @@ COVERAGE_METRICS = [
 
 CORE_METRICS = [
     "F1_Score",
+    "Adjusted_Success_Index",
     "Recall",
-    "Precision",
+    "Jaccard",
 ]
 
-IMPORTANT_METRICS = [
-    "F1_Score",
-    "Recall",
+IMPORTANT_METRICS = CORE_METRICS + [
     "Precision",
-    "Adjusted_Success_Index",
     "Success_Index",
 ]
 
