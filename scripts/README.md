@@ -7,7 +7,7 @@ Even though these experiments are **not** intended for hyperparameter optimizati
 ## Directory Structure
 
 ```
-experiment_parameters.json          # Full 7-tier experimental design (112 total experiments)
+experiment_parameters.json          # Full 7-tier experimental design (128 total experiments)
 experiment_parameters_short.json    # Shortened version for quick testing (30 quick experiments)
 run_experiment.py                   # Python script to run a single experiment
 run_sweep.ps1                       # PowerShell script for batch parameter sweeps (all combinations)
@@ -26,7 +26,7 @@ results/                            # Output directory for experiment results an
 
 ## Experimental Design Overview
 
-The experiment suite uses a **7-tier design** (112 experiments total). Each tier targets a specific scenario:
+The experiment suite uses a **7-tier design** (128 experiments total). Each tier targets a specific scenario:
 
 ### Tier 1: Basic Validation (18 experiments)
 
@@ -56,11 +56,11 @@ The experiment suite uses a **7-tier design** (112 experiments total). Each tier
 * **Parameter ranges:** N_SAMPLES: 100 or 200, N_FEATURES: 200 or 500, NOISE_STD: 0.1–1.0, NAN_RATIO: 0.0 – 0.5, BATCH_SIZE: 16 – 48.
 * **Response:** Binary classification.
 
-### Tier 5: Effect of Jaccard Penalty (12 experiments)
+### Tier 5: Effect of Jaccard Penalty (28 experiments)
 
 * **Purpose:** Investigate the effect of diversity regularization (LAMBDA_JACCARD)  
-* **Description:** Uses clean data on representative problem sizes with both sparsity levels. In addition to standard penalty setting, this tier tests three more penalty regimes to analyze how Jaccard regularization influences solution diversity and support overlap.  
-* **Parameter ranges:** N_SAMPLES: 100, N_FEATURES: 200 or 500, SPARSITY: 3 or 5, LAMBDA_JACCARD: 0 or 1000 or 5000.
+* **Description:** Uses clean data on representative problem sizes with both sparsity levels. This tier tests multiple penalty regimes to analyze how Jaccard regularization influences solution diversity and support overlap. To make the difference more prominent, the number of candidate solutions is intentionally too low: it equals the number of generating solutions. I.e. it would require perfect diversification in order to achieve full recall in "top" solutions.
+* **Parameter ranges:** N_SAMPLES: 100, N_FEATURES: 200 or 500, SPARSITY: 3 or 5, LAMBDA_JACCARD: 0 to 10000, N_GENERATING_SOLUTIONS = N_CANDIDATE_SOLUTIONS = 3.
 * **Response:** Binary classification.
 
 ### Tier 6: Regression Validation (29 experiments)
@@ -111,7 +111,7 @@ Other parameters are set up individually for each experiment. These are:
 # Single experiment  
 python run_experiment.py
 
-# Full suite (all tiers, 112 experiments)  
+# Full suite (all tiers, 128 experiments)  
 .\run_tiers.ps1 -parametersFile "experiment_parameters.json"
 
 # Short suite (28 experiments)  

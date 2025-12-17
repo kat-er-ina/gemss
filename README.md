@@ -43,7 +43,7 @@ gemss/                       # Project root (editable install target)
     run_sweep.ps1            # Parameter sweep across JSON configs  
     run_tiers.ps1            # Tiered artificial data benchmark launcher  
     run_sweep_with_tiers.ps1 # Combined sweep + tier logic  
-    experiment_parameters.json        # Full 7-tier experimental design (112 experiments)  
+    experiment_parameters.json        # Full 7-tier experimental design (128 experiments)  
     experiment_parameters_short.json  # Reduced tier set (quick checks)  
     results/                 # Structured logs + tier outputs  
       logs/                  # Execution summaries & error logs  
@@ -342,7 +342,7 @@ The artificial data experiment framework provides a reproducible, 7-tier benchma
 
 ### Total scope
 
-112 individual test cases across 7 tiers.
+128 individual test cases across 7 tiers.
 
 ### Tiers represent different experimental scenarios:
 
@@ -350,7 +350,7 @@ The artificial data experiment framework provides a reproducible, 7-tier benchma
 * **Tier 2**: High-dimensional stress test (9 experiments) - p ≥ 1000, n << p  
 * **Tier 3**: Sample-rich scenarios (14 experiments) - n ≥ p control group  
 * **Tier 4**: Robustness under adversity (22 experiments) - severe noise and missing data  
-* **Tier 5**: Effect of Jaccard penalty (12 experiments) - diversity enforcement testing  
+* **Tier 5**: Effect of Jaccard penalty (28 experiments) - diversity enforcement testing  
 * **Tier 6**: Regression validation (29 experiments) - continuous response, mirrors Tiers 1, 2 and 4  
 * **Tier 7**: Class imbalance (8 experiments) - unbalanced binary responses
 
@@ -384,7 +384,7 @@ During execution you are prompted for confirmation (experiment count summary). L
 
 Two JSON specifications exist:
 
-* `experiment_parameters.json` (full design, 112 experiments across 7 tiers)  
+* `experiment_parameters.json` (full design, 128 experiments across 7 tiers)  
 * `experiment_parameters_short.json` (small set of quick experiments for testing)
 
 Both define:
@@ -422,7 +422,7 @@ Each comma-separated combination string populates the artificial dataset \+ core
 
 ### Analysis of Experiment Results
 
-The analysis framework leverages the tier-case structure to enable comprehensive exploration of the 112 experimental results across multiple analytical dimensions.
+The analysis framework leverages the tier-case structure to enable comprehensive exploration of the 128 experimental results across multiple analytical dimensions.
 
 #### Understanding the Analysis Dimensions
 
