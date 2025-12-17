@@ -37,18 +37,18 @@ CASE_DESCRIPTION[23] = (
     "Adversity: compare [n=100, p=200] and [n=200, p=500] (Tiers 1 + 4)"
 )
 CASE_DESCRIPTION[24] = (
-    "Effect of Jaccard penalty for [n=100, p=200], SPARSITY=3 (Tiers 1 + 5)"
+    "Effect of Jaccard penalty for [n=100, p=200], SPARSITY=3 (Tier 5)"
 )
 CASE_DESCRIPTION[25] = (
-    "Effect of Jaccard penalty for [n=100, p=200], SPARSITY=5 (Tiers 1 + 5)"
+    "Effect of Jaccard penalty for [n=100, p=200], SPARSITY=5 (Tier 5)"
 )
 CASE_DESCRIPTION[26] = (
-    "Effect of Jaccard penalty for [n=100, p=500], SPARSITY=3 (Tiers 1 + 5)"
+    "Effect of Jaccard penalty for [n=100, p=500], SPARSITY=3 (Tier 5)"
 )
 CASE_DESCRIPTION[27] = (
-    "Effect of Jaccard penalty for [n=100, p=500], SPARSITY=5 (Tiers 1 + 5)"
+    "Effect of Jaccard penalty for [n=100, p=500], SPARSITY=5 (Tier 5)"
 )
-CASE_DESCRIPTION[28] = "Overall effect of Jaccard penalty (Tiers 1 + 5)"
+CASE_DESCRIPTION[28] = "Overall effect of Jaccard penalty (Tier 5)"
 CASE_DESCRIPTION[29] = "Effect of class imbalance for [n=100, p=200] (Tiers 1 + 7)"
 CASE_DESCRIPTION[30] = "Effect of class imbalance for [n=200, p=500] (Tiers 1 + 7)"
 CASE_DESCRIPTION[31] = "Overall effect of class imbalance (Tiers 1 + 7)"
@@ -117,7 +117,7 @@ SYMBOL_PARAM_PER_CASESET = {
     "scalability": "SAMPLE_VS_FEATURE_RATIO",
     "samplerich": "SAMPLE_VS_FEATURE_RATIO",
     "adversity": "NOISE_STD",
-    "jaccard": "SAMPLE_VS_FEATURE_RATIO",
+    "jaccard": "SPARSITY",
     "unbalanced": None,
     "reg_baseline": "SAMPLE_VS_FEATURE_RATIO",
     "reg_scalability": "SAMPLE_VS_FEATURE_RATIO",
@@ -240,28 +240,21 @@ def get_df_cases(df: pd.DataFrame) -> Dict[int, pd.DataFrame]:
         )
     ]
 
-    # CASE 24: Effect of Jaccard penalty for [n=100, p=200], SPARSITY=3 (Tiers 1 + 5)
-    # CASE 25: Effect of Jaccard penalty for [n=100, p=200], SPARSITY=5 (Tiers 1 + 5)
-    # CASE 26: Effect of Jaccard penalty for [n=100, p=500], SPARSITY=3 (Tiers 1 + 5)
-    # CASE 27: Effect of Jaccard penalty for [n=100, p=500], SPARSITY=5 (Tiers 1 + 5)
+    # CASE 24: Effect of Jaccard penalty for [n=100, p=200], SPARSITY=3 (Tier 5 only)
+    # CASE 25: Effect of Jaccard penalty for [n=100, p=200], SPARSITY=5 (Tier 5 only)
+    # CASE 26: Effect of Jaccard penalty for [n=100, p=500], SPARSITY=3 (Tier 5 only)
+    # CASE 27: Effect of Jaccard penalty for [n=100, p=500], SPARSITY=5 (Tier 5 only)
     for c, sp, p in zip(
         [24, 25, 26, 27],
         [3, 5, 3, 5],
         [200, 200, 500, 500],
     ):
         df_cases[c] = df[
-            (df["TIER_ID"].isin([1, 5]))
-            & (df["SPARSITY"] == sp)
-            & (df["N_SAMPLES"] == 100)
-            & (df["N_FEATURES"] == p)
+            (df["TIER_ID"] == 5) & (df["SPARSITY"] == sp) & (df["N_FEATURES"] == p)
         ]
 
-    # CASE 28: Overall effect of Jaccard penalty (Tiers 1 + 5)
-    df_cases[28] = df[
-        (df["TIER_ID"].isin([1, 5]))
-        & (df["N_SAMPLES"] == 100)
-        & (df["N_FEATURES"].isin([200, 500]))
-    ]
+    # CASE 28: Overall effect of Jaccard penalty (full Tier 5)
+    df_cases[28] = df[df["TIER_ID"] == 5]
 
     # CASE 29: Effect of class imbalance for [n=100, p=200] (Tiers 1 + 7)
     # CASE 30: Effect of class imbalance for [n=200, p=500] (Tiers 1 + 7)
