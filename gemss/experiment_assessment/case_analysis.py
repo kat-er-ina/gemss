@@ -100,30 +100,6 @@ CASE_SET_RANGES = {
     # comparing regression vs. classification
     "reg_vs_class": range(43, 48),
 }
-COLORING_PARAM_PER_CASESET = {
-    "baseline": "N_FEATURES",
-    "scalability": "N_FEATURES",
-    "samplerich": "N_FEATURES",
-    "adversity": "NAN_RATIO",
-    "jaccard": "LAMBDA_JACCARD",
-    "unbalanced": "BINARY_RESPONSE_RATIO",
-    "reg_baseline": "N_FEATURES",
-    "reg_scalability": "N_FEATURES",
-    "reg_adversity": "NOISE_STD",
-    "reg_vs_class": "BINARIZE",
-}
-SYMBOL_PARAM_PER_CASESET = {
-    "baseline": "SAMPLE_VS_FEATURE_RATIO",
-    "scalability": "SAMPLE_VS_FEATURE_RATIO",
-    "samplerich": "SAMPLE_VS_FEATURE_RATIO",
-    "adversity": "NOISE_STD",
-    "jaccard": "SPARSITY",
-    "unbalanced": None,
-    "reg_baseline": "SAMPLE_VS_FEATURE_RATIO",
-    "reg_scalability": "SAMPLE_VS_FEATURE_RATIO",
-    "reg_adversity": "NOISE_STD",
-    "reg_vs_class": "SAMPLE_VS_FEATURE_RATIO",
-}
 
 
 def case2set(case_id: int) -> str:
@@ -144,6 +120,49 @@ def case2set(case_id: int) -> str:
         if case_id in case_range:
             return case_set
     raise ValueError(f"Case ID {case_id} not found in any case set.")
+
+
+################################################################################################
+# Define COLORING_PARAM_PER_CASESET and SYMBOL_PARAM_PER_CASESET for each case set or each case
+
+COLORING_PARAM_PER_CASESET = {
+    "baseline": "N_FEATURES",
+    "scalability": "N_FEATURES",
+    "samplerich": "N_FEATURES",
+    "adversity": "NAN_RATIO",
+    "jaccard": "LAMBDA_JACCARD",
+    "unbalanced": "BINARY_RESPONSE_RATIO",
+    "reg_baseline": "N_FEATURES",
+    "reg_scalability": "N_FEATURES",
+    "reg_adversity": "NOISE_STD",
+    "reg_vs_class": "BINARIZE",
+}
+
+SYMBOL_PARAM_PER_CASESET = {
+    "baseline": "SAMPLE_VS_FEATURE_RATIO",
+    "scalability": "SAMPLE_VS_FEATURE_RATIO",
+    "samplerich": "SAMPLE_VS_FEATURE_RATIO",
+    "adversity": "NOISE_STD",
+    "jaccard": "SPARSITY",
+    "unbalanced": None,
+    "reg_baseline": "SAMPLE_VS_FEATURE_RATIO",
+    "reg_scalability": "SAMPLE_VS_FEATURE_RATIO",
+    "reg_adversity": "NOISE_STD",
+    "reg_vs_class": "SAMPLE_VS_FEATURE_RATIO",
+}
+
+# Define COLORING_PARAM_PER_CASE and SYMBOL_PARAM_PER_CASE for all cases individually
+# First initialize them based on the case sets, then override specific cases if needed
+COLORING_PARAM_PER_CASE = {}
+SYMBOL_PARAM_PER_CASE = {}
+for case_id in CASE_DESCRIPTION.keys():
+    case_set = case2set(case_id)
+    COLORING_PARAM_PER_CASE[case_id] = COLORING_PARAM_PER_CASESET[case_set]
+    SYMBOL_PARAM_PER_CASE[case_id] = SYMBOL_PARAM_PER_CASESET[case_set]
+
+# TODO: If needed, override specific cases here
+
+################################################################################################
 
 
 def get_df_cases(df: pd.DataFrame) -> Dict[int, pd.DataFrame]:
