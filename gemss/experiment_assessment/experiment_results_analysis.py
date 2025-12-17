@@ -4,7 +4,11 @@ from IPython.display import display, Markdown
 import pandas as pd
 
 from gemss.config.constants import EXPERIMENT_RESULTS_DIR
-from gemss.experiment_assessment.case_analysis import CASE_DESCRIPTION, case2set
+from gemss.experiment_assessment.case_analysis import (
+    CASE_DESCRIPTION,
+    CASE_SET_RANGES,
+    case2set,
+)
 
 # Define order for any threshold-based categories
 CATEGORY_ORDER = ["Excellent", "Good", "Moderate", "Poor", "Unknown"]
@@ -497,26 +501,14 @@ def filter_df_best_solutions(
         )
         # add case descriptions if grouping by CASE_ID
         if group_identifier == "CASE_ID":
-            exp_count["CASE_DESCRIPTION"] = exp_count.index.map(
+            exp_count["CASE_DESCRIPTION"] = exp_count.index.to_list()
+            exp_count["CASE_DESCRIPTION"] = exp_count["CASE_DESCRIPTION"].apply(
                 lambda x: CASE_DESCRIPTION.get(x, "N/A")
             )
             # order columns
             exp_count = exp_count[["CASE_DESCRIPTION", "number of experiments"]]
 
         display(exp_count.sort_index(ascending=True))
-
-        # count the number of experiments per case range
-        if group_identifier == "CASE_ID":
-            display(Markdown(f"- Number of **experiments per case set**:"))
-            exp_count["CASE_SET"] = exp_count.index.map(lambda x: case2set(x))
-            set_count = (
-                exp_count["CASE_SET"]
-                .value_counts()
-                .to_frame()
-                .rename(columns={"CASE_SET": "number of experiments"})
-            )
-            display(set_count)
-
     return df_filtered
 
 
@@ -689,17 +681,6 @@ def compute_performance_overview(
             }
         )
 
-        # Optional: add summary statistics
-        df_performance_overview_metric[f"Mean {select_metric}"] = (
-            df_performance_overview_metric.mean(axis=1)
-        )
-        df_performance_overview_metric[f"Median {select_metric}"] = (
-            df_performance_overview_metric.median(axis=1)
-        )
-        df_performance_overview = pd.concat(
-            [df_performance_overview, df_performance_overview_metric], axis=1
-        )
-
     # Drop all the "Unknown ..." columns
     df_performance_overview = df_performance_overview.drop(
         columns=[col for col in df_performance_overview.columns if "Unknown" in col]
@@ -727,11 +708,4 @@ def show_performance_overview(
         ]
         display(Markdown(f"### **Performance overview:** {select_metric}"))
         display(df_performance_overview[["Case description"] + metric_cols])
-
-    display(Markdown("---"))
-
-    # Show the aggregated metric values for each case
-    for agg in ["Median", "Mean"]:
-        agg_cols = [col for col in df_performance_overview.columns if agg in col]
-        display(Markdown(f"### **{agg} metric values** per CASE"))
-        display(df_performance_overview[["Case description"] + agg_cols])
+    return
