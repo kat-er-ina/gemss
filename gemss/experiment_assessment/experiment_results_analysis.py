@@ -88,6 +88,7 @@ DEFAULT_F1SCORE_THRESHOLDS = {
     "Good": 0.71,  # average between moderate and excellent
     "Moderate": 0.565,  # corresponds to Precision = 0.5, Recall = 0.65
 }
+
 THRESHOLDS_FOR_METRIC = {
     "Recall": DEFAULT_RECALL_THRESHOLDS,
     "Precision": DEFAULT_PRECISION_THRESHOLDS,
@@ -95,6 +96,10 @@ THRESHOLDS_FOR_METRIC = {
     "Success_Index": None,
     "Adjusted_Success_Index": None,
 }
+
+THRESHOLDED_METRICS = [
+    m for m in CORE_METRICS if THRESHOLDS_FOR_METRIC.get(m) is not None
+]
 ################################################################################################
 
 
