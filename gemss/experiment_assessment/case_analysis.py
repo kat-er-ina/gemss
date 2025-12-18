@@ -24,8 +24,8 @@ CASE_DESCRIPTION[10] = "Overall high-dim performance (Tier 2)"
 CASE_DESCRIPTION[11] = "Sample rich performance for SPARSITY = 3 (Tier 3)"
 CASE_DESCRIPTION[12] = "Sample rich performance for SPARSITY = 5 (Tier 3)"
 CASE_DESCRIPTION[13] = "Overall sample-rich performance (Tier 3)"
-CASE_DESCRIPTION[14] = "Analysis of n/p ratio, sparsity = 3 (Tiers 1 + Tier 3)"
-CASE_DESCRIPTION[15] = "Analysis of n/p ratio, sparsity = 5 (Tiers 1 + Tier 3)"
+CASE_DESCRIPTION[14] = "Overall analysis of n/p ratio, sparsity = 3 (Tiers 1 + Tier 3)"
+CASE_DESCRIPTION[15] = "Overall analysis of n/p ratio, sparsity = 5 (Tiers 1 + Tier 3)"
 CASE_DESCRIPTION[16] = "Overall basic performance (Tiers 1 + 2 + 3)"
 CASE_DESCRIPTION[17] = "Adversity: [n=100, p=200], varying noise (Tiers 1 + 4)"
 CASE_DESCRIPTION[18] = "Adversity: [n=100, p=200], varying NaNs (Tiers 1 + 4)"
@@ -117,9 +117,9 @@ def case2set(case_id: int) -> str:
 # Define COLORING_PARAM_PER_CASESET and SYMBOL_PARAM_PER_CASESET for each case set or each case
 
 COLORING_PARAM_PER_CASESET = {
-    "baseline": "N_FEATURES",
-    "scalability": "N_FEATURES",
-    "samplerich": "N_FEATURES",
+    "baseline": "SAMPLE_VS_FEATURE_RATIO",
+    "scalability": "SAMPLE_VS_FEATURE_RATIO",
+    "samplerich": "SAMPLE_VS_FEATURE_RATIO",
     "adversity": "NAN_RATIO",
     "jaccard": "LAMBDA_JACCARD",
     "unbalanced": "BINARY_RESPONSE_RATIO",
@@ -130,9 +130,9 @@ COLORING_PARAM_PER_CASESET = {
 }
 
 SYMBOL_PARAM_PER_CASESET = {
-    "baseline": "SAMPLE_VS_FEATURE_RATIO",
-    "scalability": "SAMPLE_VS_FEATURE_RATIO",
-    "samplerich": "SAMPLE_VS_FEATURE_RATIO",
+    "baseline": "N_SAMPLES",
+    "scalability": "N_FEATURES",
+    "samplerich": "N_SAMPLES",
     "adversity": "NOISE_STD",
     "jaccard": "SPARSITY",
     "unbalanced": None,
