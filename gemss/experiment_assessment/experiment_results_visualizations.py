@@ -27,6 +27,40 @@ CATEGORY_COLORS = {
     "Poor": "lightcoral",
     "Unknown": "gray",
 }
+AVAILABLE_SYMBOLS = [
+    "circle",
+    "square",
+    "diamond",
+    "cross",
+    "x",
+    "triangle-up",
+    "triangle-down",
+    "triangle-left",
+    "triangle-right",
+    "pentagon",
+    "hexagon",
+    "star",
+    "hourglass",
+    "bowtie",
+    "asterisk",
+    "hash",
+    "y-up",
+    "y-down",
+    "y-left",
+    "y-right",
+    "line-ew",
+    "line-ns",
+    "line-ne",
+    "line-nw",
+    "arrow-up",
+    "arrow-down",
+    "arrow-left",
+    "arrow-right",
+    "arrow-bar-up",
+    "arrow-bar-down",
+    "arrow-bar-left",
+    "arrow-bar-right",
+]
 
 
 def plot_solution_grouped(
@@ -132,21 +166,9 @@ def plot_solution_grouped(
 
         # If symbol_by is specified, create traces for each combination of color_by and symbol_by
         if symbol_by is not None:
-            available_symbols = [
-                "circle",
-                "square",
-                "diamond",
-                "cross",
-                "x",
-                "triangle-up",
-                "triangle-down",
-                "pentagon",
-                "hexagon",
-                "star",
-            ]
             unique_symbol_values = df_plot[symbol_by].unique()
             symbol_map = {
-                val: available_symbols[j % len(available_symbols)]
+                val: AVAILABLE_SYMBOLS[j % len(AVAILABLE_SYMBOLS)]
                 for j, val in enumerate(unique_symbol_values)
             }
 
@@ -173,6 +195,7 @@ def plot_solution_grouped(
                         + "<extra></extra>"
                     )
 
+                    # Use legendgroup to group traces by color, but show individual symbols
                     fig.add_trace(
                         go.Scatter(
                             x=symbol_data[x_axis],
@@ -184,7 +207,9 @@ def plot_solution_grouped(
                                 color=colors[i % len(colors)],
                                 symbol=symbol_map[symbol_val],
                             ),
-                            name=f"{group_val} ({symbol_val})",
+                            name=f"{symbol_val}",  # Simple name showing only symbol value
+                            legendgroup=f"{group_val}",  # Group by color parameter
+                            legendgrouptitle_text=f"{color_by}: {group_val}",  # Group title
                             hovertemplate=hovertemplate,
                             customdata=symbol_data[hover_params].round(3).values,
                         )
@@ -250,8 +275,8 @@ def plot_solution_grouped(
         )
 
     # Create legend title
-    legend = f"color: {color_by}" if color_by is not None else ""
-    legend += f"<br> (symbol: {symbol_by})" if symbol_by is not None else ""
+    legend = f"{color_by}" if color_by is not None else ""
+    legend += f"<br>symbol: {symbol_by}" if symbol_by is not None else ""
 
     # Update layout
     fig.update_layout(
