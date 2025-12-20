@@ -53,7 +53,7 @@ SOLUTION_OPTIONS = [
 
 DEFAULT_SOLUTION = "top"
 
-DEFAULT_AGGREGATION_FUNC = "median"
+DEFAULT_AGGREGATION_FUNC = "mean"
 
 ALL_PARAMETERS = [
     "N_SAMPLES",
@@ -389,7 +389,15 @@ def get_best_solution_type_per_group(
             )
         )
         for group, sol_type in sol_type_per_group.items():
-            display(Markdown(f"- **{group}:** {sol_type}"))
+            if group_identifier == "CASE_ID":
+                i = int(group.split(" = ")[1])
+                display(
+                    Markdown(
+                        f"- **{group}:** {sol_type} ({case2set(i).upper()}: {CASE_DESCRIPTION[i]})"
+                    )
+                )
+            else:
+                display(Markdown(f"- **{group}:** {sol_type}"))
 
     return sol_type_per_group
 
