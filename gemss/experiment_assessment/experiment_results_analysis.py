@@ -58,6 +58,7 @@ DEFAULT_AGGREGATION_FUNC = "mean"
 ALL_PARAMETERS = [
     "N_SAMPLES",
     "N_FEATURES",
+    "[N_SAMPLES, N_FEATURES] COMBINATION",
     "SAMPLE_VS_FEATURE_RATIO",
     "SPARSITY",
     "N_GENERATING_SOLUTIONS",
@@ -178,6 +179,10 @@ def load_experiment_results(
         # Append to main DataFrame
         df = pd.concat([df, df_tier], ignore_index=True)
 
+    # Add the combination of samples and features
+    df["[N_SAMPLES, N_FEATURES] COMBINATION"] = (
+        "[" + df["N_SAMPLES"].astype(str) + ", " + df["N_FEATURES"].astype(str) + "]"
+    )
     # Add the "SAMPLE_VS_FEATURE_RATIO" column
     df["SAMPLE_VS_FEATURE_RATIO"] = df["N_SAMPLES"] / df["N_FEATURES"]
     # Add a feature that combines information about noise and missingness
@@ -343,6 +348,71 @@ def get_average_metrics_per_group(
             )
             display(df_group_avg)
     return average_metrics
+
+
+def get_average_metrics_per_case(
+    df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Computes mean metrics for all cases provided in the DataFrame.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing experiment results with performance metrics. It is intended to be
+        used on the output of function filter_df_best_solutions()
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame containing mean performance metrics per case, with case descriptions.
+    """
+
+    df_mean_metrics_per_case = get_average_metrics_per_group(
+        df,
+        group_identifier="CASE_ID",
+        aggregation_func="mean",
+    )
+
+    # Concatenate the dictionary of DataFrames into a single DataFrame
+    df_mean_metrics_per_case_concat = pd.concat(
+        df_mean_metrics_per_case.values(), keys=df_mean_metrics_per_case.keys()
+    )
+    # Add "Mean " prefix to all metric columns
+    df_mean_metrics_per_case_concat = df_mean_metrics_per_case_concat.rename(
+        columns={col: f"Mean {col}" for col in df_mean_metrics_per_case_concat.columns}
+    )
+
+    # Currently, the index has the format [f"CASE_ID = {CASE_ID}, {SOLUTION_TYPE}"]
+    # Reset the index so that CASE_ID is a column and drop SOLUTION_TYPE
+    df_mean_metrics_per_case_concat = df_mean_metrics_per_case_concat.reset_index(
+        col_level=[0, 1]
+    )
+    df_mean_metrics_per_case_concat = df_mean_metrics_per_case_concat.rename(
+        columns={"level_0": "CASE_ID"}
+    ).drop(columns=["solution_type"])
+
+    # Reformat the values in CASE_ID column to include just numbers
+    df_mean_metrics_per_case_concat["CASE_ID"] = df_mean_metrics_per_case_concat[
+        "CASE_ID"
+    ].apply(lambda x: int(x.split(" = ")[1]))
+
+    # Add case descriptions
+    df_mean_metrics_per_case_concat["Case description"] = (
+        df_mean_metrics_per_case_concat["CASE_ID"].map(CASE_DESCRIPTION)
+    )
+
+    # Reorder columns to have CASE_ID first, Case description second, and metrics after
+    df_mean_metrics_per_case_concat = df_mean_metrics_per_case_concat[
+        ["CASE_ID", "Case description"]
+        + [
+            col
+            for col in df_mean_metrics_per_case_concat.columns
+            if col not in ["CASE_ID", "Case description"]
+        ]
+    ]
+
+    return df_mean_metrics_per_case_concat
 
 
 def get_best_solution_type_per_group(
@@ -688,6 +758,14 @@ def compute_performance_overview(
                 for col in df_performance_overview_metric.columns
             }
         )
+
+        # Concatenate to the main performance overview dataframe
+        if df_performance_overview.empty:
+            df_performance_overview = df_performance_overview_metric
+        else:
+            df_performance_overview = pd.concat(
+                [df_performance_overview, df_performance_overview_metric], axis=1
+            )
 
     # Drop all the "Unknown ..." columns
     df_performance_overview = df_performance_overview.drop(
