@@ -17,16 +17,24 @@ CASE_DESCRIPTION[3] = "Overall baseline performance (Tier 1)"
 CASE_DESCRIPTION[4] = "Scalability analysis: p = 1000 (Tier 2)"
 CASE_DESCRIPTION[5] = "Scalability analysis: p = 2000 (Tier 2)"
 CASE_DESCRIPTION[6] = "Scalability analysis: p = 5000 (Tier 2)"
-CASE_DESCRIPTION[7] = "Scalability analysis: n = 50 (Tiers 1 + 2 + 3)"
-CASE_DESCRIPTION[8] = "Scalability analysis: n = 100 (Tiers 1 + 2 + 3)"
-CASE_DESCRIPTION[9] = "Scalability analysis: n = 200 (Tiers 1 + 2 + 3)"
+CASE_DESCRIPTION[7] = (
+    f"Scalability analysis: n = 50 for SPARSITY = {DEFAULT_SPARSITY} (Tiers 1 + 2 + 3)"
+)
+CASE_DESCRIPTION[8] = (
+    f"Scalability analysis: n = 100 for SPARSITY = {DEFAULT_SPARSITY} (Tiers 1 + 2 + 3)"
+)
+CASE_DESCRIPTION[9] = (
+    f"Scalability analysis: n = 200 for SPARSITY = {DEFAULT_SPARSITY} (Tiers 1 + 2 + 3)"
+)
 CASE_DESCRIPTION[10] = "Overall high-dim performance (Tier 2)"
 CASE_DESCRIPTION[11] = "Sample rich performance for SPARSITY = 3 (Tier 3)"
 CASE_DESCRIPTION[12] = "Sample rich performance for SPARSITY = 5 (Tier 3)"
 CASE_DESCRIPTION[13] = "Overall sample-rich performance (Tier 3)"
-CASE_DESCRIPTION[14] = "Overall analysis of n/p ratio, sparsity = 3 (Tiers 1 + Tier 3)"
-CASE_DESCRIPTION[15] = "Overall analysis of n/p ratio, sparsity = 5 (Tiers 1 + Tier 3)"
-CASE_DESCRIPTION[16] = "Overall basic performance (Tiers 1 + 2 + 3)"
+CASE_DESCRIPTION[14] = "Overall analysis of n/p ratio, SPARSITY = 3 (Tiers 1 + Tier 3)"
+CASE_DESCRIPTION[15] = "Overall analysis of n/p ratio, SPARSITY = 5 (Tiers 1 + Tier 3)"
+CASE_DESCRIPTION[16] = (
+    f"Overall basic performance for SPARSITY = {DEFAULT_SPARSITY} (Tiers 1 + 2 + 3)"
+)
 CASE_DESCRIPTION[17] = "Adversity: [n=100, p=200], varying noise (Tiers 1 + 4)"
 CASE_DESCRIPTION[18] = "Adversity: [n=100, p=200], varying NaNs (Tiers 1 + 4)"
 CASE_DESCRIPTION[19] = "Adversity: [n=100, p=200], varying noise and NaNs (Tiers 1 + 4)"
@@ -38,8 +46,8 @@ CASE_DESCRIPTION[23] = (
 )
 CASE_DESCRIPTION[24] = "Effect of Jaccard penalty for [n=100, p=200] (Tier 5)"
 CASE_DESCRIPTION[25] = "Effect of Jaccard penalty for [n=100, p=500] (Tier 5)"
-CASE_DESCRIPTION[26] = "Effect of Jaccard penalty for SPARSITY=3 (Tier 5)"
-CASE_DESCRIPTION[27] = "Effect of Jaccard penalty for SPARSITY=5 (Tier 5)"
+CASE_DESCRIPTION[26] = "Effect of Jaccard penalty for SPARSITY = 3 (Tier 5)"
+CASE_DESCRIPTION[27] = "Effect of Jaccard penalty for SPARSITY = 5 (Tier 5)"
 CASE_DESCRIPTION[28] = "Overall effect of Jaccard penalty (Tier 5)"
 CASE_DESCRIPTION[29] = "Effect of class imbalance for [n=100, p=200] (Tiers 1 + 7)"
 CASE_DESCRIPTION[30] = "Effect of class imbalance for [n=200, p=500] (Tiers 1 + 7)"
@@ -117,27 +125,27 @@ def case2set(case_id: int) -> str:
 # Define COLORING_PARAM_PER_CASESET and SYMBOL_PARAM_PER_CASESET for each case set or each case
 
 COLORING_PARAM_PER_CASESET = {
-    "baseline": "SAMPLE_VS_FEATURE_RATIO",
+    "baseline": "[N_SAMPLES, N_FEATURES] COMBINATION",
     "scalability": "SAMPLE_VS_FEATURE_RATIO",
     "samplerich": "SAMPLE_VS_FEATURE_RATIO",
     "adversity": "NAN_RATIO",
     "jaccard": "LAMBDA_JACCARD",
     "unbalanced": "BINARY_RESPONSE_RATIO",
-    "reg_baseline": "N_FEATURES",
-    "reg_scalability": "N_FEATURES",
-    "reg_adversity": "NOISE_STD",
+    "reg_baseline": "[N_SAMPLES, N_FEATURES] COMBINATION",
+    "reg_scalability": "SAMPLE_VS_FEATURE_RATIO",
+    "reg_adversity": "NAN_RATIO",
     "reg_vs_class": "BINARIZE",
 }
 
 SYMBOL_PARAM_PER_CASESET = {
-    "baseline": "N_SAMPLES",
+    "baseline": "N_FEATURES",
     "scalability": "N_FEATURES",
-    "samplerich": "N_SAMPLES",
+    "samplerich": "[N_SAMPLES, N_FEATURES] COMBINATION",
     "adversity": "NOISE_STD",
     "jaccard": "SPARSITY",
-    "unbalanced": None,
-    "reg_baseline": "SAMPLE_VS_FEATURE_RATIO",
-    "reg_scalability": "SAMPLE_VS_FEATURE_RATIO",
+    "unbalanced": "[N_SAMPLES, N_FEATURES] COMBINATION",
+    "reg_baseline": "N_FEATURES",
+    "reg_scalability": "N_FEATURES",
     "reg_adversity": "NOISE_STD",
     "reg_vs_class": "SAMPLE_VS_FEATURE_RATIO",
 }
@@ -152,6 +160,32 @@ for case_id in CASE_DESCRIPTION.keys():
     SYMBOL_PARAM_PER_CASE[case_id] = SYMBOL_PARAM_PER_CASESET[case_set]
 
 # TODO: If needed, override specific cases here
+SYMBOL_PARAM_PER_CASE[3] = "SPARSITY"
+# SYMBOL_PARAM_PER_CASE[13] = "SPARSITY"
+
+# n/p ratio analysis
+COLORING_PARAM_PER_CASE[14] = "SAMPLE_VS_FEATURE_RATIO"
+COLORING_PARAM_PER_CASE[15] = "SAMPLE_VS_FEATURE_RATIO"
+
+# basic summary case
+COLORING_PARAM_PER_CASE[16] = "N_FEATURES"
+SYMBOL_PARAM_PER_CASE[16] = "N_SAMPLES"
+
+# classification adversity cases
+COLORING_PARAM_PER_CASE[17] = "NOISE_STD"
+SYMBOL_PARAM_PER_CASE[17] = "NAN_RATIO"
+COLORING_PARAM_PER_CASE[20] = "NOISE_STD"
+SYMBOL_PARAM_PER_CASE[20] = "NAN_RATIO"
+COLORING_PARAM_PER_CASE[23] = "[NOISE_STD, NAN_RATIO] COMBINATION"
+SYMBOL_PARAM_PER_CASE[23] = "N_SAMPLES"
+
+# same as above but for regression adversity cases
+COLORING_PARAM_PER_CASE[40] = "NOISE_STD"
+SYMBOL_PARAM_PER_CASE[40] = "NAN_RATIO"
+COLORING_PARAM_PER_CASE[41] = "NOISE_STD"
+SYMBOL_PARAM_PER_CASE[41] = "NAN_RATIO"
+COLORING_PARAM_PER_CASE[42] = "[NOISE_STD, NAN_RATIO] COMBINATION"
+SYMBOL_PARAM_PER_CASE[42] = None
 
 ################################################################################################
 
@@ -217,7 +251,10 @@ def get_df_cases(df: pd.DataFrame) -> Dict[int, pd.DataFrame]:
         df_cases[c] = df[(df["TIER_ID"].isin([1, 3])) & (df["SPARSITY"] == sp)]
 
     # CASE 16: Overall performance in Tiers 1 + 2 + 3
-    df_cases[16] = df[(df["TIER_ID"].isin([1, 2, 3]))]
+    # only for SPARSITY = 5 because Tier 3 has only SPARSITY = 5
+    df_cases[16] = df[
+        (df["TIER_ID"].isin([1, 2, 3])) & (df["SPARSITY"] == DEFAULT_SPARSITY)
+    ]
 
     # CASE 17: Robustness under adversity: [n=100, p=200], only varying noise
     # CASE 18: Robustness under adversity: [n=100, p=200], only varying NaNs
@@ -252,8 +289,8 @@ def get_df_cases(df: pd.DataFrame) -> Dict[int, pd.DataFrame]:
 
     # CASE 24: Effect of Jaccard penalty for [n=100, p=200], both sparsity levels (Tier 5)
     # CASE 25: Effect of Jaccard penalty for [n=100, p=500], both sparsity levels (Tier 5)
-    # CASE 26: Effect of Jaccard penalty for SPARSITY=3, both problems (Tier 5)
-    # CASE 27: Effect of Jaccard penalty for SPARSITY=5, both problems (Tier 5)
+    # CASE 26: Effect of Jaccard penalty for SPARSITY = 3, both problems (Tier 5)
+    # CASE 27: Effect of Jaccard penalty for SPARSITY = 5, both problems (Tier 5)
     # CASE 28: Overall effect of Jaccard penalty (full Tier 5)
     df_tier5 = df[df["TIER_ID"] == 5]
     df_cases[24] = df_tier5[df_tier5["N_FEATURES"] == 200]
