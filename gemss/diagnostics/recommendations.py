@@ -46,6 +46,7 @@ class RecommendationEngine:
         "VAR_SLAB": (10, 500),
         "VAR_SPIKE": (0.0001, 1.0),
         "LAMBDA_JACCARD": (0, 2000),
+        "BATCH_SIZE": (16, 64),
     }
 
     def __init__(
@@ -377,19 +378,21 @@ def display_parameter_adjustment_summary() -> None:
     var_slab_range = format_range("VAR_SLAB")
     var_spike_range = format_range("VAR_SPIKE")
     lambda_jaccard_range = format_range("LAMBDA_JACCARD")
+    batch_range = format_range("BATCH_SIZE")
 
     display(
         Markdown(
             "| Parameter | Increase when | Decrease when | Typical range |\n"
             "|-----------|---------------|---------------|---------------|\n"
+            "| `DESIRED_SPARSITY` | Too restrictive. | The progress of mu values indicates that fewer features remain non-negligible. | Dataset-dependent. |"
+            "|`N_CANDIDATE_SOLUTIONS`| Current set of solutions does not contain enough combinations despite proper Jaccard regularization and desired sparsity settings. | Solutions overlap siginificantly and uselessly. Some component weights (alphas) might be negligible too. | Dataset-dependent. Advisable to be at least double the expected `true` number of solutions. |\n"
             f"| `VAR_SPIKE` | All features converge (uniformly) to 0, i.e. over-regularization leads to no optimization and feature selection. | Too many features are selected in each component (false positives). | {var_spike_range} |\n"
             f"| `VAR_SLAB` | Poor feature separation. | Over-regularization. | {var_slab_range} |\n"
             f"| `IS_REGULARIZED` | True = penalize similarity among solutions. | False = do not influence diversity of features among solutions. | False (0) or True (1) |\n"
             f"| `LAMBDA_JACCARD` | Greater diversity wanted: the individual solutions contain too many similar features. | Interested in solutions with overlapping feature sets. | {lambda_jaccard_range} |\n"
-            f"| `N_ITER` | The ELBO has not converged, the mu values are still changing significantly | The ELBO convergence plateaus early, time constraints | {n_iter_range} |\n"
-            f"| `LEARNING_RATE` | Too slow progress | Unstable training | {lr_range} |\n"
-            "| `DESIRED_SPARSITY` | Too restrictive | The progress of mu values indicates that fewer features remain non-negligible | Dataset-dependent |"
-            "|`N_CANDIDATE_SOLUTIONS`| Current set of solutions does not contain enough combinations despite proper Jaccard regularization and desired sparsity settings. | Solutions overlap siginificantly and uselessly. Some component weights (alphas) might be negligible too. | Dataset-dependent. Advisable to be at least double the expected `true` number of solutions. |"
+            f"| `N_ITER` | The ELBO has not converged, the mu values are still changing significantly. | The ELBO convergence plateaus early, time constraints. | {n_iter_range} |\n"
+            f"| `LEARNING_RATE` | Too slow progress. | Unstable training. | {lr_range} |\n"
+            f"|`BATCH_SIZE`| Dataset contains noise, missing data, or imbalanced classes. When the sample size is large. | Iterations are too slow. Sample size is too small. | Dataset-dependent, typically {batch_range}. |"
         )
     )
 
