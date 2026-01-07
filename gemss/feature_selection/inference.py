@@ -32,7 +32,7 @@ from .models import (
     StructuredSpikeAndSlabPrior,
     GaussianMixture,
 )
-from gemss.utils import myprint
+from gemss.utils.utils import myprint
 
 
 class BayesianFeatureSelector:

@@ -8,14 +8,14 @@ import numpy as np
 import pandas as pd
 from IPython.display import display, Markdown
 from sklearn.preprocessing import StandardScaler
-from gemss.utils import myprint, get_solution_summary_df, show_solution_summary
-from gemss.diagnostics.visualizations import (
+from gemss.utils.utils import myprint, get_solution_summary_df, show_solution_summary
+from gemss.utils.visualizations import (
     plot_elbo,
     plot_mu,
     plot_alpha,
     compare_parameters,
 )
-from gemss.diagnostics.outliers import (
+from gemss.postprocessing.outliers import (
     detect_outlier_features,
     show_outlier_info,
     get_outlier_solutions,

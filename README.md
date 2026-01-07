@@ -59,10 +59,12 @@ gemss/                       # Project root (editable install target)
       analysis_per_testcase.ipynb     # Per-testcase analysis (cross-tier)  
       analyze_hyperparameters.ipynb   # Hyperparameter effect analysis  
       tier_level_analysis.ipynb       # Tier-level summary and visualization  
-    results/                 # Notebook-specific artifacts and experiment outputs
+    results/                 # Notebook-specific artifacts and experiment outputs, if saved
 
   gemss/                     # Core Python package
-    utils.py                 # Persistence & display helpers (save/load history, solutions)  
+    utils/
+      utils.py               # Persistence & display helpers (save/load history, solutions)  
+      visualizations.py      # Plotting utilities for result postprocessing (ELBO, mu trajectories, alpha distributions)  
     config/                  # Modular configuration system  
       config.py              # Loader, caching, display utilities  
       constants.py           # Paths & global names  
@@ -70,25 +72,25 @@ gemss/                       # Project root (editable install target)
       generated_dataset_parameters.json  
       solution_postprocessing_settings.json  
     data_handling/  
-      data_processing.py     # Preprocessing (scaling, categorical handling)  
+      data_processing.py              # Preprocessing (scaling, categorical handling)  
       generate_artificial_dataset.py  # Synthetic data with controlled sparsity & missingness  
     feature_selection/  
       inference.py           # Variational optimization  
       models.py              # Prior & model component definitions  
-    experiment_assessment/   # Experiment results analysis & visualization  
+    postprocessing/ # Solution extraction from the optimization run, evaluation and downstream modeling
+      outliers.py               # Outlier-based feature set extraction
+      result_postprocessing.py  # Solution recovery, metrics (SI/ASI) & summarization  
+      simple_regressions.py     # Lightweight regression/classification evaluation
+      tabpfn_evaluation.py      # Nested CV \+ metrics \+ optional SHAP (TabPFN)
+    diagnostics/  # WORK IN PROGRESS: diagnostics of performance and results, hyperparameter tuning recommendations
+      performance_tests.py       # Convergence & stability diagnostics  
+      recommendations.py         # Parameter tuning heuristics
+      recommendation_messages.py # Message templates for recommendations
+    experiment_assessment/   # Experiment results analysis & visualization (development only)
       case_analysis.py                   # Utilities for analyzing test cases (cross-tier logic)  
       experiment_results_analysis.py     # Core analysis functions and metrics  
       experiment_results_interactive.py  # Interactive widgets for result exploration  
       experiment_results_visualizations.py # Plotting functions for experiment results  
-    diagnostics/  
-      visualizations.py      # Plotting (ELBO, mu trajectories, alpha distributions)  
-      result_postprocessing.py  # Solution recovery, metrics (SI/ASI) & summarization  
-      simple_regressions.py  # Lightweight regression/classification evaluation  
-      outliers.py            # Outlier-based feature set extraction  
-      performance_tests.py   # Convergence & stability diagnostics  
-      recommendations.py     # Parameter tuning heuristics  
-      recommendation_messages.py # Message templates for recommendations  
-      tabpfn_evaluation.py   # Nested CV \+ metrics \+ optional SHAP (TabPFN)
 ```
 
 ### Artifacts
@@ -172,7 +174,7 @@ In case of significant amount of missing data, it is advisable to increase the b
 The JSON format stores sections (solution types) each containing component → features mapping. Use a single dictionary keyed by solution titles.
 
 ```python
-from gemss.utils import save_feature_lists_json, load_feature_lists_json
+from gemss.utils.utils import save_feature_lists_json, load_feature_lists_json
 
 all_features_lists = {  
     "Top features": {"component_0": ["feat_a", "feat_b"], "component_1": ["feat_c"]},  
@@ -194,7 +196,7 @@ print(list(loaded_feature_lists.keys()))  # {'Top features', 'Full features', ..
 History contains per-iteration arrays (ELBO, mu, var, alpha). Arrays are stored as nested lists and automatically converted back to NumPy arrays when loading.
 
 ```python
-from gemss.utils import save_selector_history_json, load_selector_history_json
+from gemss.utils.utils import save_selector_history_json, load_selector_history_json
 
 msg = save_selector_history_json(history, "search_history_results.json")  
 print(msg)
@@ -208,7 +210,7 @@ print(msg)  # iterations count and keys
 Persist the exact hyperparameter setup used for a run.
 
 ```python
-from gemss.utils import save_constants_json, load_constants_json
+from gemss.utils.utils import save_constants_json, load_constants_json
 
 msg = save_constants_json(constants, "search_setup.json")  
 print(msg)
@@ -226,7 +228,7 @@ For reproducibility: pair search_setup.json (inputs), search_history_results.jso
 Use lightweight baselines to quickly validate discovered feature sets. This utility automatically detects regression vs binary classification and reports metrics on the training data.
 
 ```python
-from gemss.diagnostics.simple_regressions import solve_any_regression
+from gemss.postprocessing.simple_regressions import solve_any_regression
 
 # X_selected: pd.DataFrame or np.ndarray of selected features  
 # y: target vector (continuous for regression, binary/0-1 for classification)  
@@ -246,7 +248,7 @@ results = solve_any_regression(
 The tabpfn_evaluate helper (in gemss.diagnostics.tabpfn_evaluation) offers quick performance estimation of discovered feature sets via nested (outer) cross-validation and optional SHAP explanations.
 
 ```python
-from gemss.diagnostics.tabpfn_evaluation import tabpfn_evaluate
+from gemss.postprocessing.tabpfn_evaluation import tabpfn_evaluate
 
 results = tabpfn_evaluate(  
     X_selected,            # pd.DataFrame or np.ndarray  
@@ -275,9 +277,9 @@ Use cases:
 ## Diagnostics & Recommendations
 
 ```python
-from gemss.diagnostics.result_postprocessing import recover_solutions, show_algorithm_progress  
-from gemss.diagnostics.simple_regressions import solve_any_regression  
-from gemss.utils import show_solution_summary
+from gemss.postprocessing.result_postprocessing import recover_solutions, show_algorithm_progress  
+from gemss.postprocessing.simple_regressions import solve_any_regression  
+from gemss.utils.utils import show_solution_summary
 ```
 ### Core Functions
 

@@ -8,7 +8,7 @@ from typing import List, Optional, Dict, Any, Union
 import pandas as pd
 import numpy as np
 
-from gemss.utils import (
+from gemss.utils.utils import (
     myprint,
     generate_feature_names,
     get_solution_summary_df,

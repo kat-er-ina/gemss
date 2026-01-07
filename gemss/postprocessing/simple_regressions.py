@@ -28,8 +28,8 @@ from sklearn.metrics import (
 from sklearn.linear_model import LogisticRegressionCV, RidgeCV, LassoCV, ElasticNetCV
 from sklearn.exceptions import ConvergenceWarning
 
-from gemss.utils import myprint
-from gemss.diagnostics.visualizations import (
+from gemss.utils.utils import myprint
+from gemss.utils.visualizations import (
     show_confusion_matrix,
     show_predicted_vs_actual_response,
 )

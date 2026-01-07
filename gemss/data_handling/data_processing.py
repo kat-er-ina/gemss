@@ -10,7 +10,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-from gemss.utils import myprint
+from gemss.utils.utils import myprint
 
 
 def load_data(

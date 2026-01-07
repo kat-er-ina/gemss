@@ -29,14 +29,14 @@ from typing import Dict, List, Set, Tuple, Any, Optional
 import gemss.config as C
 from gemss.data_handling.generate_artificial_dataset import generate_artificial_dataset
 from gemss.feature_selection.inference import BayesianFeatureSelector
-from gemss.diagnostics.result_postprocessing import (
+from gemss.postprocessing.result_postprocessing import (
     recover_solutions,
     get_features_from_solutions,
     get_unique_features,
 )
-from gemss.diagnostics.simple_regressions import solve_any_regression
+from gemss.postprocessing.simple_regressions import solve_any_regression
 from gemss.diagnostics.performance_tests import run_performance_diagnostics
-from gemss.utils import dataframe_to_ascii_table, get_solution_summary_df
+from gemss.utils.utils import dataframe_to_ascii_table, get_solution_summary_df
 
 
 def parse_arguments() -> argparse.Namespace:

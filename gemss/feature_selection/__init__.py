@@ -12,4 +12,4 @@ Modules:
 
 from .inference import *
 from .models import *
-from ..utils import *
+from ..utils.utils import *
