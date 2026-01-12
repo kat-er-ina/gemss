@@ -147,7 +147,7 @@ def show_solution_summary(
     solution_data: Dict[str, pd.DataFrame],
     title: str = "Solution summary",
     value_column: str = "Feature",
-    format_function: Optional[callable] = None,
+    format_function: Optional[callable] = format_summary_row_feature_with_mu,
     use_markdown: Optional[bool] = True,
 ) -> None:
     """
@@ -167,7 +167,8 @@ def show_solution_summary(
         Name of the column to extract values from. Default is "Feature".
     format_function : callable, optional
         Optional function to format each value. Should take a row and return a string.
-        If None, uses the raw values from value_column. Default is None.
+        If None, uses the raw values from value_column. Default is the callable
+        format_summary_row_feature_with_mu, which formats the feature with its Mu value.
     use_markdown : bool, optional
         Whether to format the title using Markdown. Default is True.
 
