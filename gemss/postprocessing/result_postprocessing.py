@@ -360,8 +360,14 @@ def show_algorithm_progress(
 
     if subsample_history_for_plotting:
         every_nth_iteration = 20
-        if (len(history) > 2000) and (len(history) * len(history["mu"][0])) > 1e6:
+        if (len(history) >= 2000) and (len(history) * len(history["mu"][0])) > 1e6:
             every_nth_iteration = 50
+        if (len(history) >= 4000) and (len(history) * len(history["mu"][0])) > 1e6:
+            every_nth_iteration = 100
+        if len(history) >= 8000:
+            every_nth_iteration = 200
+        if len(history) >= 15000:
+            every_nth_iteration = 500
         history_to_plot = {
             key: values[::every_nth_iteration] if isinstance(values, list) else values
             for key, values in history.items()
