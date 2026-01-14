@@ -384,8 +384,6 @@ def show_algorithm_progress(
     # Plot mixture means trajectory for each component
     if plot_mu_progress:
         for k in range(n_components):
-            myprint(f"Candidate solution {k}", header=3, use_markdown=True)
-
             # Optionally add info about outliers
             if detect_outliers:
                 final_mus_df[f"component_{k}_mus"] = history["mu"][-1][k]
@@ -401,7 +399,7 @@ def show_algorithm_progress(
                     component_numbers=k,
                     use_markdown=True,
                 )
-
+            # Most important plots: mu trajectories
             plot_mu(
                 history_to_plot,
                 component=k,
@@ -644,5 +642,3 @@ def show_final_parameter_comparison(
     for i, alpha in enumerate(final_parameters["final alpha"]):
         display(Markdown(f"- **Component {i}:** {alpha:.3f}"))
     return
-
-
