@@ -21,11 +21,15 @@
 - Add global ranking of features across all components.
 - Possibly test for differences between outliers and other solutions => it can provide some diagnostics.
 
-### Integration & Deployment (wishful thinking)
+### Dependencies of parameters (nice to have)
 
+- Some parameters are used only in certain setups, most importantly the type of prior. Currently, all parameters are set up regardless of these dependencies (and only the relevant ones are used). It would be good to have handling of these dependencies in the code instead of just comments.
+
+### Integration & Deployment
+
+- **Marimo notebooks** - interactive web-ready interface. Main purposes: 1. demo, 2. easy access by domain experts
 - **Scikit-learn compatibility** - standard fit/predict/transform interface
-- **Docker containerization** - reproducible environments
-- **MLflow integration** - experiment tracking and model registry
+- **MLflow integration** - experiment tracking and model registry (wishful thinking)
 
 ---
 
