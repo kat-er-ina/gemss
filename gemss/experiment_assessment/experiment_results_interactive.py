@@ -322,6 +322,7 @@ def show_interactive_heatmap(
             value=DEFAULT_AGGREGATION_FUNC,
             description="Aggregation:",
         ),
+        title=fixed(None),
     )
     return
 

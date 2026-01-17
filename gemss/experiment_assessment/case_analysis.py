@@ -70,7 +70,7 @@ CASE_DESCRIPTION[39] = (
 CASE_DESCRIPTION[40] = "Regression, adversity: effect of varying noise (Tier 6)"
 CASE_DESCRIPTION[41] = "Regression, adversity: effect of varying Nans (Tier 6)"
 CASE_DESCRIPTION[42] = (
-    "Regression, adversity: effect of varying both noise and NaNs (Tier 6)"
+    "Regression, adversity: overall effect of varying both noise and NaNs (Tier 6)"
 )
 # Descriptions for regression vs. classification experiment cases
 CASE_DESCRIPTION[43] = "Regression vs. classification: basic scenarios (Tiers 1 + 6)"
@@ -83,7 +83,13 @@ CASE_DESCRIPTION[47] = (
     "Regression vs. classification: effect of both noise and NaNs (Tiers 3 + 6)"
 )
 
-SUMMARY_CASES = [c for c in range(1, 48) if "overall" in CASE_DESCRIPTION[c].lower()]
+SUMMARY_CASES = [
+    c
+    for c in range(1, 48)
+    if "overall" in CASE_DESCRIPTION[c].lower()
+    or "compar" in CASE_DESCRIPTION[c].lower()
+    or "vs." in CASE_DESCRIPTION[c].lower()
+]
 CASE_SET_RANGES = {
     # all classification cases = baseline + scalability + samplerich + adversity + jaccard + unbalanced
     "baseline": [1, 2, 3, 14, 15, 16],
@@ -122,8 +128,8 @@ def case2set(case_id: int) -> str:
 
 
 ################################################################################################
-# Define COLORING_PARAM_PER_CASESET and SYMBOL_PARAM_PER_CASESET for each case set or each case
 
+# Define COLORING_PARAM_PER_CASESET and SYMBOL_PARAM_PER_CASESET for each case set or each case
 COLORING_PARAM_PER_CASESET = {
     "baseline": "[N_SAMPLES, N_FEATURES] COMBINATION",
     "scalability": "SAMPLE_VS_FEATURE_RATIO",
@@ -150,14 +156,31 @@ SYMBOL_PARAM_PER_CASESET = {
     "reg_vs_class": "SAMPLE_VS_FEATURE_RATIO",
 }
 
-# Define COLORING_PARAM_PER_CASE and SYMBOL_PARAM_PER_CASE for all cases individually
+# Axes for summarizing heatmaps
+HEATMAP_PARAM_PER_CASESET = {
+    "baseline": ["N_FEATURES", "N_SAMPLES"],
+    "scalability": ["N_FEATURES", "N_SAMPLES"],
+    "samplerich": ["N_FEATURES", "N_SAMPLES"],
+    "adversity": ["NAN_RATIO", "NOISE_STD"],
+    "jaccard": ["LAMBDA_JACCARD", "SPARSITY"],
+    "unbalanced": ["BINARY_RESPONSE_RATIO", "N_FEATURES"],
+    "reg_baseline": ["N_FEATURES", "N_SAMPLES"],
+    "reg_scalability": ["N_FEATURES", "N_SAMPLES"],
+    "reg_adversity": ["NAN_RATIO", "NOISE_STD"],
+    "reg_vs_class": ["[N_SAMPLES, N_FEATURES] COMBINATION", "BINARIZE"],
+}
+
+
+# Define *_PARAM_PER_CASE for all cases individually
 # First initialize them based on the case sets, then override specific cases if needed
 COLORING_PARAM_PER_CASE = {}
 SYMBOL_PARAM_PER_CASE = {}
+HEATMAP_PARAM_PER_CASE = {}
 for case_id in CASE_DESCRIPTION.keys():
     case_set = case2set(case_id)
     COLORING_PARAM_PER_CASE[case_id] = COLORING_PARAM_PER_CASESET[case_set]
     SYMBOL_PARAM_PER_CASE[case_id] = SYMBOL_PARAM_PER_CASESET[case_set]
+    HEATMAP_PARAM_PER_CASE[case_id] = HEATMAP_PARAM_PER_CASESET[case_set]
 
 # TODO: If needed, override specific cases here
 SYMBOL_PARAM_PER_CASE[3] = "SPARSITY"
@@ -186,6 +209,11 @@ COLORING_PARAM_PER_CASE[41] = "NOISE_STD"
 SYMBOL_PARAM_PER_CASE[41] = "NAN_RATIO"
 COLORING_PARAM_PER_CASE[42] = "[NOISE_STD, NAN_RATIO] COMBINATION"
 SYMBOL_PARAM_PER_CASE[42] = None
+
+# regression vs. classification cases, adversity scenarios
+HEATMAP_PARAM_PER_CASE[45] = ["[NOISE_STD, NAN_RATIO] COMBINATION", "BINARIZE"]
+HEATMAP_PARAM_PER_CASE[46] = ["[NOISE_STD, NAN_RATIO] COMBINATION", "BINARIZE"]
+HEATMAP_PARAM_PER_CASE[47] = ["[NOISE_STD, NAN_RATIO] COMBINATION", "BINARIZE"]
 
 ################################################################################################
 

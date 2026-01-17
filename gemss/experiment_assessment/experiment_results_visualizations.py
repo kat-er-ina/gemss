@@ -622,6 +622,7 @@ def plot_heatmap(
     identifiers_list: Optional[List[str]] = None,
     solution_type: Optional[str] = "all types",
     aggregation_func: Literal["mean", "median"] = DEFAULT_AGGREGATION_FUNC,
+    title: Optional[str] = None,
 ) -> None:
     """
     Plot a heatmap showing the interaction of two parameters on a metric.
@@ -647,6 +648,8 @@ def plot_heatmap(
     aggregation_func : Literal["mean", "median"], optional
         The aggregation function to use when multiple entries exist
         for the same (x_axis, y_axis) pair. DEFAULT_AGGREGATION_FUNC by default.
+    title : Optional[str] = None
+        Title for the plot. If None, a default title is generated.
 
     Returns
     -------
@@ -687,17 +690,26 @@ def plot_heatmap(
     # Pivot for heatmap format
     pivot_table = heatmap_data.pivot(index=y_axis, columns=x_axis, values=metric_name)
 
+    # Convert axes to categorical (strings) for equal-sized cells
+    pivot_table.index = pivot_table.index.astype(str)
+    pivot_table.columns = pivot_table.columns.astype(str)
+
+    is_01_range = False if "ASI" in metric_name or "SI" in metric_name else True
+    is_reversed = True if "Miss" in metric_name or "FDR" in metric_name else False
     fig = px.imshow(
         pivot_table,
         labels=dict(x=x_axis, y=y_axis, color=metric_name),
-        title=f"{metric_name} for {solution_type} solution",
+        title=f"{metric_name} for {solution_type} solution" if title is None else title,
         text_auto=".2f",
-        aspect="auto",
-        color_continuous_scale=(
-            "RdBu_r" if "Miss" in metric_name or "FDR" in metric_name else "Viridis"
-        ),
+        aspect="equal",
+        origin="lower",
+        zmin=0.0 if is_01_range else None,
+        zmax=1.0 if is_01_range else None,
+        color_continuous_scale="PuBuGn_r" if is_reversed else "PuBuGn",
+        # width=900,
+        # height=900,
     )
-    fig.update_layout(height=600)
+    fig.update_traces(textfont_size=12)
     fig.show(config={"displayModeBar": False})
     return
 
