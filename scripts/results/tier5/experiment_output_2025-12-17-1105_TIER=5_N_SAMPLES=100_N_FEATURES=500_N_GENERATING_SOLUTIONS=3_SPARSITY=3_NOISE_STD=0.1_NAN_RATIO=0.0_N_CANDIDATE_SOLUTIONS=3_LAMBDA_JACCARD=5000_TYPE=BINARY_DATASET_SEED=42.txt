@@ -1,0 +1,371 @@
+# GEMSS Experiment Results
+
+## Parameters and Settings
+
+- N_SAMPLES: 100
+- N_FEATURES: 500
+- N_GENERATING_SOLUTIONS: 3
+- SPARSITY: 3
+- NOISE_STD: 0.1
+- NAN_RATIO: 0
+- BINARIZE: True
+- BINARY_RESPONSE_RATIO: 0.5
+- DATASET_SEED: 42
+- N_CANDIDATE_SOLUTIONS: 3
+- N_ITER: 4000
+- PRIOR_TYPE: sss
+- PRIOR_SPARSITY: 3
+- SAMPLE_MORE_PRIORS_COEFF: 1
+- STUDENT_DF: 1
+- STUDENT_SCALE: 1
+- VAR_SLAB: 100
+- VAR_SPIKE: 0.1
+- WEIGHT_SLAB: 0.9
+- WEIGHT_SPIKE: 0.1
+- IS_REGULARIZED: True
+- LAMBDA_JACCARD: 5000
+- BATCH_SIZE: 16
+- LEARNING_RATE: 0.002
+- DESIRED_SPARSITY: 3
+- MIN_MU_THRESHOLD: 0.2
+- USE_MEDIAN_FOR_OUTLIER_DETECTION: False
+- OUTLIER_DEVIATION_THRESHOLDS: [2.0, 2.5, 3.0]
+
+----------------------------------------------------------------------
+
+   ------   ANALYSIS - Solution type: FULL   ------   
+
+## FULL Solutions
+
+All features with |mu| > 0.2
+
+Coverage Metrics for full
+=========================
+
+| Index                  | Value  |
+| ______________________ | ______ |
+| n_features_found       | 9.000  |
+| n_correct              | 9.000  |
+| n_missed               | 0.000  |
+| n_extra                | 0.000  |
+| Recall                 | 1.000  |
+| Precision              | 1.000  |
+| F1_Score               | 1.000  |
+| Jaccard                | 1.000  |
+| Miss_Rate              | 0.000  |
+| FDR                    | 0.000  |
+| Global_Miss_Rate       | 0.000  |
+| Global_FDR             | 0.000  |
+| Success_Index          | 55.556 |
+| Adjusted_Success_Index | 55.556 |
+
+## Overview of discovered features for FULL solutions:
+
+ - 9 unique true support features:
+   ['feature_262', 'feature_327', 'feature_348', 'feature_367', 'feature_386', 'feature_42', 'feature_427', 'feature_44', 'feature_486']
+
+
+ - 9 discovered features:
+   ['feature_262', 'feature_327', 'feature_348', 'feature_367', 'feature_386', 'feature_42', 'feature_427', 'feature_44', 'feature_486']
+
+ - 0 missed true support features:
+   []
+
+ - 0 extra features found (not in true support):
+   []
+
+
+Overview of FULL solutions
+============================
+
+| Index | component_0                | component_1                | component_2                |
+| _____ | __________________________ | __________________________ | __________________________ |
+| 0     | feature_386 (mu = 0.5383)  | feature_367 (mu = -0.6962) | feature_262 (mu = 1.7402)  |
+| 1     | feature_44 (mu = -0.4792)  | feature_348 (mu = -0.6593) | feature_367 (mu = -1.3458) |
+| 2     | feature_327 (mu = -0.4430) | feature_427 (mu = 0.5327)  | feature_348 (mu = 0.6462)  |
+| 3     | feature_486 (mu = -0.4158) | feature_262 (mu = 0.2923)  | feature_327 (mu = 0.5430)  |
+| 4     | feature_42 (mu = 0.3371)   | feature_327 (mu = 0.2316)  | feature_42 (mu = -0.5426)  |
+| 5     | feature_427 (mu = 0.3230)  | None                       | feature_427 (mu = 0.5073)  |
+| 6     | feature_262 (mu = 0.2099)  | None                       | feature_386 (mu = 0.3428)  |
+| 7     | None                       | None                       | feature_486 (mu = -0.2553) |
+| 8     | None                       | None                       | feature_44 (mu = 0.2336)   |
+
+
+Regression results on training data (l2 penalty)
+================================================
+
+No data to display.
+
+----------------------------------------------------------------------
+
+   ------   ANALYSIS - Solution type: TOP   ------   
+
+## TOP Solutions
+
+Required sparsity = 3
+
+Coverage Metrics for top
+========================
+
+| Index                  | Value  |
+| ______________________ | ______ |
+| n_features_found       | 7.000  |
+| n_correct              | 7.000  |
+| n_missed               | 2.000  |
+| n_extra                | 0.000  |
+| Recall                 | 0.778  |
+| Precision              | 1.000  |
+| F1_Score               | 0.875  |
+| Jaccard                | 0.778  |
+| Miss_Rate              | 0.222  |
+| FDR                    | 0.000  |
+| Global_Miss_Rate       | 0.004  |
+| Global_FDR             | 0.000  |
+| Success_Index          | 43.210 |
+| Adjusted_Success_Index | 43.210 |
+
+## Overview of discovered features for TOP solutions:
+
+ - 9 unique true support features:
+   ['feature_262', 'feature_327', 'feature_348', 'feature_367', 'feature_386', 'feature_42', 'feature_427', 'feature_44', 'feature_486']
+
+
+ - 7 discovered features:
+   ['feature_262', 'feature_327', 'feature_348', 'feature_367', 'feature_386', 'feature_427', 'feature_44']
+
+ - 2 missed true support features:
+   ['feature_42', 'feature_486']
+
+ - 0 extra features found (not in true support):
+   []
+
+
+Overview of TOP solutions
+===========================
+
+| Index | component_0                | component_1                | component_2                |
+| _____ | __________________________ | __________________________ | __________________________ |
+| 0     | feature_386 (mu = 0.5383)  | feature_367 (mu = -0.6962) | feature_262 (mu = 1.7402)  |
+| 1     | feature_44 (mu = -0.4792)  | feature_348 (mu = -0.6593) | feature_367 (mu = -1.3458) |
+| 2     | feature_327 (mu = -0.4430) | feature_427 (mu = 0.5327)  | feature_348 (mu = 0.6462)  |
+
+
+Regression results on training data (l2 penalty)
+================================================
+
+No data to display.
+
+----------------------------------------------------------------------
+
+   ------   ANALYSIS - Solution type: OUTLIER (STD_2.0)   ------   
+
+## OUTLIER (STD_2.0) Solutions
+
+Features identified as outliers based on standard deviation.
+
+Coverage Metrics for outlier (STD_2.0)
+======================================
+
+| Index                  | Value  |
+| ______________________ | ______ |
+| n_features_found       | 32.000 |
+| n_correct              | 9.000  |
+| n_missed               | 0.000  |
+| n_extra                | 23.000 |
+| Recall                 | 1.000  |
+| Precision              | 0.281  |
+| F1_Score               | 0.439  |
+| Jaccard                | 0.281  |
+| Miss_Rate              | 0.000  |
+| FDR                    | 0.719  |
+| Global_Miss_Rate       | 0.000  |
+| Global_FDR             | 0.046  |
+| Success_Index          | 55.556 |
+| Adjusted_Success_Index | 15.625 |
+
+## Overview of discovered features for OUTLIER (STD_2.0) solutions:
+
+ - 9 unique true support features:
+   ['feature_262', 'feature_327', 'feature_348', 'feature_367', 'feature_386', 'feature_42', 'feature_427', 'feature_44', 'feature_486']
+
+
+ - 32 discovered features:
+   ['feature_102', 'feature_106', 'feature_183', 'feature_191', 'feature_227', 'feature_23', 'feature_260', 'feature_262', 'feature_289', 'feature_296', 'feature_323', 'feature_327', 'feature_348', 'feature_358', 'feature_367', 'feature_370', 'feature_386', 'feature_403', 'feature_406', 'feature_417', 'feature_42', 'feature_420', 'feature_423', 'feature_427', 'feature_44', 'feature_447', 'feature_47', 'feature_486', 'feature_6', 'feature_76', 'feature_81', 'feature_94']
+
+ - 0 missed true support features:
+   []
+
+ - 23 extra features found (not in true support):
+   ['feature_102', 'feature_106', 'feature_183', 'feature_191', 'feature_227', 'feature_23', 'feature_260', 'feature_289', 'feature_296', 'feature_323', 'feature_358', 'feature_370', 'feature_403', 'feature_406', 'feature_417', 'feature_420', 'feature_423', 'feature_447', 'feature_47', 'feature_6', 'feature_76', 'feature_81', 'feature_94']
+
+
+Overview of OUTLIER (STD_2.0) solutions
+=========================================
+
+| Index | component_0                | component_1                | component_2                |
+| _____ | __________________________ | __________________________ | __________________________ |
+| 0     | feature_386 (mu = 0.5383)  | feature_367 (mu = -0.6962) | feature_262 (mu = 1.7402)  |
+| 1     | feature_44 (mu = -0.4792)  | feature_348 (mu = -0.6593) | feature_367 (mu = -1.3458) |
+| 2     | feature_327 (mu = -0.4430) | feature_427 (mu = 0.5327)  | feature_348 (mu = 0.6462)  |
+| 3     | feature_486 (mu = -0.4158) | feature_262 (mu = 0.2923)  | feature_327 (mu = 0.5430)  |
+| 4     | feature_42 (mu = 0.3371)   | feature_327 (mu = 0.2316)  | feature_42 (mu = -0.5426)  |
+| 5     | feature_427 (mu = 0.3230)  | feature_42 (mu = -0.1562)  | feature_427 (mu = 0.5073)  |
+| 6     | feature_262 (mu = 0.2099)  | feature_486 (mu = 0.1300)  | feature_386 (mu = 0.3428)  |
+| 7     | feature_348 (mu = -0.1713) | feature_44 (mu = -0.1041)  | feature_486 (mu = -0.2553) |
+| 8     | feature_367 (mu = -0.1390) | feature_386 (mu = -0.1000) | feature_44 (mu = 0.2336)   |
+| 9     | feature_406 (mu = -0.0686) | feature_106 (mu = 0.0725)  | feature_76 (mu = 0.0731)   |
+| 10    | feature_423 (mu = -0.0617) | feature_102 (mu = -0.0687) | feature_227 (mu = -0.0690) |
+| 11    | feature_183 (mu = -0.0613) | feature_323 (mu = -0.0673) | None                       |
+| 12    | feature_94 (mu = 0.0607)   | feature_417 (mu = -0.0525) | None                       |
+| 13    | feature_260 (mu = 0.0584)  | feature_23 (mu = -0.0491)  | None                       |
+| 14    | feature_447 (mu = -0.0554) | feature_81 (mu = 0.0488)   | None                       |
+| 15    | feature_296 (mu = -0.0531) | feature_420 (mu = -0.0487) | None                       |
+| 16    | feature_289 (mu = 0.0529)  | feature_358 (mu = -0.0471) | None                       |
+| 17    | feature_6 (mu = 0.0490)    | feature_403 (mu = -0.0464) | None                       |
+| 18    | None                       | feature_191 (mu = -0.0461) | None                       |
+| 19    | None                       | feature_370 (mu = -0.0460) | None                       |
+| 20    | None                       | feature_47 (mu = -0.0447)  | None                       |
+
+
+Regression results on training data (l2 penalty)
+================================================
+
+No data to display.
+
+----------------------------------------------------------------------
+
+   ------   ANALYSIS - Solution type: OUTLIER (STD_2.5)   ------   
+
+## OUTLIER (STD_2.5) Solutions
+
+Features identified as outliers based on standard deviation.
+
+Coverage Metrics for outlier (STD_2.5)
+======================================
+
+| Index                  | Value  |
+| ______________________ | ______ |
+| n_features_found       | 15.000 |
+| n_correct              | 9.000  |
+| n_missed               | 0.000  |
+| n_extra                | 6.000  |
+| Recall                 | 1.000  |
+| Precision              | 0.600  |
+| F1_Score               | 0.750  |
+| Jaccard                | 0.600  |
+| Miss_Rate              | 0.000  |
+| FDR                    | 0.400  |
+| Global_Miss_Rate       | 0.000  |
+| Global_FDR             | 0.012  |
+| Success_Index          | 55.556 |
+| Adjusted_Success_Index | 33.333 |
+
+## Overview of discovered features for OUTLIER (STD_2.5) solutions:
+
+ - 9 unique true support features:
+   ['feature_262', 'feature_327', 'feature_348', 'feature_367', 'feature_386', 'feature_42', 'feature_427', 'feature_44', 'feature_486']
+
+
+ - 15 discovered features:
+   ['feature_102', 'feature_106', 'feature_183', 'feature_262', 'feature_323', 'feature_327', 'feature_348', 'feature_367', 'feature_386', 'feature_406', 'feature_42', 'feature_423', 'feature_427', 'feature_44', 'feature_486']
+
+ - 0 missed true support features:
+   []
+
+ - 6 extra features found (not in true support):
+   ['feature_102', 'feature_106', 'feature_183', 'feature_323', 'feature_406', 'feature_423']
+
+
+Overview of OUTLIER (STD_2.5) solutions
+=========================================
+
+| Index | component_0                | component_1                | component_2                |
+| _____ | __________________________ | __________________________ | __________________________ |
+| 0     | feature_386 (mu = 0.5383)  | feature_367 (mu = -0.6962) | feature_262 (mu = 1.7402)  |
+| 1     | feature_44 (mu = -0.4792)  | feature_348 (mu = -0.6593) | feature_367 (mu = -1.3458) |
+| 2     | feature_327 (mu = -0.4430) | feature_427 (mu = 0.5327)  | feature_348 (mu = 0.6462)  |
+| 3     | feature_486 (mu = -0.4158) | feature_262 (mu = 0.2923)  | feature_327 (mu = 0.5430)  |
+| 4     | feature_42 (mu = 0.3371)   | feature_327 (mu = 0.2316)  | feature_42 (mu = -0.5426)  |
+| 5     | feature_427 (mu = 0.3230)  | feature_42 (mu = -0.1562)  | feature_427 (mu = 0.5073)  |
+| 6     | feature_262 (mu = 0.2099)  | feature_486 (mu = 0.1300)  | feature_386 (mu = 0.3428)  |
+| 7     | feature_348 (mu = -0.1713) | feature_44 (mu = -0.1041)  | feature_486 (mu = -0.2553) |
+| 8     | feature_367 (mu = -0.1390) | feature_386 (mu = -0.1000) | feature_44 (mu = 0.2336)   |
+| 9     | feature_406 (mu = -0.0686) | feature_106 (mu = 0.0725)  | None                       |
+| 10    | feature_423 (mu = -0.0617) | feature_102 (mu = -0.0687) | None                       |
+| 11    | feature_183 (mu = -0.0613) | feature_323 (mu = -0.0673) | None                       |
+
+
+Regression results on training data (l2 penalty)
+================================================
+
+No data to display.
+
+----------------------------------------------------------------------
+
+   ------   ANALYSIS - Solution type: OUTLIER (STD_3.0)   ------   
+
+## OUTLIER (STD_3.0) Solutions
+
+Features identified as outliers based on standard deviation.
+
+Coverage Metrics for outlier (STD_3.0)
+======================================
+
+| Index                  | Value  |
+| ______________________ | ______ |
+| n_features_found       | 12.000 |
+| n_correct              | 9.000  |
+| n_missed               | 0.000  |
+| n_extra                | 3.000  |
+| Recall                 | 1.000  |
+| Precision              | 0.750  |
+| F1_Score               | 0.857  |
+| Jaccard                | 0.750  |
+| Miss_Rate              | 0.000  |
+| FDR                    | 0.250  |
+| Global_Miss_Rate       | 0.000  |
+| Global_FDR             | 0.006  |
+| Success_Index          | 55.556 |
+| Adjusted_Success_Index | 41.667 |
+
+## Overview of discovered features for OUTLIER (STD_3.0) solutions:
+
+ - 9 unique true support features:
+   ['feature_262', 'feature_327', 'feature_348', 'feature_367', 'feature_386', 'feature_42', 'feature_427', 'feature_44', 'feature_486']
+
+
+ - 12 discovered features:
+   ['feature_102', 'feature_106', 'feature_262', 'feature_323', 'feature_327', 'feature_348', 'feature_367', 'feature_386', 'feature_42', 'feature_427', 'feature_44', 'feature_486']
+
+ - 0 missed true support features:
+   []
+
+ - 3 extra features found (not in true support):
+   ['feature_102', 'feature_106', 'feature_323']
+
+
+Overview of OUTLIER (STD_3.0) solutions
+=========================================
+
+| Index | component_0                | component_1                | component_2                |
+| _____ | __________________________ | __________________________ | __________________________ |
+| 0     | feature_386 (mu = 0.5383)  | feature_367 (mu = -0.6962) | feature_262 (mu = 1.7402)  |
+| 1     | feature_44 (mu = -0.4792)  | feature_348 (mu = -0.6593) | feature_367 (mu = -1.3458) |
+| 2     | feature_327 (mu = -0.4430) | feature_427 (mu = 0.5327)  | feature_348 (mu = 0.6462)  |
+| 3     | feature_486 (mu = -0.4158) | feature_262 (mu = 0.2923)  | feature_327 (mu = 0.5430)  |
+| 4     | feature_42 (mu = 0.3371)   | feature_327 (mu = 0.2316)  | feature_42 (mu = -0.5426)  |
+| 5     | feature_427 (mu = 0.3230)  | feature_42 (mu = -0.1562)  | feature_427 (mu = 0.5073)  |
+| 6     | feature_262 (mu = 0.2099)  | feature_486 (mu = 0.1300)  | feature_386 (mu = 0.3428)  |
+| 7     | feature_348 (mu = -0.1713) | feature_44 (mu = -0.1041)  | feature_486 (mu = -0.2553) |
+| 8     | feature_367 (mu = -0.1390) | feature_386 (mu = -0.1000) | feature_44 (mu = 0.2336)   |
+| 9     | None                       | feature_106 (mu = 0.0725)  | None                       |
+| 10    | None                       | feature_102 (mu = -0.0687) | None                       |
+| 11    | None                       | feature_323 (mu = -0.0673) | None                       |
+
+
+Regression results on training data (l2 penalty)
+================================================
+
+No data to display.
+
+----------------------------------------------------------------------

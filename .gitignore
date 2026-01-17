@@ -10,7 +10,6 @@ build/
 
 # Project specific
 *.html
-*.txt
 *.parquet
 
 # IDEs and editors
@@ -19,8 +18,12 @@ build/
 *.swp
 .DS_Store
 
-# Ignore results
+# Ignore notebook results
 notebooks/results/
+notebooks/*.txt
+
+# Ignore logs
+scripts/results/logs/
 
 # Ignore data
 data/
