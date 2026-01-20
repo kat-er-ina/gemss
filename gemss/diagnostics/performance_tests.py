@@ -536,19 +536,19 @@ class PerformanceTests:
             display(Markdown(f"**Component {component}** {status_icon}"))
             display(
                 Markdown(
-                    f" - {comp_detail["intersection_count"]}/{details['n_features_tested']} common features"
+                    f" - {comp_detail['intersection_count']}/{details['n_features_tested']} common features"
                 )
             )
             if comp_detail["intersection_count"] == 0:
                 display(Markdown("- **Component passed.**"))
             elif comp_detail["intersection_count"] == details["n_features_tested"]:
                 display(
-                    Markdown(f" - Common features: {comp_detail["common_features"]}")
+                    Markdown(f" - Common features: {comp_detail['common_features']}")
                 )
                 display(Markdown(f" - **Component failed.**"))
             else:
                 display(
-                    Markdown(f" - Common features: {comp_detail["common_features"]}")
+                    Markdown(f" - Common features: {comp_detail['common_features']}")
                 )
                 display(Markdown(f" - Jaccard similarity = {jaccard:.3f}"))
 
