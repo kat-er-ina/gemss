@@ -353,8 +353,12 @@ class BayesianFeatureSelector:
         """
         Main optimization loop for the feature selector.
 
-        Handles missing values internally using masking, ensures valid alphas,
-        and prevents propagation of NaNs in mixture weights.
+        Each iteration:
+        - Samples `z ~ q(z)` from the mixture
+        - Computes the ELBO (optionally regularized)
+        - Backpropagates and takes an Adam step on variational parameters
+
+        Missing values in `X` are handled inside `log_likelihood` via masking.
 
          Parameters
         ----------
