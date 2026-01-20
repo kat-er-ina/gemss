@@ -3,6 +3,7 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 
+from gemss.config.constants import DATA_DIR
 from gemss.utils.visualizations import (
     show_correlations_with_response,
     show_correlation_matrix,
@@ -307,14 +308,14 @@ def generate_artificial_dataset(
 
     if save_to_csv:
         suffix = f"{n_samples}x{n_features}_{n_solutions}sols_{sparsity}sparse_{noise_data_std}noise_{nan_ratio}nan_{random_seed}seed"
-        data.to_csv(f"../data/artificial_dataset_{suffix}.csv")
-        pd.DataFrame(solutions).to_csv(f"../data/artificial_support_{suffix}.csv")
-        parameters.to_csv(f"../data/artificial_generating_solutions_{suffix}.csv")
+        data.to_csv(DATA_DIR / f"artificial_dataset_{suffix}.csv")
+        pd.DataFrame(solutions).to_csv(DATA_DIR / f"artificial_support_{suffix}.csv")
+        parameters.to_csv(DATA_DIR / f"artificial_generating_solutions_{suffix}.csv")
 
         if binarize:
-            response.to_csv(f"../data/artificial_binary_labels_{suffix}.csv")
+            response.to_csv(DATA_DIR / f"artificial_binary_labels_{suffix}.csv")
         else:
-            response.to_csv(f"../data/artificial_continuous_labels_{suffix}.csv")
+            response.to_csv(DATA_DIR / f"artificial_continuous_labels_{suffix}.csv")
         print(
             f"Data and generating parameters saved to 'data/' directory with suffix '{suffix}'."
         )

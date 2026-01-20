@@ -11,6 +11,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 from gemss.utils.utils import myprint
+from gemss.config.constants import DATA_DIR
 
 
 def load_data(
@@ -35,7 +36,7 @@ def load_data(
     tuple[pd.DataFrame, pd.Series]
         A tuple containing the features DataFrame and the response Series.
     """
-    df = pd.read_csv(f"../data/{csv_dataset_name}", index_col=index_column_name)
+    df = pd.read_csv(DATA_DIR / csv_dataset_name, index_col=index_column_name)
     response = df.pop(label_column_name)
     return df, response
 

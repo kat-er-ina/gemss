@@ -15,6 +15,7 @@ CONFIG_FILES: Final = {
     "POSTPROCESSING": "solution_postprocessing_settings.json",
 }
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+DATA_DIR = ROOT_DIR / "data"
 
 # Project metadata
 PROJECT_NAME: Final = "Gaussian Ensemble for Multiple Sparse Solutions"
