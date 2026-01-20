@@ -4,9 +4,8 @@ Variational inference and optimization for Bayesian sparse feature selection.
 Implements:
 
 - ELBO objective
-- Gradient and Hessian computation
-- SGD/Adam parameter updates
-- Regularized ELBO with Jaccard similarity penalty
+- Gradient-based optimization of variational parameters (Adam)
+- Optional support-overlap regularization (Jaccard penalty)
 
 Classes
 -------
