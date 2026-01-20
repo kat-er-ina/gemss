@@ -48,7 +48,7 @@ print(config_dir / CONFIG_FILES[str_data])
 print(config_dir / CONFIG_FILES[str_algo])
 print(config_dir / CONFIG_FILES[str_post])
 "@
-$paths = python -c $pythonCmd
+$paths = uv run python -c $pythonCmd
 $pathArray = $paths.Split("`n")
 $GEN_JSON = $pathArray[0].Trim()
 $ALG_JSON = $pathArray[1].Trim()
@@ -154,7 +154,7 @@ foreach ($combo in $combinations) {
     ) -join "_"
     $output_file = "${resultsDir}\experiment_output_${timestamp}_${combo_named}.txt"
 
-    python $RUN_SCRIPT --output $output_file
+    uv run python $RUN_SCRIPT --output $output_file
 }
 Write-Host "====================================================================================="
 Write-Host "All predefined experiments finished. Check the results/ directory for outputs."

@@ -74,13 +74,97 @@ gemss/
     utils/                   # Persistence and visualization
 ```
 
-**Output artifacts:**
+<!-- ## Output artifacts
 * `search_setup*.json` — configuration used
 * `search_history_results*.json` — optimization trajectories
 * `all_candidate_solutions*.json` — discovered feature sets
-* `tier_summary_metrics.csv` — aggregated experiment metrics
+* `tier_summary_metrics.csv` — aggregated experiment metrics -->
 
-## Configuration
+
+## Package installation
+
+This project uses [uv](https://github.com/astral-sh/uv) for dependency management. `uv` replaces tools like `pip`.
+
+### 1. Install uv
+If you do not have `uv` installed, run one of the following commands:
+
+**macOS/Linux:**
+```bash
+curl -LsSf [https://astral.sh/uv/install.sh](https://astral.sh/uv/install.sh) | sh
+```
+
+**Windows*:*
+```powershell
+powershell -c "irm [https://astral.sh/uv/install.ps1](https://astral.sh/uv/install.ps1) | iex"
+```
+
+### 2. Set up the environment
+
+Navigate to the repository root and sync the environment. This command will create a virtual environment and install all dependencies (including the `gemss` package itself) defined in `pyproject.toml`.
+
+```bash
+uv sync
+```
+
+
+## Usage
+
+GEMSS can be applied to both custom datasets and synthetic data for validation and benchmarking.
+
+### Interactive demos
+
+**Demo:** [notebooks/demo.ipynb](notebooks/demo.ipynb) — complete synthetic data walkthrough
+
+**Custom data:** [notebooks/explore_custom_dataset.ipynb](notebooks/explore_custom_dataset.ipynb) — guided workflow for your datasets
+
+The notebooks can be opened either in your favorite editor or by using `uv run`, e.g.:
+
+```bash
+uv run jupyter notebook notebooks/demo.ipynb
+```
+
+### Custom datasets
+
+1. Place your CSV file in `data/`
+2. Open [notebooks/explore_custom_dataset.ipynb](notebooks/explore_custom_dataset.ipynb)
+3. Configure data loading (file name, index, target column)
+4. Review preprocessing outputs and adjust as needed
+5. Adjust algorithm hyperparameters
+6. Run and review diagnostics/visualizations
+7. Iterate based on convergence and results
+
+**Data requirements:** Numerical features preferred. Missing values handled natively. Preprocessing utilities include standard/minmax scaling.
+
+### Experiments on artificial data
+
+In order to use correct Python dependencies, it is recommended that scripts are run using `uv run python` instead of the `python` command.
+
+```bash
+# Single experiment
+uv run python scripts/run_experiment.py
+```
+
+**Batch experiments (PowerShell):** for the PowerShell scripts, it is often easier to activate the environment first:
+
+```bash
+# Activate environment (Windows)
+.venv\Scripts\activate.ps1
+```
+
+Then run:
+
+```bash
+# Parameter sweeps
+.\scripts\run_sweep.ps1
+
+# Full tiered benchmark (128 experiments)
+.\scripts\run_tiers.ps1
+```
+
+See [scripts/README.md](scripts/README.md) for detailed experimental design documentation.
+
+
+## Parameter configuration
 
 Three JSON files in `gemss/config/` control all parameters:
 
@@ -126,47 +210,6 @@ For synthetic data generation (experiments and demos):
 * `BINARIZE`: Binary classification (true) vs regression (false)
 * `BINARY_RESPONSE_RATIO`: Class balance for classification
 
-## Quick start
-
-```bash
-pip install -r requirements.txt
-pip install -e .  # optional, for development
-```
-
-**Demo:** [notebooks/demo.ipynb](notebooks/demo.ipynb) — complete synthetic data walkthrough
-
-**Custom data:** [notebooks/explore_custom_dataset.ipynb](notebooks/explore_custom_dataset.ipynb) — guided workflow for your datasets
-
-## Usage
-
-GEMSS can be applied to both custom datasets and synthetic data for validation and benchmarking.
-
-### Custom datasets
-
-1. Place your CSV file in `data/`
-2. Open [notebooks/explore_custom_dataset.ipynb](notebooks/explore_custom_dataset.ipynb)
-3. Configure data loading (file name, index, target column)
-4. Review preprocessing outputs and adjust as needed
-5. Adjust algorithm hyperparameters
-6. Run and review diagnostics/visualizations
-7. Iterate based on convergence and results
-
-**Data requirements:** Numerical features preferred. Missing values handled natively. Preprocessing utilities include standard/minmax scaling.
-
-### Experiments on artificial data
-
-```bash
-# Single experiment
-python scripts/run_experiment.py
-
-# Parameter sweeps
-.\scripts\run_sweep.ps1
-
-# Full tiered benchmark (128 experiments)
-.\scripts\run_tiers.ps1
-```
-
-See [scripts/README.md](scripts/README.md) for detailed experimental design documentation.
 
 ## Missing data handling
 
@@ -286,6 +329,7 @@ Experiments are grouped into **47 test cases** addressing specific research ques
 
 **Run experiments:**
 ```bash
+.venv\Scripts\activate.ps1    # Activate environment (Windows)
 .\scripts\run_tiers.ps1                          # Full suite
 .\scripts\run_tiers.ps1 -tiers @("1","4")        # Selected tiers
 ```

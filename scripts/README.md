@@ -146,10 +146,23 @@ These vary across experiments to test different scenarios:
 
 ## How to reproduce experiments on artificial data
 
-```
-# Single experiment  
-python run_experiment.py
+In order to use correct Python dependencies, it is recommended that scripts are run using `uv run python` instead of the `python` command.
 
+```bash
+# Single experiment  
+uv run python run_experiment.py
+```
+
+**Batch experiments (PowerShell):** for the PowerShell scripts, it is often easier to activate the environment first:
+
+```bash
+# Activate environment (Windows)
+.venv\Scripts\activate.ps1
+```
+
+Then run:
+
+```bash
 # Full suite (all tiers, 128 experiments)  
 .\run_tiers.ps1 -parametersFile "experiment_parameters.json"
 
@@ -165,10 +178,6 @@ The `tier_summary_metrics.csv` files contain aggregated performance metrics (Rec
 1. **Full:** All features with non-zero importance.  
 2. **Top:** Top features matching the DESIRED_SPARSITY.  
 3. **Outlier:** Features detected as outliers using deviations of 2.0, 2.5, and 3.0.
-
-
-### Definition of test cases
-
 
 
 ### Assessment of results
