@@ -609,7 +609,7 @@ def analyze_metric_results(
     ] = DEFAULT_METRIC,
     thresholds: Dict[str, float] = None,
     verbose: Optional[bool] = True,
-) -> None:
+) -> pd.DataFrame:
     """
     Analyze the distribution of a specified metric for a given solution type.
 
@@ -642,6 +642,12 @@ def analyze_metric_results(
     thresholds : Optional[Dict[str, float]]
         Dictionary defining the lower bounds for performance categories.
         Defaults to THRESHOLDS_FOR_METRIC for the given metric.
+
+    Returns:
+    --------
+    pd.DataFrame
+        A DataFrame with counts of experiments in each performance category
+        ("Excellent", "Good", "Moderate", "Poor", "Unknown").
     """
     if group_identifier is not None:
         # if no identifiers provided, use all unique identifiers
