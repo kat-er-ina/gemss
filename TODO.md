@@ -8,7 +8,6 @@
 - **nan_ratio check in regression computations** - nan_ratio is sometimes in range 0 to 100 (instead of 0 - 1) for some components but it is not clear why.
 - **fix duplicities in logging** of experiment results.
 
----
 
 ## Additions
 
@@ -31,7 +30,12 @@
 - **Scikit-learn compatibility** - standard fit/predict/transform interface
 - **MLflow integration** - experiment tracking and model registry (wishful thinking)
 
----
+### Better dependency management
+
+- Marek: If you consider pushing the package to PyPi, I would consider moving dependencies that are not needed for running the main code to `dev` dep group. Reasoning, if I want to use `gemss` in some data pipeline I don't want `jupyter` to be installed. `dev` deps are also good place for `ruff`, `pytest`
+
+- Update Python to 3.13
+
 
 ## Research & Development
 
