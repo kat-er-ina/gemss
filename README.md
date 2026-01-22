@@ -8,26 +8,19 @@ In many real-world problems, e.g. in life sciences, datasets with far more featu
 
 Traditional feature selection methods typically identify only a single solution to a classification or regression problem, overlooking the ambiguity and the potential for multiple valid interpretations. This project addresses that gap by providing a Bayesian framework that systematically recovers all plausible sparse solutions, enabling a more complete understanding of the data and supporting the exploration and comparison of alternative explanatory hypotheses.
 
----
 
 ## Citation
 
 If you use GEMSS in your research, please cite:
 
 ```bibtex
-@article{GEMSS2026,
-  author = {Katerina Henclova, Vaclav Smidl},
-  title = {GEMSS: A Variational Bayesian Method for Discovering Multiple
-Sparse Solutions in Classification and Regression Problems},
-  journal = {Journal Name},
+@misc{GEMSS2026,
+  author = {Henclova, Katerina and Smidl, Vaclav},
+  title = {GEMSS: A Variational Bayesian Method for Discovering Multiple Sparse Solutions in Classification and Regression Problems},
   year = {2026},
-  volume = {XX},
-  pages = {XX--XX},
-  doi = {XX.XXXX/XXXXX}
+  note = {arXiv preprint arXiv:XXXX.XXXXX}
 }
 ```
-
----
 
 ## Features
 
@@ -42,7 +35,6 @@ GEMSS provides a comprehensive framework for Bayesian feature selection with the
 * **Modular configuration:** JSON-based dataset/algorithm/postprocessing settings
 * **Batch experiments:** Parameter sweeps and tiered validation suites
 
----
 
 ## Repository structure
 
@@ -74,13 +66,6 @@ gemss/
     utils/                   # Persistence and visualization
 ```
 
-<!-- ## Output artifacts
-* `search_setup*.json` — configuration used
-* `search_history_results*.json` — optimization trajectories
-* `all_candidate_solutions*.json` — discovered feature sets
-* `tier_summary_metrics.csv` — aggregated experiment metrics -->
-
-
 ## Package installation
 
 This project uses [uv](https://github.com/astral-sh/uv) for dependency management. `uv` replaces tools like `pip`.
@@ -90,12 +75,12 @@ If you do not have `uv` installed, run one of the following commands:
 
 **macOS/Linux:**
 ```bash
-curl -LsSf [https://astral.sh/uv/install.sh](https://astral.sh/uv/install.sh) | sh
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-**Windows*:*
+**Windows:**
 ```powershell
-powershell -c "irm [https://astral.sh/uv/install.ps1](https://astral.sh/uv/install.ps1) | iex"
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
 ### 2. Set up the environment
@@ -106,8 +91,7 @@ Navigate to the repository root and sync the environment. This command will crea
 uv sync
 ```
 
-
-## Usage
+## Quick start
 
 GEMSS can be applied to both custom datasets and synthetic data for validation and benchmarking.
 
@@ -123,6 +107,8 @@ The notebooks can be opened either in your favorite editor or by using `uv run`,
 uv run jupyter notebook notebooks/demo.ipynb
 ```
 
+**Detailed documentation:** [notebooks/README.md](notebooks/README.md)
+
 ### Custom datasets
 
 1. Place your CSV file in `data/`
@@ -135,7 +121,24 @@ uv run jupyter notebook notebooks/demo.ipynb
 
 **Data requirements:** Numerical features preferred. Missing values handled natively. Preprocessing utilities include standard/minmax scaling.
 
-### Experiments on artificial data
+
+## Proof-of-concept experiments
+
+A comprehensive experimental framework validates GEMSS across diverse data scenarios, from clean baseline conditions to challenging high-dimensional and noisy settings.
+
+There are 128 experiments organized in 7 tiers:
+
+* **Tier 1:** Baseline (18): clean data, n < p
+* **Tier 2:** High-dimensional (9): p ≥ 1000, n << p
+* **Tier 3:** Sample-rich (14): n ≥ p
+* **Tier 4:** Robustness (22): noise and missing data
+* **Tier 5:** Jaccard penalty (28): diversity effects
+* **Tier 6:** Regression (29): continuous response
+* **Tier 7:** Class imbalance (8): unbalanced labels
+
+Experiments are grouped into **47 test cases** addressing specific research questions.
+
+### Running experiments
 
 In order to use correct Python dependencies, it is recommended that scripts are run using `uv run python` instead of the `python` command.
 
@@ -154,193 +157,22 @@ uv run python scripts/run_experiment.py
 Then run:
 
 ```bash
-# Parameter sweeps
+# Parameter sweeps (custom parameter setting)
 .\scripts\run_sweep.ps1
 
-# Full tiered benchmark (128 experiments)
-.\scripts\run_tiers.ps1
-```
-
-See [scripts/README.md](scripts/README.md) for detailed experimental design documentation.
-
-
-## Parameter configuration
-
-Three JSON files in `gemss/config/` control all parameters:
-
-1. **algorithm_settings.json** — Core algorithm parameters
-2. **generated_dataset_parameters.json** — Artificial data generation (dev/demo)
-3. **solution_postprocessing_settings.json** — Solution extraction settings
-
-```python
-import gemss.config as C
-C.display_current_config(constants=C.as_dict(), constant_type='algorithm')
-```
-
-### Key algorithm parameters
-
-**Optimization:**
-* `N_ITER`: Number of optimization iterations (3500-5000 typical)
-* `LEARNING_RATE`: Optimizer step size (default: 0.002)
-* `BATCH_SIZE`: Minibatch size for stochastic updates (increase with missing data)
-
-**Prior configuration:**
-* `PRIOR_TYPE`: Prior family: `sss` (structured spike-and-slab), `student`, or `vanilla`
-* `VAR_SLAB`, `VAR_SPIKE`: Spike-and-slab variances
-* `WEIGHT_SLAB`, `WEIGHT_SPIKE`: Prior mixture weights
-
-**Solution recovery:**
-* `N_CANDIDATE_SOLUTIONS`: Number of mixture components to optimize
-* `DESIRED_SPARSITY`: Target sparsity level for solution extraction
-* `MIN_MU_THRESHOLD`: Importance threshold for feature inclusion
-
-**Diversity control:**
-* `IS_REGULARIZED`: Enable diversity regularization
-* `LAMBDA_JACCARD`: Jaccard penalty weight (0 = no penalty, higher = more diversity)
-
-### Artificial dataset parameters
-
-For synthetic data generation (experiments and demos):
-
-* `N_SAMPLES`, `N_FEATURES`: Dataset dimensions
-* `N_GENERATING_SOLUTIONS`: Number of true sparse supports
-* `SPARSITY`: Features per generating solution
-* `NOISE_STD`: Gaussian noise level
-* `NAN_RATIO`: Fraction of missing values
-* `BINARIZE`: Binary classification (true) vs regression (false)
-* `BINARY_RESPONSE_RATIO`: Class balance for classification
-
-
-## Missing data handling
-
-GEMSS natively supports missing feature values without imputation or sample removal. The algorithm automatically handles missing data during likelihood computation. Only samples without a valid target are dropped. For datasets with substantial missing data, increase the batch size.
-
-## Persistence & reproducibility
-
-GEMSS provides utilities to save and load complete analysis runs, ensuring full reproducibility:
-
-```python
-from gemss.utils.utils import (
-    save_feature_lists_json, load_feature_lists_json,
-    save_selector_history_json, load_selector_history_json,
-    save_constants_json, load_constants_json
-)
-
-# Save complete run
-save_constants_json(constants, "search_setup.json")  # inputs
-save_selector_history_json(history, "search_history_results.json")  # trajectory
-save_feature_lists_json(solutions, "all_candidate_solutions.json")  # outputs
-
-# Load for analysis
-constants, _ = load_constants_json("search_setup.json")
-history, _ = load_selector_history_json("search_history_results.json")
-solutions, _ = load_feature_lists_json("all_candidate_solutions.json")
-```
-
-## Solution evaluation
-
-Validate discovered feature sets using lightweight regression baselines or advanced TabPFN evaluation.
-
-### Quick validation (linear/logistic regression)
-
-```python
-from gemss.postprocessing.simple_regressions import solve_any_regression
-
-results = solve_any_regression(
-    solutions=solutions_dict,
-    df=df,
-    response=y,
-    apply_scaling="standard"  # or "minmax" or None
-)
-```
-
-Returns task-appropriate metrics (R², MSE, accuracy, F1, etc.). Cross-validation is performed to optimize the parameters but the validation is only run on the full training dataset.
-
-### Advanced evaluation (TabPFN)
-
-The following notebooks provide tools for downstream evaluation of feature sets discovered by GEMSS:
-
-* [notebooks/tabpfn_evaluation_example.ipynb](notebooks/tabpfn_evaluation_example.ipynb) — Example TabPFN evaluation workflow.
-* [notebooks/tabpfn_evaluate_custom_dataset_results.ipynb](notebooks/tabpfn_evaluate_custom_dataset_results.ipynb) — Evaluate feature sets discovered by GEMSS on your custom data.
-
-The core functionality:
-
-```python
-from gemss.postprocessing.tabpfn_evaluation import tabpfn_evaluate
-
-results = tabpfn_evaluate(
-    X_selected, y,
-    apply_scaling="standard",
-    outer_cv_folds=3,
-    explain=True,  # optional SHAP values computation (costly)
-    shap_sample_size=100  # cap SHAP sample size
-    random_state=42
-)
-```
-
-Provides nested CV metrics and optional SHAP feature importance.
-
-## Diagnostics
-
-Monitor convergence, extract solutions, and assess algorithm performance with built-in diagnostic tools. They provide essential information for performance assessment and hyperparameter tuning.
-
-```python
-from gemss.postprocessing.result_postprocessing import (
-    show_algorithm_progress, recover_solutions
-)
-from gemss.utils.utils import show_solution_summary
-
-# Visual convergence diagnostics
-show_algorithm_progress(history)
-
-# Extract solutions
-solutions = recover_solutions(history, desired_sparsity=5)
-
-# Tabular summary
-show_solution_summary(solutions)
-```
-
-**Advanced diagnostics (work in progress):**
-```python
-from gemss.diagnostics.performance_tests import run_performance_diagnostics
-from gemss.diagnostics.recommendations import display_recommendations
-
-diagnostics = run_performance_diagnostics(history, desired_sparsity=5)
-display_recommendations(diagnostics=diagnostics, constants=C.as_dict())
-```
-
----
-
-## Benchmark experiments
-
-A comprehensive experimental framework validates GEMSS across diverse data scenarios, from clean baseline conditions to challenging high-dimensional and noisy settings.
-
-There are 128 experiments organized in 7 tiers:
-
-* **Tier 1:** Baseline (18): clean data, n < p
-* **Tier 2:** High-dimensional (9): p ≥ 1000, n << p
-* **Tier 3:** Sample-rich (14): n ≥ p
-* **Tier 4:** Robustness (22): noise and missing data
-* **Tier 5:** Jaccard penalty (28): diversity effects
-* **Tier 6:** Regression (29): continuous response
-* **Tier 7:** Class imbalance (8): unbalanced labels
-
-Experiments are grouped into **47 test cases** addressing specific research questions.
-
-**Run experiments:**
-```bash
-.venv\Scripts\activate.ps1    # Activate environment (Windows)
+# The benchmark (128 experiments)
 .\scripts\run_tiers.ps1                          # Full suite
 .\scripts\run_tiers.ps1 -tiers @("1","4")        # Selected tiers
 ```
 
-**Analyze results:**
+### Result analysis
+
 * [notebooks/analyze_experiment_results/tier_level_analysis.ipynb](notebooks/analyze_experiment_results/tier_level_analysis.ipynb) — tier-level performance
 * [notebooks/analyze_experiment_results/analysis_per_testcase.ipynb](notebooks/analyze_experiment_results/analysis_per_testcase.ipynb) — cross-tier research questions
 
-**Detailed documentation:** [scripts/README.md](scripts/README.md)
 
----
+**For more details, see the dedicated documentation:** [scripts/README.md](scripts/README.md)
+
 
 ## License
 
