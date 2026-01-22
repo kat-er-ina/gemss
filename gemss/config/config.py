@@ -88,7 +88,7 @@ class ConfigurationManager:
         "BINARY_RESPONSE_RATIO": "Proportion of synthetic samples assigned label 1.",
         "DATASET_SEED": "Random seed for synthetic data reproducibility.",
         # Algorithm settings
-        "N_CANDIDATE_SOLUTIONS": "Number of mixture components in variational posterior. Set to 2-3x the value of expected true solutions.",
+        "N_CANDIDATE_SOLUTIONS": "Desired number of candidate solutions (components of the Gaussian mixture approximating the variational posterior). Set to 2-3x the value of expected true solutions.",
         "N_ITER": "Number of optimization iterations.",
         "PRIOR_TYPE": "Prior type ('ss', 'sss', or 'student')",
         "PRIOR_SPARSITY": "Expected number of nonzero features per component. Used only in 'sss' prior",
@@ -101,8 +101,8 @@ class ConfigurationManager:
         "WEIGHT_SPIKE": "Weight of the 'spike' component in the 'ss' prior. Ignored for other priors.",
         "IS_REGULARIZED": "Whether to use Jaccard similarity penalty.",
         "LAMBDA_JACCARD": "Regularization strength for Jaccard penalty. Applies only if IS_REGULARIZED is True.",
-        "BATCH_SIZE": "Mini-batch size for optimization.",
-        "LEARNING_RATE": "Learning rate for Adam optimizer.",
+        "BATCH_SIZE": "Minibatch size for stochastic updates in the SGD optimization.",
+        "LEARNING_RATE": "Learning rate for the Adam optimizer.",
         # Postprocessing
         "DESIRED_SPARSITY": "Desired number of features in final solution.",
         "MIN_MU_THRESHOLD": "Minimum mu threshold for feature selection. Specific for each dataset.",
