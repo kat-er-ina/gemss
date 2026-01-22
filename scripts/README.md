@@ -78,25 +78,83 @@ The experiment suite uses a **7-tier design** (128 experiments total). Each tier
 
 ### Definition of test cases
 
-The 128 experiments are organized into **47 test cases** for analysis purposes. These test cases group experiments across tiers to answer specific research questions about algorithm performance:
+The 128 experiments are organized into **47 test cases** for analysis purposes. These test cases group experiments across tiers to answer specific research questions about algorithm performance.
 
-**Classification test cases (Cases 1-31):**
-- **Cases 1-3:** Tier 1 baseline performance analysis (different sparsity levels)
-- **Cases 4-10:** Tier 2 high-dimensional scalability analysis (varying dimensions and sample sizes)
-- **Cases 11-16:** Tier 3 sample-rich scenarios and cross-tier comparisons with Tier 1
-- **Cases 17-23:** Robustness analysis combining Tiers 1+4 (varying noise and missing data)
-- **Cases 24-28:** Tier 5 Jaccard penalty effect analysis
-- **Cases 29-31:** Class imbalance analysis combining Tiers 1+7
+#### Classification baseline and scalability (Cases 1-16)
 
-**Regression test cases (Cases 32-42):**
-- **Cases 32-33:** Tier 6 regression baseline performance
-- **Cases 34-39:** Tier 6 regression scalability analysis (high-dimensional scenarios)
-- **Cases 40-42:** Tier 6 regression robustness under noise and missing data
+**Baseline performance (Tier 1):**
+- **Case 1:** Baseline performance for SPARSITY = 3
+- **Case 2:** Baseline performance for SPARSITY = 5
+- **Case 3:** Overall baseline performance comparing sparsity levels
 
-**Cross-response comparison (Cases 43-47):**
-- **Cases 43-47:** Direct comparison of regression vs. classification performance across multiple tiers
+**High-dimensional scalability (Tiers 1 + 2 + 3):**
+- **Case 4:** Scalability analysis: p = 1000
+- **Case 5:** Scalability analysis: p = 2000
+- **Case 6:** Scalability analysis: p = 5000
+- **Case 7:** Scalability analysis: n = 50 (Tiers 1 + 2 + 3)
+- **Case 8:** Scalability analysis: n = 100 (Tiers 1 + 2 + 3)
+- **Case 9:** Scalability analysis: n = 200 (Tiers 1 + 2 + 3)
+- **Case 10:** Overall high-dimensional performance (Tier 2)
 
-Each test case combines relevant experiments to isolate specific factors (dimensionality, noise, sparsity, etc.) and provide statistical power for meaningful conclusions. The complete case definitions are implemented in `notebooks/analyze_experiment_results/` analysis scripts.
+**Sample-rich scenarios (Tiers 1+3):**
+- **Case 11:** Sample-rich performance for SPARSITY = 3
+- **Case 12:** Sample-rich performance for SPARSITY = 5
+- **Case 13:** Overall sample-rich performance
+- **Case 14:** Overall analysis of n/p ratio, SPARSITY = 3 (Tiers 1 + 3)
+- **Case 15:** Overall analysis of n/p ratio, SPARSITY = 5 (Tiers 1 + 3)
+
+**Summary of basic experiments (Tiers 1+2+3):**
+- **Case 16:** Overall basic performance for SPARSITY = 5 (Tiers 1 + 2 + 3)
+
+#### Classification robustness and diversity (Cases 17-31)
+
+**Adversity: noise and missing data (Tiers 1+4):**
+- **Case 17:** [n=100, p=200], varying noise only
+- **Case 18:** [n=100, p=200], varying NaNs only
+- **Case 19:** [n=100, p=200], varying both noise and NaNs
+- **Case 20:** [n=200, p=500], varying noise only
+- **Case 21:** [n=200, p=500], varying NaNs only
+- **Case 22:** [n=200, p=500], varying both noise and NaNs
+- **Case 23:** Comparing [n=100, p=200] and [n=200, p=500] under adversity
+
+**Jaccard penalty effects (Tiers 1+5):**
+- **Case 24:** Effect of Jaccard penalty for [n=100, p=200]
+- **Case 25:** Effect of Jaccard penalty for [n=100, p=500]
+- **Case 26:** Effect of Jaccard penalty for SPARSITY = 3
+- **Case 27:** Effect of Jaccard penalty for SPARSITY = 5
+- **Case 28:** Overall effect of Jaccard penalty
+
+**Class imbalance (Tiers 1+7):**
+- **Case 29:** Effect of class imbalance for [n=100, p=200]
+- **Case 30:** Effect of class imbalance for [n=200, p=500]
+- **Case 31:** Overall effect of class imbalance
+
+#### Regression validation (Cases 32-42, Tier 6)
+
+**Baseline and scalability:**
+- **Case 32:** Regression baseline performance (p ≤ 500)
+- **Case 33:** Overall baseline + high-dimensional performance
+- **Case 34:** Regression scalability: p = 1000
+- **Case 35:** Regression scalability: p = 2000
+- **Case 36:** Regression scalability: p = 5000
+- **Case 37:** Regression scalability: baseline + high-dim for n = 50
+- **Case 38:** Regression scalability: baseline + high-dim for n = 100
+- **Case 39:** Regression scalability: baseline + high-dim for n = 200
+
+**Adversity:**
+- **Case 40:** Effect of varying noise
+- **Case 41:** Effect of varying NaNs
+- **Case 42:** Overall effect of varying both noise and NaNs
+
+#### Regression vs. Classification comparison (Cases 43-47, Tiers 1+2+4+6)
+
+- **Case 43:** Basic scenarios (Tiers 1 + 6)
+- **Case 44:** High-dimensional scenarios (Tiers 2 + 6)
+- **Case 45:** Effect of noise (Tiers 4 + 6)
+- **Case 46:** Effect of NaNs (Tiers 4 + 6)
+- **Case 47:** Effect of both noise and NaNs (Tiers 4 + 6)
+
+Each test case combines relevant experiments to isolate specific factors (dimensionality, noise, sparsity, response type, etc.) and provide statistical power for meaningful conclusions. The complete case definitions and analysis parameters are implemented in `gemss/experiment_assessment/case_analysis.py` and analyzed in `notebooks/analyze_experiment_results/`.
 
 ## Parameters
 
@@ -187,6 +245,11 @@ Results can be viewed and analyzed by notebooks provided in directory `notebooks
 - Analysis per tier: `tier_level_analysis.ipynb` - used mainly for designing experimental tiers.
 - Analysis per test case: `analysis_per_testcase.ipynb` - used for the actual assessment of results.
 
+### Evaluation metrics
+
+While the experiments can be and are evaluated in many ways, the main focus is on how the joint set of all discovered features (i.e. all features across all candidate solutions) corresponds with the "true" joint set of all the generating features. The provided metrics (recall, precision, F1 score) thus relate to the relationship between these two sets, *not* to any predictive potential.
+
+Details are described in the [technical report](../technical_report.pdf).
 
 ## **Limitations**
 
