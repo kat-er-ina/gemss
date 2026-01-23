@@ -3,9 +3,8 @@
 
 ## Fixes
 
-- **tabpfn evaluation** uses only the outer_cv parameter but inner_cv is there too, redundant
 - **sparsity gap test** - an essential fix: overly pessimistic results, might require major changes.
-- **nan_ratio check in regression computations** - nan_ratio is sometimes in range 0 to 100 (instead of 0 - 1) for some components but it is not clear why.
+- **nan_ratio check in regression computations** - nan_ratio is sometimes in range 0 to 100 (instead of 0 - 1) for some components but it is not clear why. It is working, though.
 - **fix duplicities in logging** of experiment results.
 
 
@@ -33,9 +32,6 @@
 ### Better dependency management
 
 - Marek: If you consider pushing the package to PyPi, I would consider moving dependencies that are not needed for running the main code to `dev` dep group. Reasoning, if I want to use `gemss` in some data pipeline I don't want `jupyter` to be installed. `dev` deps are also good place for `ruff`, `pytest`
-
-- Update Python to 3.13
-
 
 ## Research & Development
 
