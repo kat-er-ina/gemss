@@ -20,9 +20,13 @@ from sklearn.metrics import (
 import shap
 
 
-def detect_task(y, n_class_threshold=10):
+def detect_task(y, n_class_threshold=10) -> str:
     """
     Detect if the task should be treated as classification or regression.
+    Rules:
+    - If the target has 2 or fewer unique values, it's classification.
+    - If the target is of integer or boolean type and has fewer unique values than the threshold, it's classification.
+    - Otherwise, it's regression.
 
     Parameters
     ----------
@@ -38,7 +42,9 @@ def detect_task(y, n_class_threshold=10):
     """
     y = np.asarray(y)
     unique = np.unique(y)
-    if (pd.api.types.is_integer_dtype(y) or pd.api.types.is_bool_dtype(y)) and len(
+    if len(unique) <= 2:
+        return "classification"
+    elif (pd.api.types.is_integer_dtype(y) or pd.api.types.is_bool_dtype(y)) and len(
         unique
     ) <= n_class_threshold:
         return "classification"
@@ -183,7 +189,6 @@ def tabpfn_evaluate(
     y,
     apply_scaling: Literal["standard", "minmax", None] = None,
     outer_cv_folds=5,
-    inner_cv_folds=3,
     tabpfn_kwargs=None,
     random_state=None,
     verbose: bool = False,
@@ -191,9 +196,9 @@ def tabpfn_evaluate(
     shap_sample_size: int = None,  # optional max number of samples to use for SHAP explanations
 ):
     """
-    Evaluate TabPFN Classifier or Regressor using nested cross-validation.
-    Optionally standardizes features and computes SHAP (Shapley) explanations.
-    Metrics are inspired by gemss.diagnostics.simple_regressions.
+    Evaluate TabPFN Classifier or Regressor using cross-validation. Optionally standardizes
+    features and computes SHAP (Shapley) explanations. Metrics are inspired by
+    gemss.diagnostics.simple_regressions.
 
     Parameters
     ----------
@@ -208,8 +213,6 @@ def tabpfn_evaluate(
         - None: do not apply any scaling.
     outer_cv_folds : int, optional
         Number of outer cross-validation folds (default: 5).
-    inner_cv_folds : int, optional
-        For future hyper-parameter search (currently unused).
     tabpfn_kwargs : dict, optional
         Custom arguments for TabPFNClassifier/Regressor.
     random_state : int, optional
@@ -262,11 +265,13 @@ def tabpfn_evaluate(
                 **(tabpfn_kwargs or {}),
                 balance_probabilities=True,
                 ignore_pretraining_limits=True,
+                random_state=random_state,
             )
         else:
             model = TabPFNRegressor(
                 **(tabpfn_kwargs or {}),
                 ignore_pretraining_limits=True,
+                random_state=random_state,
             )
 
         model.fit(X_train, y_train)
@@ -296,7 +301,11 @@ def tabpfn_evaluate(
             explanations.append(shap_importance)
 
     # Aggregate (average except for confusion matrices)
-    keys = [k for k in all_scores[0].keys() if k != "confusion_matrix"]
+    keys = [
+        k
+        for k in all_scores[0].keys()
+        if k not in ["confusion_matrix", "class_distribution"]
+    ]
     avg_scores = {k: np.mean([s[k] for s in all_scores]) for k in keys}
     if "confusion_matrix" in all_scores[0]:
         avg_scores["confusion_matrix_sum"] = np.sum(
