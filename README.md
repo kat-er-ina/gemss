@@ -91,6 +91,22 @@ Navigate to the repository root and sync the environment. This command will crea
 uv sync
 ```
 
+### 3. Register the Jupyter kernel
+
+To run notebooks with the correct Python environment, register the kernel:
+
+```bash
+uv run python -m ipykernel install --user --name=gemss --display-name="Python (gemss)"
+```
+
+This makes the `gemss` environment available as a kernel in Jupyter and VS Code notebooks. When opening a notebook, select "Python (gemss)" from the kernel picker.
+
+To verify the kernel is registered, run:
+
+```bash
+jupyter kernelspec list
+```
+
 ## Quick start
 
 GEMSS can be applied to both custom datasets and synthetic data for validation and benchmarking.
