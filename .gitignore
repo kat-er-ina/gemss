@@ -30,4 +30,4 @@ data/
 
 # Ignore private files and select folders
 private/
-scripts/results_short/
+notebooks/private/
