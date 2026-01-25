@@ -447,6 +447,10 @@ def solve_any_regression(
     pd.DataFrame
         DataFrame summarizing regression metrics for all candidate solutions.
     """
+    # if response is a numpy array, convert to pd.Series
+    if isinstance(response, np.ndarray):
+        response = pd.Series(response)
+
     if set(np.unique(response.dropna())).__len__() == 2:
         is_binary = True
     else:
