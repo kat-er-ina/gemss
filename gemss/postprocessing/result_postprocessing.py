@@ -7,18 +7,14 @@ from typing import Dict, List, Tuple, Literal, Any, Optional, Union, Set
 import numpy as np
 import pandas as pd
 from IPython.display import display, Markdown
+import plotly.graph_objects as go
 from sklearn.preprocessing import StandardScaler
-from gemss.utils.utils import myprint, get_solution_summary_df, show_solution_summary
-from gemss.utils.visualizations import (
-    plot_elbo,
-    plot_mu,
-    plot_alpha,
-    compare_parameters,
-)
+from gemss.utils.utils import myprint
+from gemss.utils.visualizations import compare_parameters, get_algorithm_progress_plots
 from gemss.postprocessing.outliers import (
+    get_outlier_solutions,
     detect_outlier_features,
     show_outlier_info,
-    get_outlier_solutions,
 )
 
 
@@ -297,123 +293,6 @@ def recover_solutions(
     )
 
 
-def show_algorithm_progress(
-    history: Dict[str, List[Any]],
-    plot_elbo_progress: bool = True,
-    plot_mu_progress: bool = True,
-    plot_alpha_progress: bool = True,
-    original_feature_names_mapping: Optional[Dict[str, str]] = None,
-    detect_outliers: bool = False,
-    use_medians_for_outliers: bool = False,
-    outlier_threshold_coeff: float = 3.0,
-    subsample_history_for_plotting: bool = False,
-) -> None:
-    """
-    Show the progress of the algorithm by plotting the evolution of
-    ELBO, mixture means, and weights. This function uses markdown formatting
-    and Plotly for interactive visualizations.
-
-    Parameters
-    ----------
-    history : Dict[str, List[Any]]
-        Dictionary containing optimization history with keys 'elbo', 'mu', and 'alpha'
-        (fewer keys allowed if corresponding plots are disabled).
-        'mu' should have shape [n_iterations, n_components, n_features].
-        This is the output of the `optimize` method of `BayesianFeatureSelector`.
-    plot_elbo_progress : bool, optional
-        Whether to plot the ELBO progress. Default is True.
-    plot_mu_progress : bool, optional
-        Whether to plot the mixture means (mu) trajectory. Default is True.
-    plot_alpha_progress : bool, optional
-        Whether to plot the mixture weights (alpha) progress. Default is True.
-    original_feature_names_mapping : Optional[Dict[str, str]], optional
-        A mapping from internal feature names (e.g., 'feature_0') to original feature names.
-        If provided, the plots will use the original feature names where applicable.
-        Default is None.
-    subsample_history_for_plotting: bool, optional
-        If True, plot only every N-th iteration in order to save resources during plotting.
-
-    Returns
-    -------
-    None
-
-    Notes
-    -----
-    This function displays markdown output and plots as side effects.
-    The function requires the corresponding keys in history for each plot type requested.
-    """
-    myprint("Algorithm progress:", header=2, use_markdown=True)
-    n_components = len(history["mu"][0])
-
-    if detect_outliers:
-        outliers = {}
-        final_mus_df = pd.DataFrame(
-            index=[
-                (
-                    original_feature_names_mapping[f"feature_{i}"]
-                    if original_feature_names_mapping
-                    else f"feature_{i}"
-                )
-                for i in range(len(history["mu"][0][0]))
-            ]
-        )
-
-    if subsample_history_for_plotting:
-        every_nth_iteration = 20
-        if (len(history) >= 2000) and (len(history) * len(history["mu"][0])) > 1e6:
-            every_nth_iteration = 50
-        if (len(history) >= 4000) and (len(history) * len(history["mu"][0])) > 1e6:
-            every_nth_iteration = 100
-        if len(history) >= 8000:
-            every_nth_iteration = 200
-        if len(history) >= 15000:
-            every_nth_iteration = 500
-        history_to_plot = {
-            key: values[::every_nth_iteration] if isinstance(values, list) else values
-            for key, values in history.items()
-        }
-        myprint(
-            f"Plotting only every {every_nth_iteration}th iteration.", use_markdown=True
-        )
-
-    else:
-        history_to_plot = history
-
-    # Plot ELBO progress
-    if plot_elbo_progress:
-        plot_elbo(history_to_plot)
-
-    # Plot mixture weights (alpha)
-    if plot_alpha_progress:
-        plot_alpha(history_to_plot)
-
-    # Plot mixture means trajectory for each component
-    if plot_mu_progress:
-        for k in range(n_components):
-            # Optionally add info about outliers
-            if detect_outliers:
-                final_mus_df[f"component_{k}_mus"] = history["mu"][-1][k]
-                outlier_info = detect_outlier_features(
-                    values=final_mus_df[f"component_{k}_mus"],
-                    threshold_coeff=outlier_threshold_coeff,
-                    use_median=use_medians_for_outliers,
-                    replace_middle_by_zero=True,
-                )
-                outlier_dict = {f"component_{k}": outlier_info}
-                show_outlier_info(
-                    outlier_info=outlier_dict,
-                    component_numbers=k,
-                    use_markdown=True,
-                )
-            # Most important plots: mu trajectories
-            plot_mu(
-                history_to_plot,
-                component=k,
-                original_feature_names_mapping=original_feature_names_mapping,
-            )
-    return
-
-
 def compare_true_and_found_features(
     features_found: Union[List[str], set],
     true_support_features: List[str],
@@ -647,4 +526,99 @@ def show_final_parameter_comparison(
     display(Markdown("### Final mixture weights (alpha):"))
     for i, alpha in enumerate(final_parameters["final alpha"]):
         display(Markdown(f"- **Component {i}:** {alpha:.3f}"))
+    return
+
+
+# This function cannot be in visualizations.py due to circular import issues (outlier functions)
+def show_algorithm_progress_with_outliers(
+    history: Dict[str, List[Any]],
+    plot_elbo_progress: bool = True,
+    plot_mu_progress: bool = True,
+    plot_alpha_progress: bool = True,
+    original_feature_names_mapping: Optional[Dict[str, str]] = None,
+    detect_outliers: bool = False,
+    use_medians_for_outliers: bool = False,
+    outlier_threshold_coeff: float = 3.0,
+    subsample_history_for_plotting: bool = False,
+) -> None:
+    """
+    Show the progress of the algorithm by plotting the evolution of
+    ELBO, mixture means, and weights. This function uses markdown formatting
+    and Plotly for interactive visualizations.
+
+    Parameters
+    ----------
+    history : Dict[str, List[Any]]
+        Dictionary containing optimization history with keys 'elbo', 'mu', and 'alpha'
+        (fewer keys allowed if corresponding plots are disabled).
+        'mu' should have shape [n_iterations, n_components, n_features].
+        This is the output of the `optimize` method of `BayesianFeatureSelector`.
+    plot_elbo_progress : bool, optional
+        Whether to plot the ELBO progress. Default is True.
+    plot_mu_progress : bool, optional
+        Whether to plot the mixture means (mu) trajectory. Default is True.
+    plot_alpha_progress : bool, optional
+        Whether to plot the mixture weights (alpha) progress. Default is True.
+    original_feature_names_mapping : Optional[Dict[str, str]], optional
+        A mapping from internal feature names (e.g., 'feature_0') to original feature names.
+        If provided, the plots will use the original feature names where applicable.
+        Default is None.
+    subsample_history_for_plotting: bool, optional
+        If True, plot only every N-th iteration in order to save resources during plotting.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    This function displays markdown output and plots as side effects.
+    The function requires the corresponding keys in history for each plot type requested.
+    """
+    myprint("Algorithm progress:", header=2, use_markdown=True)
+
+    figures = get_algorithm_progress_plots(
+        history,
+        plot_elbo_progress=plot_elbo_progress,
+        plot_mu_progress=plot_mu_progress,
+        plot_alpha_progress=plot_alpha_progress,
+        original_feature_names_mapping=original_feature_names_mapping,
+        subsample_history_for_plotting=subsample_history_for_plotting,
+    )
+
+    if plot_elbo_progress:
+        figures["elbo"].show(config={"displayModeBar": False})
+
+    if plot_alpha_progress:
+        figures["alpha"].show(config={"displayModeBar": False})
+
+    if plot_mu_progress and detect_outliers:
+        # Optionally add info about outliers
+        final_mus_df = pd.DataFrame(
+            index=[
+                (
+                    original_feature_names_mapping[f"feature_{i}"]
+                    if original_feature_names_mapping
+                    else f"feature_{i}"
+                )
+                for i in range(len(history["mu"][0][0]))
+            ]
+        )
+
+        n_components = len(history["mu"][0])
+        for k in range(n_components):
+            final_mus_df[f"component_{k}_mus"] = history["mu"][-1][k]
+            outlier_info = detect_outlier_features(
+                values=final_mus_df[f"component_{k}_mus"],
+                threshold_coeff=outlier_threshold_coeff,
+                use_median=use_medians_for_outliers,
+                replace_middle_by_zero=True,
+            )
+            outlier_dict = {f"component_{k}": outlier_info}
+            figures[f"mu_{k}"].show(config={"displayModeBar": False})
+            show_outlier_info(
+                outlier_info=outlier_dict,
+                component_numbers=k,
+                use_markdown=True,
+            )
     return
