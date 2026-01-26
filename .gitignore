@@ -34,3 +34,4 @@ notebooks/private/
 
 # Ignore running marimo files
 app/__marimo__/*
+app/results/*
