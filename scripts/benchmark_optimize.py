@@ -171,10 +171,10 @@ def _parse_args() -> argparse.Namespace:
         description="Benchmark BayesianFeatureSelector.optimize on synthetic data."
     )
 
-    parser.add_argument("--n-samples", type=_positive_int, default=400)
-    parser.add_argument("--n-features", type=_positive_int, default=400)
+    parser.add_argument("--n-samples", type=_positive_int, default=1000)
+    parser.add_argument("--n-features", type=_positive_int, default=1000)
     parser.add_argument("--n-components", type=_positive_int, default=3)
-    parser.add_argument("--n-iter", type=_positive_int, default=400)
+    parser.add_argument("--n-iter", type=_positive_int, default=1000)
     parser.add_argument("--batch-size", type=_positive_int, default=16)
     parser.add_argument("--lr", type=float, default=2e-3)
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
@@ -193,7 +193,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--lambda-jaccard", type=float, default=10.0)
 
     parser.add_argument("--noise-std", type=_non_negative_float, default=0.1)
-    parser.add_argument("--missing-rate", type=_non_negative_float, default=0.0)
+    parser.add_argument("--missing-rate", type=_non_negative_float, default=0.1)
 
     parser.add_argument("--runs", type=_positive_int, default=1)
     parser.add_argument("--seed", type=int, default=0)
