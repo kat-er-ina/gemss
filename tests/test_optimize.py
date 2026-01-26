@@ -1,0 +1,106 @@
+import numpy as np
+import torch
+
+from gemss.feature_selection.inference import BayesianFeatureSelector
+
+
+def _make_dataset(
+    n_samples: int = 12,
+    n_features: int = 6,
+    noise_std: float = 0.1,
+    missing_rate: float = 0.0,
+    seed: int = 0,
+) -> tuple[np.ndarray, np.ndarray]:
+    rng = np.random.default_rng(seed)
+    X = rng.normal(0.0, 1.0, size=(n_samples, n_features)).astype(np.float32)
+    true_w = rng.normal(0.0, 1.0, size=(n_features,)).astype(np.float32)
+    y = X @ true_w + rng.normal(0.0, noise_std, size=(n_samples,)).astype(np.float32)
+
+    if missing_rate > 0:
+        mask = rng.random(X.shape) < missing_rate
+        X = X.copy()
+        X[mask] = np.nan
+
+    return X, y
+
+
+def test_optimize_history_shapes() -> None:
+    torch.manual_seed(0)
+    X, y = _make_dataset(seed=0)
+    selector = BayesianFeatureSelector(
+        n_features=X.shape[1],
+        n_components=2,
+        X=X,
+        y=y,
+        n_iter=5,
+        batch_size=4,
+        device="cpu",
+    )
+
+    history = selector.optimize(verbose=False)
+
+    assert set(history.keys()) == {"elbo", "mu", "var", "alpha"}
+    assert len(history["elbo"]) == 5
+    assert len(history["mu"]) == 5
+    assert len(history["var"]) == 5
+    assert len(history["alpha"]) == 5
+
+    mu0 = np.asarray(history["mu"][0])
+    var0 = np.asarray(history["var"][0])
+    alpha0 = np.asarray(history["alpha"][0])
+
+    assert mu0.shape == (2, X.shape[1])
+    assert var0.shape == (2, X.shape[1])
+    assert alpha0.shape == (2,)
+
+    assert np.isfinite(history["elbo"]).all()
+    assert np.isclose(np.sum(history["alpha"][-1]), 1.0, atol=1e-5)
+
+
+def test_optimize_regularized_callback() -> None:
+    torch.manual_seed(1)
+    X, y = _make_dataset(seed=1)
+    selector = BayesianFeatureSelector(
+        n_features=X.shape[1],
+        n_components=2,
+        X=X,
+        y=y,
+        n_iter=101,
+        batch_size=4,
+        device="cpu",
+    )
+
+    calls = []
+
+    def _callback(it: int, elbo: float, mixture) -> None:
+        calls.append(it)
+
+    history = selector.optimize(
+        log_callback=_callback,
+        regularize=True,
+        lambda_jaccard=1.0,
+        verbose=False,
+    )
+
+    assert calls == [0, 100]
+    assert len(history["elbo"]) == 101
+    assert np.isfinite(history["elbo"]).all()
+
+
+def test_optimize_with_missing_values() -> None:
+    torch.manual_seed(2)
+    X, y = _make_dataset(seed=2, missing_rate=0.2)
+    selector = BayesianFeatureSelector(
+        n_features=X.shape[1],
+        n_components=2,
+        X=X,
+        y=y,
+        n_iter=3,
+        batch_size=4,
+        device="cpu",
+    )
+
+    history = selector.optimize(verbose=False)
+
+    assert len(history["elbo"]) == 3
+    assert np.isfinite(history["elbo"]).all()
