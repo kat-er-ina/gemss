@@ -17,6 +17,8 @@ from typing import Any, Dict, List, cast
 import numpy as np
 import torch
 
+import gemss.config as C
+from gemss.data_handling.generate_artificial_dataset import generate_artificial_dataset
 from gemss.feature_selection.inference import BayesianFeatureSelector
 
 
@@ -52,44 +54,42 @@ def _filter_cprofile_stats(stats: pstats.Stats, min_calls: int) -> None:
     stats_any.get_top_level_stats()
 
 
-def _make_dataset(
-    n_samples: int,
-    n_features: int,
-    noise_std: float,
-    missing_rate: float,
-    seed: int,
-) -> tuple[np.ndarray, np.ndarray]:
-    rng = np.random.default_rng(seed)
-    X = rng.normal(0.0, 1.0, size=(n_samples, n_features)).astype(np.float32)
-    true_w = rng.normal(0.0, 1.0, size=(n_features,)).astype(np.float32)
-    y = X @ true_w + rng.normal(0.0, noise_std, size=(n_samples,)).astype(np.float32)
+def _make_dataset(args: argparse.Namespace) -> tuple[np.ndarray, np.ndarray]:
+    # Seed numpy so nan masking in generate_artificial_dataset is reproducible.
+    np.random.seed(args.dataset_seed)
+    df, y, _, _ = generate_artificial_dataset(
+        n_samples=args.n_samples,
+        n_features=args.n_features,
+        n_solutions=args.n_solutions,
+        sparsity=args.sparsity,
+        noise_data_std=args.noise_std,
+        nan_ratio=args.nan_ratio,
+        binarize=args.binarize,
+        binary_response_ratio=args.binary_response_ratio,
+        random_seed=args.dataset_seed,
+        save_to_csv=args.save_dataset,
+        print_data_overview=args.print_data_overview,
+        show_feature_correlations=args.show_feature_correlations,
+    )
 
-    if missing_rate > 0:
-        mask = rng.random(X.shape) < missing_rate
-        X = X.copy()
-        X[mask] = np.nan
-
-    return X, y
+    X = df.to_numpy(dtype=np.float32, copy=False)
+    y_values = y.to_numpy(dtype=np.float32, copy=False)
+    return X, y_values
 
 
 def _run_once(
     args: argparse.Namespace,
     seed: int,
     enable_torch_profile: bool,
+    X: np.ndarray,
+    y: np.ndarray,
 ) -> Dict[str, Any]:
     np.random.seed(seed)
     torch.manual_seed(seed)
-
-    X, y = _make_dataset(
-        n_samples=args.n_samples,
-        n_features=args.n_features,
-        noise_std=args.noise_std,
-        missing_rate=args.missing_rate,
-        seed=seed,
-    )
+    n_features = X.shape[1]
 
     selector = BayesianFeatureSelector(
-        n_features=args.n_features,
+        n_features=n_features,
         n_components=args.n_components,
         X=X,
         y=y,
@@ -171,32 +171,69 @@ def _parse_args() -> argparse.Namespace:
         description="Benchmark BayesianFeatureSelector.optimize on synthetic data."
     )
 
-    parser.add_argument("--n-samples", type=_positive_int, default=1000)
-    parser.add_argument("--n-features", type=_positive_int, default=1000)
-    parser.add_argument("--n-components", type=_positive_int, default=3)
-    parser.add_argument("--n-iter", type=_positive_int, default=1000)
-    parser.add_argument("--batch-size", type=_positive_int, default=16)
-    parser.add_argument("--lr", type=float, default=2e-3)
+    parser.add_argument("--n-samples", type=_positive_int, default=C.N_SAMPLES)
+    parser.add_argument("--n-features", type=_positive_int, default=C.N_FEATURES)
+    parser.add_argument(
+        "--n-solutions",
+        "--n-generating-solutions",
+        dest="n_solutions",
+        type=_positive_int,
+        default=C.N_GENERATING_SOLUTIONS,
+    )
+    parser.add_argument("--sparsity", type=_positive_int, default=C.SPARSITY)
+    parser.add_argument("--n-components", type=_positive_int, default=C.N_CANDIDATE_SOLUTIONS)
+    parser.add_argument("--n-iter", type=_positive_int, default=C.N_ITER)
+    parser.add_argument("--batch-size", type=_positive_int, default=C.BATCH_SIZE)
+    parser.add_argument("--lr", type=float, default=C.LEARNING_RATE)
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
 
-    parser.add_argument("--prior", choices=["ss", "sss", "student"], default="sss")
-    parser.add_argument("--sss-sparsity", type=_positive_int, default=3)
-    parser.add_argument("--sample-more-priors-coeff", type=float, default=1.0)
-    parser.add_argument("--var-slab", type=float, default=100.0)
-    parser.add_argument("--var-spike", type=float, default=0.1)
-    parser.add_argument("--weight-slab", type=float, default=0.9)
-    parser.add_argument("--weight-spike", type=float, default=0.1)
-    parser.add_argument("--student-df", type=float, default=1.0)
-    parser.add_argument("--student-scale", type=float, default=1.0)
+    parser.add_argument(
+        "--prior", choices=["ss", "sss", "student"], default=C.PRIOR_TYPE
+    )
+    default_sss_sparsity = C.PRIOR_SPARSITY if C.PRIOR_SPARSITY is not None else 3
+    parser.add_argument("--sss-sparsity", type=_positive_int, default=default_sss_sparsity)
+    parser.add_argument(
+        "--sample-more-priors-coeff", type=float, default=C.SAMPLE_MORE_PRIORS_COEFF
+    )
+    parser.add_argument("--var-slab", type=float, default=C.VAR_SLAB)
+    parser.add_argument("--var-spike", type=float, default=C.VAR_SPIKE)
+    parser.add_argument("--weight-slab", type=float, default=C.WEIGHT_SLAB)
+    parser.add_argument("--weight-spike", type=float, default=C.WEIGHT_SPIKE)
+    parser.add_argument("--student-df", type=float, default=C.STUDENT_DF)
+    parser.add_argument("--student-scale", type=float, default=C.STUDENT_SCALE)
 
-    parser.add_argument("--regularize", action="store_true")
-    parser.add_argument("--lambda-jaccard", type=float, default=10.0)
+    parser.add_argument(
+        "--regularize",
+        action=argparse.BooleanOptionalAction,
+        default=C.IS_REGULARIZED,
+    )
+    parser.add_argument("--lambda-jaccard", type=float, default=C.LAMBDA_JACCARD)
 
-    parser.add_argument("--noise-std", type=_non_negative_float, default=0.1)
-    parser.add_argument("--missing-rate", type=_non_negative_float, default=0.1)
+    parser.add_argument("--noise-std", type=_non_negative_float, default=C.NOISE_STD)
+    parser.add_argument(
+        "--nan-ratio",
+        "--missing-rate",
+        dest="nan_ratio",
+        type=_non_negative_float,
+        default=C.NAN_RATIO,
+    )
+    parser.add_argument(
+        "--binarize",
+        action=argparse.BooleanOptionalAction,
+        default=C.BINARIZE,
+    )
+    parser.add_argument(
+        "--binary-response-ratio",
+        type=_non_negative_float,
+        default=C.BINARY_RESPONSE_RATIO,
+    )
+    parser.add_argument("--dataset-seed", type=int, default=C.DATASET_SEED)
+    parser.add_argument("--save-dataset", action="store_true")
+    parser.add_argument("--print-data-overview", action="store_true")
+    parser.add_argument("--show-feature-correlations", action="store_true")
 
     parser.add_argument("--runs", type=_positive_int, default=1)
-    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--seed", type=int, default=C.DATASET_SEED)
     parser.add_argument("--tail-k", type=_positive_int, default=10)
 
     parser.add_argument("--output", type=str, default=None)
@@ -218,19 +255,22 @@ def main() -> None:
     if args.device == "cuda" and not torch.cuda.is_available():
         raise SystemExit("CUDA requested but not available on this machine.")
 
-    if args.missing_rate > 1.0:
-        raise SystemExit("missing-rate must be between 0 and 1.")
+    if args.nan_ratio > 1.0:
+        raise SystemExit("nan-ratio must be between 0 and 1.")
+    if args.binary_response_ratio > 1.0:
+        raise SystemExit("binary-response-ratio must be between 0 and 1.")
 
     profiler = None
     if args.cprofile_output:
         profiler = cProfile.Profile()
         profiler.enable()
 
+    X, y = _make_dataset(args)
     run_results = []
     for idx in range(args.runs):
         run_seed = args.seed + idx
         enable_torch_profile = args.torch_profile and idx == 0
-        run_results.append(_run_once(args, run_seed, enable_torch_profile))
+        run_results.append(_run_once(args, run_seed, enable_torch_profile, X, y))
 
     if profiler is not None:
         profiler.disable()
