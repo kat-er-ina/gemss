@@ -295,23 +295,22 @@ class BayesianFeatureSelector:
             sigmoid_coeff * torch.abs(z)
         )  # [batch_size, n_features]
 
-        # Compute pairwise Jaccard similarities
-        jaccard_vals = []
-        for i in range(batch_size):
-            for j in range(i + 1, batch_size):
-                intersection = (support_mask[i] * support_mask[j]).sum()  #
-                union = ((support_mask[i] + support_mask[j]) > 0).sum()
-                if union > 0:
-                    jaccard = intersection / union
-                else:
-                    jaccard = torch.tensor(0.0, device=z.device)
-                jaccard_vals.append(jaccard)
-
-        # Average Jaccard similarity
-        if len(jaccard_vals) > 0:
-            avg_jaccard = torch.stack(jaccard_vals).mean()
-        else:
+        # Compute pairwise Jaccard similarities (vectorized)
+        if batch_size < 2:
             avg_jaccard = torch.tensor(0.0, device=z.device)
+        else:
+            intersection = support_mask @ support_mask.T
+            union = (support_mask[:, None, :] + support_mask[None, :, :] > 0).sum(
+                dim=-1
+            )
+            union = union.to(dtype=intersection.dtype)
+            jaccard = torch.where(
+                union > 0, intersection / union, torch.zeros_like(intersection)
+            )
+            pair_idx = torch.triu_indices(
+                batch_size, batch_size, offset=1, device=z.device
+            )
+            avg_jaccard = jaccard[pair_idx[0], pair_idx[1]].mean()
 
         # Regularized ELBO
         elbo_reg = self.elbo(z) - lambda_jaccard * avg_jaccard
