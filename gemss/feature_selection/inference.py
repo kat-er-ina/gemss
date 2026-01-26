@@ -21,17 +21,20 @@ optimize(...)          : Runs the main optimization loop.
 """
 
 from time import time
-from typing import Literal, Dict, List
-from IPython.display import display, Markdown
+from typing import Dict, List, Literal
+
 import torch
+from IPython.display import Markdown, display
 from torch.optim import Adam
+
+from gemss.utils.utils import myprint
+
 from .models import (
-    StudentTPrior,
+    GaussianMixture,
     SpikeAndSlabPrior,
     StructuredSpikeAndSlabPrior,
-    GaussianMixture,
+    StudentTPrior,
 )
-from gemss.utils.utils import myprint
 
 
 class BayesianFeatureSelector:
@@ -141,6 +144,18 @@ class BayesianFeatureSelector:
                 "Response variable (y) contains NaN values. Please remove samples with missing responses before feature selection."
             )
 
+        # Precompute NaN-related information for X to avoid repeated computation
+        self._has_missing_X = torch.isnan(self.X).any().item()
+        if self._has_missing_X:
+            self._X_observed_mask = ~torch.isnan(self.X)
+            self._X_filled = torch.nan_to_num(self.X, nan=0.0)
+            # Samples that have at least one observed feature (y is guaranteed non-NaN)
+            self._valid_sample_mask = self._X_observed_mask.any(dim=1)
+        else:
+            self._X_observed_mask = None
+            self._X_filled = None
+            self._valid_sample_mask = None
+
         self.batch_size = batch_size
         self.n_iter = n_iter
 
@@ -180,8 +195,8 @@ class BayesianFeatureSelector:
         torch.Tensor
             Log-likelihood values for each sample, shape (batch_size,).
         """
-        # Check if X has missing values
-        if torch.isnan(self.X).any():
+        # Use precomputed flag to check if X has missing values
+        if self._has_missing_X:
             return self._log_likelihood_with_missing(z)
         else:
             # Standard computation for complete data
@@ -208,16 +223,17 @@ class BayesianFeatureSelector:
         """
         batch_size = z.shape[0]
 
-        observed_mask = ~torch.isnan(self.X)
-        valid_mask = observed_mask.any(dim=1) & ~torch.isnan(self.y)
+        # These are guaranteed non-None since this method is only called when _has_missing_X is True
+        assert self._valid_sample_mask is not None and self._X_filled is not None
+
+        # Combine precomputed X mask with dynamic y NaN check (y could be modified after init)
+        valid_mask = self._valid_sample_mask & ~torch.isnan(self.y)
         if not valid_mask.any():
             return torch.zeros(batch_size, device=z.device)
 
-        X_filled = torch.nan_to_num(self.X, nan=0.0)
-        y_filled = torch.nan_to_num(self.y, nan=0.0)
-
-        pred = torch.matmul(z, X_filled.T)  # [batch_size, n_samples]
-        residual = pred - y_filled.unsqueeze(0)
+        # Use precomputed X with NaNs filled with zeros
+        pred = torch.matmul(z, self._X_filled.T)  # [batch_size, n_samples]
+        residual = pred - torch.nan_to_num(self.y, nan=0.0).unsqueeze(0)
         log_likes = -0.5 * (residual**2)
 
         valid_mask = valid_mask.to(dtype=log_likes.dtype, device=log_likes.device)
@@ -299,11 +315,10 @@ class BayesianFeatureSelector:
         if batch_size < 2:
             avg_jaccard = torch.tensor(0.0, device=z.device)
         else:
-            intersection = support_mask @ support_mask.T
-            union = (support_mask[:, None, :] + support_mask[None, :, :] > 0).sum(
-                dim=-1
-            )
-            union = union.to(dtype=intersection.dtype)
+            intersection = support_mask @ support_mask.T  # [batch_size, batch_size]
+            # Use |A ∪ B| = |A| + |B| - |A ∩ B| to avoid creating 3D tensor
+            support_sizes = support_mask.sum(dim=1)  # [batch_size]
+            union = support_sizes[:, None] + support_sizes[None, :] - intersection
             jaccard = torch.where(
                 union > 0, intersection / union, torch.zeros_like(intersection)
             )
@@ -402,7 +417,7 @@ class BayesianFeatureSelector:
             if verbose and nth_iteration and it > 0:
                 elapsed_time = time() - start_time
                 myprint(
-                    msg=f"**Iteration {it}:** elapsed time: {elapsed_time:.0f}s, remaining time: {elapsed_time/it * (self.n_iter - it):.0f}s, ELBO = {elbo.item()}"
+                    msg=f"**Iteration {it}:** elapsed time: {elapsed_time:.0f}s, remaining time: {elapsed_time / it * (self.n_iter - it):.0f}s, ELBO = {elbo.item()}"
                 )
         if verbose:
             myprint("Optimization complete.", use_markdown=True)
