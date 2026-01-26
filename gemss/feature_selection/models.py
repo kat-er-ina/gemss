@@ -160,30 +160,32 @@ class StructuredSpikeAndSlabPrior:
         batch_shape = z.shape[:-1]
         z_flat = z.view(-1, self.n_features)
         if self._all_supports is not None:
-            supports = self._all_supports
+            supports_tensor = torch.tensor(
+                self._all_supports, dtype=torch.long, device=z.device
+            )
         else:
             if self.sample_more_priors_coeff:
                 n_support_samples = np.round(
                     n_support_samples * self.sample_more_priors_coeff
                 ).astype(int)
-            # Sample supports
-            supports = [
-                torch.randperm(self.n_features)[: self.sparsity].tolist()
-                for _ in range(n_support_samples)
-            ]
+            # Sample supports (vectorized) on the same device as z
+            n_support_samples = int(n_support_samples)
+            if self.sparsity == 0:
+                supports_tensor = torch.empty(
+                    n_support_samples, 0, dtype=torch.long, device=z.device
+                )
+            else:
+                scores = torch.rand(n_support_samples, self.n_features, device=z.device)
+                supports_tensor = torch.topk(scores, k=self.sparsity, dim=1).indices
 
-        n_supports = len(supports)
+        n_supports = supports_tensor.shape[0]
         if n_supports == 0:
             raise ValueError(
                 "StructuredSpikeAndSlabPrior requires at least one support."
             )
 
         if self.sparsity == 0:
-            supports_tensor = torch.empty(
-                n_supports, 0, dtype=torch.long, device=z.device
-            )
-        else:
-            supports_tensor = torch.tensor(supports, dtype=torch.long, device=z.device)
+            supports_tensor = supports_tensor[:, :0]
 
         var_slab = torch.as_tensor(self.var_slab, device=z.device, dtype=z.dtype)
         var_spike = torch.as_tensor(self.var_spike, device=z.device, dtype=z.dtype)
