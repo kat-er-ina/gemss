@@ -144,9 +144,8 @@ def test_structured_log_prob_sampling_uses_rng_and_coeff() -> None:
     expected_samples = int(
         np.round(n_support_samples * sample_more_priors_coeff).astype(int)
     )
-    supports = [
-        torch.randperm(n_features)[:sparsity].tolist() for _ in range(expected_samples)
-    ]
+    scores = torch.rand(expected_samples, n_features, device=z.device)
+    supports = torch.topk(scores, k=sparsity, dim=1).indices.tolist()
     expected = _manual_log_prob(z, n_features, var_slab, var_spike, supports)
 
     assert torch.allclose(actual, expected, rtol=1e-5, atol=1e-6)

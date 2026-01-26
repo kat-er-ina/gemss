@@ -12,7 +12,7 @@ import cProfile
 import json
 import pstats
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 import numpy as np
 import torch
@@ -32,6 +32,24 @@ def _non_negative_float(value: str) -> float:
     if parsed < 0:
         raise argparse.ArgumentTypeError("value must be non-negative")
     return parsed
+
+
+def _filter_cprofile_stats(stats: pstats.Stats, min_calls: int) -> None:
+    if min_calls <= 1:
+        return
+
+    stats_any = cast(Any, stats)
+    stats_any.stats = {
+        func: stat for func, stat in stats_any.stats.items() if stat[1] >= min_calls
+    }
+    stats_any.total_calls = 0
+    stats_any.prim_calls = 0
+    stats_any.total_tt = 0
+    stats_any.max_name_len = 0
+    stats_any.top_level = set()
+    stats_any.all_callees = None
+    stats_any.fcn_list = None
+    stats_any.get_top_level_stats()
 
 
 def _make_dataset(
@@ -186,6 +204,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--cprofile-output", type=str, default=None)
     parser.add_argument("--cprofile-sort", type=str, default="cumtime")
     parser.add_argument("--cprofile-lines", type=_positive_int, default=30)
+    parser.add_argument("--cprofile-min-calls", type=_positive_int, default=10)
     parser.add_argument("--torch-profile", action="store_true")
     parser.add_argument("--torch-profile-output", type=str, default=None)
     parser.add_argument("--torch-profile-row-limit", type=_positive_int, default=25)
@@ -216,7 +235,9 @@ def main() -> None:
     if profiler is not None:
         profiler.disable()
         profiler.dump_stats(args.cprofile_output)
-        stats = pstats.Stats(profiler).sort_stats(args.cprofile_sort)
+        stats = pstats.Stats(profiler)
+        _filter_cprofile_stats(stats, args.cprofile_min_calls)
+        stats.sort_stats(args.cprofile_sort)
         stats.print_stats(args.cprofile_lines)
 
     summary = _summarize_runs(run_results)
