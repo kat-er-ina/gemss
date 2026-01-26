@@ -207,46 +207,21 @@ class BayesianFeatureSelector:
             Log-likelihood values, shape (batch_size,).
         """
         batch_size = z.shape[0]
-        n_samples = self.X.shape[0]
 
-        # Compute log-likelihood for each data sample separately
-        log_likes = []
-
-        for i in range(n_samples):
-            x_i = self.X[i]  # [n_features]
-            y_i = self.y[i]  # scalar
-
-            # Skip if response is missing (shouldn't happen if properly preprocessed)
-            if torch.isnan(y_i):
-                continue
-
-            # Find observed features for this sample
-            observed_mask = ~torch.isnan(x_i)  # [n_features]
-
-            if observed_mask.sum() == 0:
-                # If no features observed, skip this sample
-                continue
-
-            # Use only observed features for prediction
-            x_obs = x_i[observed_mask]  # [n_observed]
-            z_obs = z[:, observed_mask]  # [batch_size, n_observed]
-
-            # Compute prediction using observed features only
-            pred_i = torch.matmul(z_obs, x_obs)  # [batch_size]
-
-            # Compute log-likelihood for this sample
-            # Scale by number of observed features to maintain comparable magnitudes
-            mse_i = (pred_i - y_i) ** 2
-            log_like_i = -0.5 * mse_i
-
-            log_likes.append(log_like_i)
-
-        if len(log_likes) == 0:
-            # If no valid samples, return zero log-likelihood
+        observed_mask = ~torch.isnan(self.X)
+        valid_mask = observed_mask.any(dim=1) & ~torch.isnan(self.y)
+        if not valid_mask.any():
             return torch.zeros(batch_size, device=z.device)
 
-        # Sum log-likelihoods across all data samples
-        total_log_like = torch.stack(log_likes, dim=0).sum(dim=0)  # [batch_size]
+        X_filled = torch.nan_to_num(self.X, nan=0.0)
+        y_filled = torch.nan_to_num(self.y, nan=0.0)
+
+        pred = torch.matmul(z, X_filled.T)  # [batch_size, n_samples]
+        residual = pred - y_filled.unsqueeze(0)
+        log_likes = -0.5 * (residual**2)
+
+        valid_mask = valid_mask.to(dtype=log_likes.dtype, device=log_likes.device)
+        total_log_like = (log_likes * valid_mask.unsqueeze(0)).sum(dim=1)
 
         return total_log_like
 
