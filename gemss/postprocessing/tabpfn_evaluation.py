@@ -212,17 +212,19 @@ def tabpfn_evaluate(
         - "minmax": apply Min-Max scaling.
         - None: do not apply any scaling.
     outer_cv_folds : int, optional
-        Number of outer cross-validation folds (default: 5).
+        Number of outer cross-validation folds (default: 5). (Inner CV is handled by TabPFN.)
     tabpfn_kwargs : dict, optional
-        Custom arguments for TabPFNClassifier/Regressor.
+        Custom arguments for TabPFNClassifier/Regressor. See TabPFN documentation for options.
     random_state : int, optional
         Random seed.
     verbose : bool, optional
         If True, prints metrics per fold.
     explain : bool, optional
-        If True, computes SHAP feature explanations.
+        If True, computes SHAP feature explanations for model trained on full data.
+        By default False.
     shap_sample_size : int, optional
         If set, subsample up to this many samples for SHAP explanations.
+        Ignored if explain is False.
 
     Returns
     -------
@@ -236,6 +238,7 @@ def tabpfn_evaluate(
         X = X.values
     if isinstance(y, pd.Series):
         y = y.values
+
     outer_cv = (
         StratifiedKFold(
             n_splits=outer_cv_folds, shuffle=True, random_state=random_state
@@ -244,9 +247,23 @@ def tabpfn_evaluate(
         else KFold(n_splits=outer_cv_folds, shuffle=True, random_state=random_state)
     )
 
+    if task == "classification":
+        model = TabPFNClassifier(
+            **(tabpfn_kwargs or {}),
+            balance_probabilities=True,
+            ignore_pretraining_limits=True,
+            random_state=random_state,
+        )
+    else:
+        model = TabPFNRegressor(
+            **(tabpfn_kwargs or {}),
+            ignore_pretraining_limits=True,
+            random_state=random_state,
+        )
+
     all_scores = []
-    explanations = []
-    rs = np.random.RandomState(random_state)
+    random_seed = np.random.RandomState(random_state)
+    # Run outer cross-validation (inner CV is handled by TabPFN)
     for fold, (train_idx, test_idx) in enumerate(outer_cv.split(X, y)):
         X_train, X_test = X[train_idx], X[test_idx]
         y_train, y_test = y[train_idx], y[test_idx]
@@ -260,45 +277,20 @@ def tabpfn_evaluate(
             X_train = scaler.fit_transform(X_train)
             X_test = scaler.transform(X_test)
 
-        if task == "classification":
-            model = TabPFNClassifier(
-                **(tabpfn_kwargs or {}),
-                balance_probabilities=True,
-                ignore_pretraining_limits=True,
-                random_state=random_state,
-            )
-        else:
-            model = TabPFNRegressor(
-                **(tabpfn_kwargs or {}),
-                ignore_pretraining_limits=True,
-                random_state=random_state,
-            )
-
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
 
         n_features = X_train.shape[1]
         if task == "classification":
             scores = classification_metrics(y_test, y_pred)
-            scores["n_features"] = n_features
+            scores["n_features"] = int(n_features)
         else:
             scores = regression_metrics(y_test, y_pred, n_features=n_features)
+            scores["n_features"] = int(n_features)
 
         all_scores.append(scores)
         if verbose:
             print(f"Fold {fold+1}/{outer_cv_folds}\n{pd.Series(scores)}\n")
-
-        if explain:
-            # Subsample for SHAP if requested
-            if shap_sample_size is not None and X_train.shape[0] > shap_sample_size:
-                idx = rs.choice(X_train.shape[0], shap_sample_size, replace=False)
-                background = X_train[idx, :]
-            else:
-                background = X_train
-            shap_importance, _ = _compute_shap_explanation(
-                model, background, feature_names=feature_names
-            )
-            explanations.append(shap_importance)
 
     # Aggregate (average except for confusion matrices)
     keys = [
@@ -313,6 +305,22 @@ def tabpfn_evaluate(
         )
 
     result = {"task": task, "average_scores": avg_scores, "fold_scores": all_scores}
+
     if explain:
-        result["shap_explanations_per_fold"] = explanations
+        if verbose:
+            print("Computing SHAP explanations on model trained on full data...")
+        model.fit(X, y)
+        # Subsample for SHAP if requested
+        if shap_sample_size is not None and X.shape[0] > shap_sample_size:
+            idx = random_seed.choice(X.shape[0], shap_sample_size, replace=False)
+            background = X[idx, :]
+        else:
+            background = X
+        shap_importance, _ = _compute_shap_explanation(
+            model, background, feature_names=feature_names
+        )
+        result["shap_explanations"] = pd.Series(
+            shap_importance,
+            name=f"Shapley value",
+        ).sort_values(ascending=False)
     return result
