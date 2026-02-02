@@ -1,0 +1,17 @@
+{
+    "N_ITER":  4000,
+    "SAMPLE_MORE_PRIORS_COEFF":  1,
+    "WEIGHT_SPIKE":  0.1,
+    "LAMBDA_JACCARD":  500,
+    "STUDENT_SCALE":  1,
+    "LEARNING_RATE":  0.002,
+    "IS_REGULARIZED":  true,
+    "BATCH_SIZE":  32,
+    "VAR_SLAB":  100,
+    "VAR_SPIKE":  0.1,
+    "PRIOR_SPARSITY":  3,
+    "STUDENT_DF":  1,
+    "PRIOR_TYPE":  "sss",
+    "WEIGHT_SLAB":  0.9,
+    "N_CANDIDATE_SOLUTIONS":  8
+}

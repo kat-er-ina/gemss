@@ -1,0 +1,389 @@
+# GEMSS Experiment Results
+
+## Parameters and Settings
+
+- N_SAMPLES: 200
+- N_FEATURES: 500
+- N_GENERATING_SOLUTIONS: 3
+- SPARSITY: 3
+- NOISE_STD: 0.1
+- NAN_RATIO: 0
+- BINARIZE: True
+- BINARY_RESPONSE_RATIO: 0.5
+- DATASET_SEED: 42
+- N_CANDIDATE_SOLUTIONS: 9
+- N_ITER: 3500
+- PRIOR_TYPE: sss
+- PRIOR_SPARSITY: 3
+- SAMPLE_MORE_PRIORS_COEFF: 1
+- STUDENT_DF: 1
+- STUDENT_SCALE: 1
+- VAR_SLAB: 100
+- VAR_SPIKE: 0.1
+- WEIGHT_SLAB: 0.9
+- WEIGHT_SPIKE: 0.1
+- IS_REGULARIZED: True
+- LAMBDA_JACCARD: 1000
+- BATCH_SIZE: 16
+- LEARNING_RATE: 0.002
+- DESIRED_SPARSITY: 3
+- MIN_MU_THRESHOLD: 0.2
+- USE_MEDIAN_FOR_OUTLIER_DETECTION: False
+- OUTLIER_DEVIATION_THRESHOLDS: [2.0, 2.5, 3.0]
+
+----------------------------------------------------------------------
+
+   ------   ANALYSIS - Solution type: FULL   ------   
+
+## FULL Solutions
+
+All features with |mu| > 0.2
+
+Coverage Metrics for full
+=========================
+
+| Index                  | Value  |
+| ______________________ | ______ |
+| n_features_found       | 10.000 |
+| n_correct              | 9.000  |
+| n_missed               | 0.000  |
+| n_extra                | 1.000  |
+| Recall                 | 1.000  |
+| Precision              | 0.900  |
+| F1_Score               | 0.947  |
+| Jaccard                | 0.900  |
+| Miss_Rate              | 0.000  |
+| FDR                    | 0.100  |
+| Global_Miss_Rate       | 0.000  |
+| Global_FDR             | 0.002  |
+| Success_Index          | 55.556 |
+| Adjusted_Success_Index | 50.000 |
+
+## Overview of discovered features for FULL solutions:
+
+ - 9 unique true support features:
+   ['feature_262', 'feature_327', 'feature_348', 'feature_367', 'feature_386', 'feature_42', 'feature_427', 'feature_44', 'feature_486']
+
+
+ - 10 discovered features:
+   ['feature_16', 'feature_262', 'feature_327', 'feature_348', 'feature_367', 'feature_386', 'feature_42', 'feature_427', 'feature_44', 'feature_486']
+
+ - 0 missed true support features:
+   []
+
+ - 1 extra features found (not in true support):
+   ['feature_16']
+
+
+Overview of FULL solutions
+============================
+
+| Index | component_0                | component_1                | component_2                | component_3                | component_4                | component_5                | component_6                | component_7                | component_8                |
+| _____ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ |
+| 0     | feature_386 (mu = -1.6350) | feature_386 (mu = -2.7980) | feature_386 (mu = 1.9499)  | feature_486 (mu = -0.9319) | feature_42 (mu = -1.0423)  | feature_348 (mu = 1.4001)  | feature_367 (mu = 2.0176)  | feature_486 (mu = -0.9233) | feature_386 (mu = -1.5999) |
+| 1     | feature_367 (mu = -1.1932) | feature_262 (mu = 0.5586)  | feature_348 (mu = -1.2371) | feature_427 (mu = -0.9103) | feature_348 (mu = -0.6452) | feature_262 (mu = -0.8741) | feature_262 (mu = -1.9683) | feature_427 (mu = -0.7334) | feature_367 (mu = -0.9267) |
+| 2     | feature_44 (mu = 1.1626)   | feature_42 (mu = -0.3289)  | feature_262 (mu = -0.8708) | feature_42 (mu = 0.7589)   | feature_44 (mu = 0.4935)   | feature_386 (mu = 0.8637)  | feature_42 (mu = -1.5823)  | feature_44 (mu = -0.3341)  | feature_427 (mu = 0.8835)  |
+| 3     | feature_262 (mu = 1.0977)  | feature_327 (mu = 0.2404)  | feature_367 (mu = 0.7973)  | feature_262 (mu = 0.7155)  | feature_386 (mu = -0.4703) | feature_367 (mu = 0.8248)  | feature_386 (mu = -0.6663) | feature_386 (mu = 0.2270)  | feature_262 (mu = 0.5056)  |
+| 4     | feature_327 (mu = 0.9432)  | feature_427 (mu = 0.2088)  | feature_42 (mu = -0.7105)  | feature_348 (mu = 0.4224)  | feature_486 (mu = -0.3491) | feature_486 (mu = -0.7139) | feature_348 (mu = 0.4176)  | None                       | feature_327 (mu = -0.4938) |
+| 5     | feature_427 (mu = 0.8560)  | None                       | feature_427 (mu = -0.6736) | feature_44 (mu = 0.3577)   | feature_262 (mu = -0.2709) | feature_44 (mu = -0.4439)  | feature_327 (mu = -0.3223) | None                       | feature_44 (mu = 0.4497)   |
+| 6     | feature_348 (mu = 0.7674)  | None                       | feature_327 (mu = -0.6047) | feature_367 (mu = -0.2751) | feature_367 (mu = 0.2699)  | feature_42 (mu = 0.2210)   | feature_486 (mu = -0.3076) | None                       | feature_42 (mu = -0.2537)  |
+| 7     | feature_42 (mu = 0.5844)   | None                       | feature_16 (mu = 0.3209)   | None                       | None                       | None                       | feature_427 (mu = 0.3052)  | None                       | None                       |
+| 8     | None                       | None                       | feature_486 (mu = 0.3037)  | None                       | None                       | None                       | None                       | None                       | None                       |
+
+
+Regression results on training data (l2 penalty)
+================================================
+
+No data to display.
+
+----------------------------------------------------------------------
+
+   ------   ANALYSIS - Solution type: TOP   ------   
+
+## TOP Solutions
+
+Required sparsity = 3
+
+Coverage Metrics for top
+========================
+
+| Index                  | Value  |
+| ______________________ | ______ |
+| n_features_found       | 8.000  |
+| n_correct              | 8.000  |
+| n_missed               | 1.000  |
+| n_extra                | 0.000  |
+| Recall                 | 0.889  |
+| Precision              | 1.000  |
+| F1_Score               | 0.941  |
+| Jaccard                | 0.889  |
+| Miss_Rate              | 0.111  |
+| FDR                    | 0.000  |
+| Global_Miss_Rate       | 0.002  |
+| Global_FDR             | 0.000  |
+| Success_Index          | 49.383 |
+| Adjusted_Success_Index | 49.383 |
+
+## Overview of discovered features for TOP solutions:
+
+ - 9 unique true support features:
+   ['feature_262', 'feature_327', 'feature_348', 'feature_367', 'feature_386', 'feature_42', 'feature_427', 'feature_44', 'feature_486']
+
+
+ - 8 discovered features:
+   ['feature_262', 'feature_348', 'feature_367', 'feature_386', 'feature_42', 'feature_427', 'feature_44', 'feature_486']
+
+ - 1 missed true support features:
+   ['feature_327']
+
+ - 0 extra features found (not in true support):
+   []
+
+
+Overview of TOP solutions
+===========================
+
+| Index | component_0                | component_1                | component_2                | component_3                | component_4                | component_5                | component_6                | component_7                | component_8                |
+| _____ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ |
+| 0     | feature_386 (mu = -1.6350) | feature_386 (mu = -2.7980) | feature_386 (mu = 1.9499)  | feature_486 (mu = -0.9319) | feature_42 (mu = -1.0423)  | feature_348 (mu = 1.4001)  | feature_367 (mu = 2.0176)  | feature_486 (mu = -0.9233) | feature_386 (mu = -1.5999) |
+| 1     | feature_367 (mu = -1.1932) | feature_262 (mu = 0.5586)  | feature_348 (mu = -1.2371) | feature_427 (mu = -0.9103) | feature_348 (mu = -0.6452) | feature_262 (mu = -0.8741) | feature_262 (mu = -1.9683) | feature_427 (mu = -0.7334) | feature_367 (mu = -0.9267) |
+| 2     | feature_44 (mu = 1.1626)   | feature_42 (mu = -0.3289)  | feature_262 (mu = -0.8708) | feature_42 (mu = 0.7589)   | feature_44 (mu = 0.4935)   | feature_386 (mu = 0.8637)  | feature_42 (mu = -1.5823)  | feature_44 (mu = -0.3341)  | feature_427 (mu = 0.8835)  |
+
+
+Regression results on training data (l2 penalty)
+================================================
+
+No data to display.
+
+----------------------------------------------------------------------
+
+   ------   ANALYSIS - Solution type: OUTLIER (STD_2.0)   ------   
+
+## OUTLIER (STD_2.0) Solutions
+
+Features identified as outliers based on standard deviation.
+
+Coverage Metrics for outlier (STD_2.0)
+======================================
+
+| Index                  | Value  |
+| ______________________ | ______ |
+| n_features_found       | 74.000 |
+| n_correct              | 9.000  |
+| n_missed               | 0.000  |
+| n_extra                | 65.000 |
+| Recall                 | 1.000  |
+| Precision              | 0.122  |
+| F1_Score               | 0.217  |
+| Jaccard                | 0.122  |
+| Miss_Rate              | 0.000  |
+| FDR                    | 0.878  |
+| Global_Miss_Rate       | 0.000  |
+| Global_FDR             | 0.130  |
+| Success_Index          | 55.556 |
+| Adjusted_Success_Index | 6.757  |
+
+## Overview of discovered features for OUTLIER (STD_2.0) solutions:
+
+ - 9 unique true support features:
+   ['feature_262', 'feature_327', 'feature_348', 'feature_367', 'feature_386', 'feature_42', 'feature_427', 'feature_44', 'feature_486']
+
+
+ - 74 discovered features:
+   ['feature_105', 'feature_120', 'feature_13', 'feature_131', 'feature_136', 'feature_14', 'feature_146', 'feature_152', 'feature_154', 'feature_155', 'feature_157', 'feature_159', 'feature_16', 'feature_168', 'feature_17', 'feature_176', 'feature_191', 'feature_204', 'feature_208', 'feature_216', 'feature_226', 'feature_229', 'feature_242', 'feature_245', 'feature_255', 'feature_26', 'feature_262', 'feature_267', 'feature_273', 'feature_289', 'feature_291', 'feature_292', 'feature_3', 'feature_312', 'feature_32', 'feature_323', 'feature_325', 'feature_327', 'feature_330', 'feature_336', 'feature_339', 'feature_348', 'feature_35', 'feature_362', 'feature_367', 'feature_382', 'feature_386', 'feature_387', 'feature_389', 'feature_40', 'feature_403', 'feature_411', 'feature_418', 'feature_42', 'feature_427', 'feature_44', 'feature_448', 'feature_452', 'feature_458', 'feature_46', 'feature_468', 'feature_486', 'feature_488', 'feature_490', 'feature_493', 'feature_56', 'feature_59', 'feature_61', 'feature_68', 'feature_76', 'feature_82', 'feature_95', 'feature_96', 'feature_97']
+
+ - 0 missed true support features:
+   []
+
+ - 65 extra features found (not in true support):
+   ['feature_105', 'feature_120', 'feature_13', 'feature_131', 'feature_136', 'feature_14', 'feature_146', 'feature_152', 'feature_154', 'feature_155', 'feature_157', 'feature_159', 'feature_16', 'feature_168', 'feature_17', 'feature_176', 'feature_191', 'feature_204', 'feature_208', 'feature_216', 'feature_226', 'feature_229', 'feature_242', 'feature_245', 'feature_255', 'feature_26', 'feature_267', 'feature_273', 'feature_289', 'feature_291', 'feature_292', 'feature_3', 'feature_312', 'feature_32', 'feature_323', 'feature_325', 'feature_330', 'feature_336', 'feature_339', 'feature_35', 'feature_362', 'feature_382', 'feature_387', 'feature_389', 'feature_40', 'feature_403', 'feature_411', 'feature_418', 'feature_448', 'feature_452', 'feature_458', 'feature_46', 'feature_468', 'feature_488', 'feature_490', 'feature_493', 'feature_56', 'feature_59', 'feature_61', 'feature_68', 'feature_76', 'feature_82', 'feature_95', 'feature_96', 'feature_97']
+
+
+Overview of OUTLIER (STD_2.0) solutions
+=========================================
+
+| Index | component_0                | component_1                | component_2                | component_3                | component_4                | component_5                | component_6                | component_7                | component_8                |
+| _____ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ |
+| 0     | feature_386 (mu = -1.6350) | feature_386 (mu = -2.7980) | feature_386 (mu = 1.9499)  | feature_486 (mu = -0.9319) | feature_42 (mu = -1.0423)  | feature_348 (mu = 1.4001)  | feature_367 (mu = 2.0176)  | feature_486 (mu = -0.9233) | feature_386 (mu = -1.5999) |
+| 1     | feature_367 (mu = -1.1932) | feature_262 (mu = 0.5586)  | feature_348 (mu = -1.2371) | feature_427 (mu = -0.9103) | feature_348 (mu = -0.6452) | feature_262 (mu = -0.8741) | feature_262 (mu = -1.9683) | feature_427 (mu = -0.7334) | feature_367 (mu = -0.9267) |
+| 2     | feature_44 (mu = 1.1626)   | feature_42 (mu = -0.3289)  | feature_262 (mu = -0.8708) | feature_42 (mu = 0.7589)   | feature_44 (mu = 0.4935)   | feature_386 (mu = 0.8637)  | feature_42 (mu = -1.5823)  | feature_44 (mu = -0.3341)  | feature_427 (mu = 0.8835)  |
+| 3     | feature_262 (mu = 1.0977)  | feature_327 (mu = 0.2404)  | feature_367 (mu = 0.7973)  | feature_262 (mu = 0.7155)  | feature_386 (mu = -0.4703) | feature_367 (mu = 0.8248)  | feature_386 (mu = -0.6663) | feature_386 (mu = 0.2270)  | feature_262 (mu = 0.5056)  |
+| 4     | feature_327 (mu = 0.9432)  | feature_427 (mu = 0.2088)  | feature_42 (mu = -0.7105)  | feature_348 (mu = 0.4224)  | feature_486 (mu = -0.3491) | feature_486 (mu = -0.7139) | feature_348 (mu = 0.4176)  | feature_348 (mu = -0.1244) | feature_327 (mu = -0.4938) |
+| 5     | feature_427 (mu = 0.8560)  | feature_367 (mu = -0.1279) | feature_427 (mu = -0.6736) | feature_44 (mu = 0.3577)   | feature_262 (mu = -0.2709) | feature_44 (mu = -0.4439)  | feature_327 (mu = -0.3223) | feature_327 (mu = -0.1202) | feature_44 (mu = 0.4497)   |
+| 6     | feature_348 (mu = 0.7674)  | feature_152 (mu = 0.0955)  | feature_327 (mu = -0.6047) | feature_367 (mu = -0.2751) | feature_367 (mu = 0.2699)  | feature_42 (mu = 0.2210)   | feature_486 (mu = -0.3076) | feature_367 (mu = 0.0937)  | feature_42 (mu = -0.2537)  |
+| 7     | feature_42 (mu = 0.5844)   | feature_146 (mu = 0.0899)  | feature_16 (mu = 0.3209)   | feature_327 (mu = -0.1204) | feature_327 (mu = 0.1263)  | feature_226 (mu = -0.1918) | feature_427 (mu = 0.3052)  | feature_42 (mu = -0.0883)  | feature_348 (mu = -0.1400) |
+| 8     | feature_486 (mu = -0.1716) | feature_17 (mu = -0.0896)  | feature_486 (mu = 0.3037)  | feature_157 (mu = -0.1083) | feature_427 (mu = -0.1222) | feature_229 (mu = -0.1716) | feature_44 (mu = -0.1364)  | feature_336 (mu = -0.0642) | feature_154 (mu = 0.1074)  |
+| 9     | feature_255 (mu = -0.1695) | feature_13 (mu = -0.0893)  | feature_35 (mu = -0.0967)  | feature_155 (mu = -0.0728) | feature_95 (mu = 0.1023)   | feature_59 (mu = -0.0700)  | None                       | feature_289 (mu = -0.0631) | feature_486 (mu = -0.0811) |
+| 10    | feature_97 (mu = 0.0779)   | feature_312 (mu = -0.0859) | feature_242 (mu = -0.0891) | feature_273 (mu = 0.0675)  | feature_336 (mu = -0.0950) | feature_327 (mu = 0.0558)  | None                       | feature_339 (mu = 0.0627)  | feature_389 (mu = 0.0660)  |
+| 11    | None                       | feature_493 (mu = 0.0857)  | feature_458 (mu = -0.0809) | feature_490 (mu = -0.0501) | feature_152 (mu = 0.0885)  | feature_458 (mu = -0.0553) | None                       | feature_40 (mu = 0.0625)   | feature_336 (mu = -0.0618) |
+| 12    | None                       | feature_97 (mu = 0.0806)   | feature_3 (mu = -0.0797)   | feature_325 (mu = -0.0492) | feature_76 (mu = -0.0815)  | None                       | None                       | feature_262 (mu = 0.0611)  | feature_289 (mu = -0.0593) |
+| 13    | None                       | feature_336 (mu = -0.0768) | feature_61 (mu = 0.0786)   | feature_488 (mu = 0.0489)  | feature_13 (mu = -0.0809)  | None                       | None                       | feature_216 (mu = 0.0609)  | feature_267 (mu = 0.0566)  |
+| 14    | None                       | feature_35 (mu = 0.0749)   | feature_448 (mu = 0.0770)  | feature_152 (mu = 0.0487)  | feature_292 (mu = -0.0801) | None                       | None                       | feature_159 (mu = 0.0607)  | feature_82 (mu = 0.0566)   |
+| 15    | None                       | feature_46 (mu = 0.0735)   | None                       | None                       | feature_35 (mu = 0.0772)   | None                       | None                       | feature_245 (mu = -0.0588) | feature_13 (mu = -0.0561)  |
+| 16    | None                       | feature_348 (mu = -0.0731) | None                       | None                       | feature_136 (mu = -0.0765) | None                       | None                       | feature_168 (mu = -0.0581) | feature_362 (mu = -0.0558) |
+| 17    | None                       | feature_418 (mu = 0.0731)  | None                       | None                       | feature_97 (mu = 0.0760)   | None                       | None                       | feature_191 (mu = -0.0570) | None                       |
+| 18    | None                       | feature_32 (mu = 0.0704)   | None                       | None                       | feature_146 (mu = 0.0755)  | None                       | None                       | feature_176 (mu = 0.0560)  | None                       |
+| 19    | None                       | feature_131 (mu = 0.0680)  | None                       | None                       | feature_96 (mu = 0.0715)   | None                       | None                       | feature_96 (mu = 0.0549)   | None                       |
+| 20    | None                       | None                       | None                       | None                       | feature_208 (mu = -0.0666) | None                       | None                       | feature_105 (mu = -0.0546) | None                       |
+| 21    | None                       | None                       | None                       | None                       | feature_14 (mu = 0.0647)   | None                       | None                       | feature_403 (mu = 0.0541)  | None                       |
+| 22    | None                       | None                       | None                       | None                       | feature_323 (mu = -0.0635) | None                       | None                       | feature_13 (mu = -0.0537)  | None                       |
+| 23    | None                       | None                       | None                       | None                       | feature_362 (mu = -0.0635) | None                       | None                       | feature_387 (mu = -0.0536) | None                       |
+| 24    | None                       | None                       | None                       | None                       | feature_411 (mu = 0.0635)  | None                       | None                       | feature_120 (mu = 0.0535)  | None                       |
+| 25    | None                       | None                       | None                       | None                       | feature_26 (mu = 0.0626)   | None                       | None                       | feature_68 (mu = 0.0533)   | None                       |
+| 26    | None                       | None                       | None                       | None                       | feature_382 (mu = 0.0598)  | None                       | None                       | feature_452 (mu = -0.0525) | None                       |
+| 27    | None                       | None                       | None                       | None                       | feature_68 (mu = 0.0580)   | None                       | None                       | feature_204 (mu = 0.0498)  | None                       |
+| 28    | None                       | None                       | None                       | None                       | None                       | None                       | None                       | feature_291 (mu = -0.0496) | None                       |
+| 29    | None                       | None                       | None                       | None                       | None                       | None                       | None                       | feature_56 (mu = -0.0496)  | None                       |
+| 30    | None                       | None                       | None                       | None                       | None                       | None                       | None                       | feature_468 (mu = -0.0494) | None                       |
+| 31    | None                       | None                       | None                       | None                       | None                       | None                       | None                       | feature_330 (mu = 0.0490)  | None                       |
+
+
+Regression results on training data (l2 penalty)
+================================================
+
+No data to display.
+
+----------------------------------------------------------------------
+
+   ------   ANALYSIS - Solution type: OUTLIER (STD_2.5)   ------   
+
+## OUTLIER (STD_2.5) Solutions
+
+Features identified as outliers based on standard deviation.
+
+Coverage Metrics for outlier (STD_2.5)
+======================================
+
+| Index                  | Value  |
+| ______________________ | ______ |
+| n_features_found       | 34.000 |
+| n_correct              | 9.000  |
+| n_missed               | 0.000  |
+| n_extra                | 25.000 |
+| Recall                 | 1.000  |
+| Precision              | 0.265  |
+| F1_Score               | 0.419  |
+| Jaccard                | 0.265  |
+| Miss_Rate              | 0.000  |
+| FDR                    | 0.735  |
+| Global_Miss_Rate       | 0.000  |
+| Global_FDR             | 0.050  |
+| Success_Index          | 55.556 |
+| Adjusted_Success_Index | 14.706 |
+
+## Overview of discovered features for OUTLIER (STD_2.5) solutions:
+
+ - 9 unique true support features:
+   ['feature_262', 'feature_327', 'feature_348', 'feature_367', 'feature_386', 'feature_42', 'feature_427', 'feature_44', 'feature_486']
+
+
+ - 34 discovered features:
+   ['feature_13', 'feature_136', 'feature_146', 'feature_152', 'feature_154', 'feature_155', 'feature_157', 'feature_16', 'feature_17', 'feature_226', 'feature_229', 'feature_255', 'feature_262', 'feature_273', 'feature_289', 'feature_292', 'feature_312', 'feature_327', 'feature_336', 'feature_339', 'feature_348', 'feature_35', 'feature_367', 'feature_386', 'feature_40', 'feature_42', 'feature_427', 'feature_44', 'feature_486', 'feature_493', 'feature_59', 'feature_76', 'feature_95', 'feature_97']
+
+ - 0 missed true support features:
+   []
+
+ - 25 extra features found (not in true support):
+   ['feature_13', 'feature_136', 'feature_146', 'feature_152', 'feature_154', 'feature_155', 'feature_157', 'feature_16', 'feature_17', 'feature_226', 'feature_229', 'feature_255', 'feature_273', 'feature_289', 'feature_292', 'feature_312', 'feature_336', 'feature_339', 'feature_35', 'feature_40', 'feature_493', 'feature_59', 'feature_76', 'feature_95', 'feature_97']
+
+
+Overview of OUTLIER (STD_2.5) solutions
+=========================================
+
+| Index | component_0                | component_1                | component_2                | component_3                | component_4                | component_5                | component_6                | component_7                | component_8                |
+| _____ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ |
+| 0     | feature_386 (mu = -1.6350) | feature_386 (mu = -2.7980) | feature_386 (mu = 1.9499)  | feature_486 (mu = -0.9319) | feature_42 (mu = -1.0423)  | feature_348 (mu = 1.4001)  | feature_367 (mu = 2.0176)  | feature_486 (mu = -0.9233) | feature_386 (mu = -1.5999) |
+| 1     | feature_367 (mu = -1.1932) | feature_262 (mu = 0.5586)  | feature_348 (mu = -1.2371) | feature_427 (mu = -0.9103) | feature_348 (mu = -0.6452) | feature_262 (mu = -0.8741) | feature_262 (mu = -1.9683) | feature_427 (mu = -0.7334) | feature_367 (mu = -0.9267) |
+| 2     | feature_44 (mu = 1.1626)   | feature_42 (mu = -0.3289)  | feature_262 (mu = -0.8708) | feature_42 (mu = 0.7589)   | feature_44 (mu = 0.4935)   | feature_386 (mu = 0.8637)  | feature_42 (mu = -1.5823)  | feature_44 (mu = -0.3341)  | feature_427 (mu = 0.8835)  |
+| 3     | feature_262 (mu = 1.0977)  | feature_327 (mu = 0.2404)  | feature_367 (mu = 0.7973)  | feature_262 (mu = 0.7155)  | feature_386 (mu = -0.4703) | feature_367 (mu = 0.8248)  | feature_386 (mu = -0.6663) | feature_386 (mu = 0.2270)  | feature_262 (mu = 0.5056)  |
+| 4     | feature_327 (mu = 0.9432)  | feature_427 (mu = 0.2088)  | feature_42 (mu = -0.7105)  | feature_348 (mu = 0.4224)  | feature_486 (mu = -0.3491) | feature_486 (mu = -0.7139) | feature_348 (mu = 0.4176)  | feature_348 (mu = -0.1244) | feature_327 (mu = -0.4938) |
+| 5     | feature_427 (mu = 0.8560)  | feature_367 (mu = -0.1279) | feature_427 (mu = -0.6736) | feature_44 (mu = 0.3577)   | feature_262 (mu = -0.2709) | feature_44 (mu = -0.4439)  | feature_327 (mu = -0.3223) | feature_327 (mu = -0.1202) | feature_44 (mu = 0.4497)   |
+| 6     | feature_348 (mu = 0.7674)  | feature_152 (mu = 0.0955)  | feature_327 (mu = -0.6047) | feature_367 (mu = -0.2751) | feature_367 (mu = 0.2699)  | feature_42 (mu = 0.2210)   | feature_486 (mu = -0.3076) | feature_367 (mu = 0.0937)  | feature_42 (mu = -0.2537)  |
+| 7     | feature_42 (mu = 0.5844)   | feature_146 (mu = 0.0899)  | feature_16 (mu = 0.3209)   | feature_327 (mu = -0.1204) | feature_327 (mu = 0.1263)  | feature_226 (mu = -0.1918) | feature_427 (mu = 0.3052)  | feature_42 (mu = -0.0883)  | feature_348 (mu = -0.1400) |
+| 8     | feature_486 (mu = -0.1716) | feature_17 (mu = -0.0896)  | feature_486 (mu = 0.3037)  | feature_157 (mu = -0.1083) | feature_427 (mu = -0.1222) | feature_229 (mu = -0.1716) | feature_44 (mu = -0.1364)  | feature_336 (mu = -0.0642) | feature_154 (mu = 0.1074)  |
+| 9     | feature_255 (mu = -0.1695) | feature_13 (mu = -0.0893)  | feature_35 (mu = -0.0967)  | feature_155 (mu = -0.0728) | feature_95 (mu = 0.1023)   | feature_59 (mu = -0.0700)  | None                       | feature_289 (mu = -0.0631) | feature_486 (mu = -0.0811) |
+| 10    | None                       | feature_312 (mu = -0.0859) | None                       | feature_273 (mu = 0.0675)  | feature_336 (mu = -0.0950) | None                       | None                       | feature_339 (mu = 0.0627)  | None                       |
+| 11    | None                       | feature_493 (mu = 0.0857)  | None                       | None                       | feature_152 (mu = 0.0885)  | None                       | None                       | feature_40 (mu = 0.0625)   | None                       |
+| 12    | None                       | None                       | None                       | None                       | feature_76 (mu = -0.0815)  | None                       | None                       | None                       | None                       |
+| 13    | None                       | None                       | None                       | None                       | feature_13 (mu = -0.0809)  | None                       | None                       | None                       | None                       |
+| 14    | None                       | None                       | None                       | None                       | feature_292 (mu = -0.0801) | None                       | None                       | None                       | None                       |
+| 15    | None                       | None                       | None                       | None                       | feature_35 (mu = 0.0772)   | None                       | None                       | None                       | None                       |
+| 16    | None                       | None                       | None                       | None                       | feature_136 (mu = -0.0765) | None                       | None                       | None                       | None                       |
+| 17    | None                       | None                       | None                       | None                       | feature_97 (mu = 0.0760)   | None                       | None                       | None                       | None                       |
+| 18    | None                       | None                       | None                       | None                       | feature_146 (mu = 0.0755)  | None                       | None                       | None                       | None                       |
+
+
+Regression results on training data (l2 penalty)
+================================================
+
+No data to display.
+
+----------------------------------------------------------------------
+
+   ------   ANALYSIS - Solution type: OUTLIER (STD_3.0)   ------   
+
+## OUTLIER (STD_3.0) Solutions
+
+Features identified as outliers based on standard deviation.
+
+Coverage Metrics for outlier (STD_3.0)
+======================================
+
+| Index                  | Value  |
+| ______________________ | ______ |
+| n_features_found       | 19.000 |
+| n_correct              | 9.000  |
+| n_missed               | 0.000  |
+| n_extra                | 10.000 |
+| Recall                 | 1.000  |
+| Precision              | 0.474  |
+| F1_Score               | 0.643  |
+| Jaccard                | 0.474  |
+| Miss_Rate              | 0.000  |
+| FDR                    | 0.526  |
+| Global_Miss_Rate       | 0.000  |
+| Global_FDR             | 0.020  |
+| Success_Index          | 55.556 |
+| Adjusted_Success_Index | 26.316 |
+
+## Overview of discovered features for OUTLIER (STD_3.0) solutions:
+
+ - 9 unique true support features:
+   ['feature_262', 'feature_327', 'feature_348', 'feature_367', 'feature_386', 'feature_42', 'feature_427', 'feature_44', 'feature_486']
+
+
+ - 19 discovered features:
+   ['feature_152', 'feature_154', 'feature_155', 'feature_157', 'feature_16', 'feature_226', 'feature_229', 'feature_255', 'feature_262', 'feature_327', 'feature_336', 'feature_348', 'feature_367', 'feature_386', 'feature_42', 'feature_427', 'feature_44', 'feature_486', 'feature_95']
+
+ - 0 missed true support features:
+   []
+
+ - 10 extra features found (not in true support):
+   ['feature_152', 'feature_154', 'feature_155', 'feature_157', 'feature_16', 'feature_226', 'feature_229', 'feature_255', 'feature_336', 'feature_95']
+
+
+Overview of OUTLIER (STD_3.0) solutions
+=========================================
+
+| Index | component_0                | component_1                | component_2                | component_3                | component_4                | component_5                | component_6                | component_7                | component_8                |
+| _____ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ | __________________________ |
+| 0     | feature_386 (mu = -1.6350) | feature_386 (mu = -2.7980) | feature_386 (mu = 1.9499)  | feature_486 (mu = -0.9319) | feature_42 (mu = -1.0423)  | feature_348 (mu = 1.4001)  | feature_367 (mu = 2.0176)  | feature_486 (mu = -0.9233) | feature_386 (mu = -1.5999) |
+| 1     | feature_367 (mu = -1.1932) | feature_262 (mu = 0.5586)  | feature_348 (mu = -1.2371) | feature_427 (mu = -0.9103) | feature_348 (mu = -0.6452) | feature_262 (mu = -0.8741) | feature_262 (mu = -1.9683) | feature_427 (mu = -0.7334) | feature_367 (mu = -0.9267) |
+| 2     | feature_44 (mu = 1.1626)   | feature_42 (mu = -0.3289)  | feature_262 (mu = -0.8708) | feature_42 (mu = 0.7589)   | feature_44 (mu = 0.4935)   | feature_386 (mu = 0.8637)  | feature_42 (mu = -1.5823)  | feature_44 (mu = -0.3341)  | feature_427 (mu = 0.8835)  |
+| 3     | feature_262 (mu = 1.0977)  | feature_327 (mu = 0.2404)  | feature_367 (mu = 0.7973)  | feature_262 (mu = 0.7155)  | feature_386 (mu = -0.4703) | feature_367 (mu = 0.8248)  | feature_386 (mu = -0.6663) | feature_386 (mu = 0.2270)  | feature_262 (mu = 0.5056)  |
+| 4     | feature_327 (mu = 0.9432)  | feature_427 (mu = 0.2088)  | feature_42 (mu = -0.7105)  | feature_348 (mu = 0.4224)  | feature_486 (mu = -0.3491) | feature_486 (mu = -0.7139) | feature_348 (mu = 0.4176)  | feature_348 (mu = -0.1244) | feature_327 (mu = -0.4938) |
+| 5     | feature_427 (mu = 0.8560)  | feature_367 (mu = -0.1279) | feature_427 (mu = -0.6736) | feature_44 (mu = 0.3577)   | feature_262 (mu = -0.2709) | feature_44 (mu = -0.4439)  | feature_327 (mu = -0.3223) | feature_327 (mu = -0.1202) | feature_44 (mu = 0.4497)   |
+| 6     | feature_348 (mu = 0.7674)  | None                       | feature_327 (mu = -0.6047) | feature_367 (mu = -0.2751) | feature_367 (mu = 0.2699)  | feature_42 (mu = 0.2210)   | feature_486 (mu = -0.3076) | feature_367 (mu = 0.0937)  | feature_42 (mu = -0.2537)  |
+| 7     | feature_42 (mu = 0.5844)   | None                       | feature_16 (mu = 0.3209)   | feature_327 (mu = -0.1204) | feature_327 (mu = 0.1263)  | feature_226 (mu = -0.1918) | feature_427 (mu = 0.3052)  | feature_42 (mu = -0.0883)  | feature_348 (mu = -0.1400) |
+| 8     | feature_486 (mu = -0.1716) | None                       | feature_486 (mu = 0.3037)  | feature_157 (mu = -0.1083) | feature_427 (mu = -0.1222) | feature_229 (mu = -0.1716) | feature_44 (mu = -0.1364)  | None                       | feature_154 (mu = 0.1074)  |
+| 9     | feature_255 (mu = -0.1695) | None                       | None                       | feature_155 (mu = -0.0728) | feature_95 (mu = 0.1023)   | None                       | None                       | None                       | None                       |
+| 10    | None                       | None                       | None                       | None                       | feature_336 (mu = -0.0950) | None                       | None                       | None                       | None                       |
+| 11    | None                       | None                       | None                       | None                       | feature_152 (mu = 0.0885)  | None                       | None                       | None                       | None                       |
+
+
+Regression results on training data (l2 penalty)
+================================================
+
+No data to display.
+
+----------------------------------------------------------------------

@@ -1,0 +1,11 @@
+{
+    "N_FEATURES":  500,
+    "N_SAMPLES":  100,
+    "NOISE_STD":  0.1,
+    "NAN_RATIO":  0.0,
+    "N_GENERATING_SOLUTIONS":  3,
+    "DATASET_SEED":  42,
+    "BINARIZE":  true,
+    "SPARSITY":  3,
+    "BINARY_RESPONSE_RATIO":  0.5
+}
