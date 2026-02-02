@@ -104,7 +104,7 @@ This makes the `gemss` environment available as a kernel in Jupyter and VS Code 
 To verify the kernel is registered, run:
 
 ```bash
-jupyter kernelspec list
+uv run jupyter kernelspec list
 ```
 
 ## Quick start
