@@ -26,6 +26,9 @@ dependencies = [
 [project.urls]
 Repository = "https://github.com/kat-er-ina/gemss"
 
+[tool.marimo.runtime]
+output_max_bytes = 200_000_000
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
