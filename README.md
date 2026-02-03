@@ -2,6 +2,8 @@
 
 This repository implements Bayesian sparse feature selection using variational inference with Gaussian mixture models. The main objective is to recover all sparse feature subsets (supports) that explain the response in high-dimensional regression or classification tasks.
 
+**To make this tool accessible by non-coders (typically domain experts), we provide a user-friendly application for the entire exploratory GEMSS workflow.**
+
 ## Motivation
 
 In many real-world problems, e.g. in life sciences, datasets with far more features than samples are common because collecting new data points is costly or impractical. In these situations, there are often several distinct, sparse combinations of features that can explain the observed outcomes, each corresponding to a different underlying mechanism or hypothesis. Moreover, in many cases, the quality of a combination of predictors can be assessed only ex-post by utilizing advanced domain knowledge.
@@ -9,18 +11,23 @@ In many real-world problems, e.g. in life sciences, datasets with far more featu
 Traditional feature selection methods typically identify only a single solution to a classification or regression problem, overlooking the ambiguity and the potential for multiple valid interpretations. This project addresses that gap by providing a Bayesian framework that systematically recovers all plausible sparse solutions, enabling a more complete understanding of the data and supporting the exploration and comparison of alternative explanatory hypotheses.
 
 
-## Citation
+## When to use GEMSS
 
-If you use GEMSS in your research, please cite:
+Instead of finding just one "best" set of features, GEMSS discovers **several most likely feature combinations** that predict your target variable comparably well. This is valuable when:
 
-```bibtex
-@misc{GEMSS2026,
-  author = {Henclova, Katerina and Smidl, Vaclav},
-  title = {GEMSS: A Variational Bayesian Method for Discovering Multiple Sparse Solutions in Classification and Regression Problems},
-  year = {2026},
-  note = {arXiv preprint arXiv:XXXX.XXXXX}
-}
-```
+- You have precious few samples and many more features.
+- Multiple underlying mechanisms might explain your data.
+- You are striving for an interpretable model.
+- You want to engineer a multitude of nonlinear and combined features from your original set for exploratory purposes.
+- Your features are correlated.
+- When there is domain knowledge to be mined (a human in the loop).
+
+
+### When NOT to use GEMSS
+
+- When the desired number of features you are looking for exceeds approximately 10-20.
+- Inside automated modeling pipelines.
+
 
 ## Features
 
@@ -36,12 +43,30 @@ GEMSS provides a comprehensive framework for Bayesian feature selection with the
 * **Batch experiments:** Parameter sweeps and tiered validation suites
 
 
+## Citation
+
+If you use GEMSS in your research, please cite:
+
+```bibtex
+@misc{GEMSS2026,
+  author = {Henclova, Katerina and Smidl, Vaclav},
+  title = {GEMSS: A Variational Bayesian Method for Discovering Multiple Sparse Solutions in Classification and Regression Problems},
+  year = {2026},
+  note = {arXiv preprint arXiv:XXXX.XXXXX}
+}
+```
+
+
 ## Repository structure
 
 The repository is organized into core packages, interactive notebooks, batch experiment scripts, and configuration files:
 
 ```
 gemss/
+  app/                       # Interactive marimo app
+    gemss_explorer_noncommercial.py   # GEMSS explorer app with non-commercial TabPFN modeling add-on
+    gemss_explorer_unlimited.py       # GEMSS explorer app for unlimited use
+    results/                          # App outputs
   data/                      # User datasets
   notebooks/                 # Interactive demos and analysis
     demo.ipynb               # End-to-end synthetic demo
@@ -91,9 +116,11 @@ Navigate to the repository root and sync the environment. This command will crea
 uv sync
 ```
 
-### 3. Register the Jupyter kernel
+### 3. Register the Jupyter kernel (optional)
 
-To run notebooks with the correct Python environment, register the kernel:
+**Note:** This step is only required if you plan to use Jupyter notebooks. The marimo app doesn't need kernel registration.
+
+To run Jupyter notebooks with the correct Python environment, register the kernel:
 
 ```bash
 uv run python -m ipykernel install --user --name=gemss --display-name="Python (gemss)"
@@ -111,36 +138,56 @@ uv run jupyter kernelspec list
 
 GEMSS can be applied to both custom datasets and synthetic data for validation and benchmarking.
 
-### Interactive demos
+### **GEMSS Explorer:** an interactive application (recommended)
 
-**Demo:** [notebooks/demo.ipynb](notebooks/demo.ipynb) — complete synthetic data walkthrough
+The easiest way to use GEMSS is through the interactive marimo app. There are two versions:
 
-**Custom data:** [notebooks/explore_custom_dataset.ipynb](notebooks/explore_custom_dataset.ipynb) — guided workflow for your datasets
+- unlimited - contains all the basic functionalities and is free to use in any settings, including commercial
+- non-commercial - same as 'unlimited' but also includes the TabPFN modeling tool
 
-The notebooks can be opened either in your favorite editor or by using `uv run`, e.g.:
+Run the apps by
+
+```bash
+uv run marimo run app/gemss_explorer_unlimited.py
+```
+or
+
+```bash
+uv run marimo run app/gemss_explorer_noncommercial.py
+```
+
+The app provides a complete guided workflow:
+- Upload and preprocess your CSV data
+- Configure algorithm parameters (with built-in help)
+- Run feature selection and visualize convergence
+- Recover multiple sparse solutions
+- Evaluate solutions with TabPFN (optional)
+- Export results automatically
+
+**Data requirements:** CSV format with numerical features. Missing values are handled natively. Binary classification and regression supported.
+
+### Jupyter notebooks
+
+For more control and customization, use the Jupyter notebooks:
+
+- [notebooks/demo.ipynb](notebooks/demo.ipynb) — complete walkthrough with synthetic data
+- [notebooks/explore_custom_dataset.ipynb](notebooks/explore_custom_dataset.ipynb) — custom data workflow
+- [notebooks/README.md](notebooks/README.md) — detailed documentation
+
+Launch notebooks with:
 
 ```bash
 uv run jupyter notebook notebooks/demo.ipynb
 ```
 
-**Detailed documentation:** [notebooks/README.md](notebooks/README.md)
+### Batch experiments
 
-### Custom datasets
-
-1. Place your CSV file in `data/`
-2. Open [notebooks/explore_custom_dataset.ipynb](notebooks/explore_custom_dataset.ipynb)
-3. Configure data loading (file name, index, target column)
-4. Review preprocessing outputs and adjust as needed
-5. Adjust algorithm hyperparameters
-6. Run and review diagnostics/visualizations
-7. Iterate based on convergence and results
-
-**Data requirements:** Numerical features preferred. Missing values handled natively. Preprocessing utilities include standard/minmax scaling.
+For systematic benchmarking and parameter sweeps, see the [Proof-of-concept experiments](#proof-of-concept-experiments) section below.
 
 
 ## Proof-of-concept experiments
 
-A comprehensive experimental framework validates GEMSS across diverse data scenarios, from clean baseline conditions to challenging high-dimensional and noisy settings.
+A comprehensive experimental framework validates GEMSS across diverse data scenarios, from clean baseline conditions to challenging high-dimensional and noisy settings. One can review and replicate these experiments.
 
 There are 128 experiments organized in 7 tiers:
 
@@ -192,4 +239,6 @@ Then run:
 
 ## License
 
-This project is licensed under the MIT License.
+The GEMSS algorithm is licensed under the MIT License.
+
+The optional add-on for modeling, [TabPFN](https://huggingface.co/Prior-Labs/tabpfn_2_5), is used in compliance with its non-commercial [license](https://huggingface.co/Prior-Labs/tabpfn_2_5#licensing).
