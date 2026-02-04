@@ -61,9 +61,6 @@ def _():
         solve_any_regression,
         show_regression_metrics,
     )
-    from gemss.postprocessing.tabpfn_evaluation import (
-        tabpfn_evaluate,
-    )
     from gemss.data_handling.data_processing import (
         preprocess_features,
         get_df_from_X,
@@ -94,7 +91,6 @@ def _():
         save_feature_lists_txt,
         save_selector_history_json,
         solve_any_regression,
-        tabpfn_evaluate,
     )
 
 
@@ -103,13 +99,15 @@ def _(current_dir, mo, os):
     logo_path = os.path.join(current_dir, "datamole_logo_wide.jpg")
 
     # Read and display logo
-    logo_link = mo.Html(f"""
+    logo_link = mo.Html(
+        f"""
         <div style="text-align: right;">
             <a href="https://www.datamole.ai/" target="_blank">
                 {mo.image(src=logo_path, width=1000, alt="Datamole").text}
             </a>
         </div>
-    """)
+    """
+    )
 
     mo.image(src=logo_path, width=1000, alt="Datamole")
     return
@@ -117,11 +115,13 @@ def _(current_dir, mo, os):
 
 @app.cell
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     # 💎 **GEMSS Explorer**
 
     This app helps you discover **multiple distinct feature sets** that explain your data using GEMSS: Gaussian Ensemble for Multiple Sparse Solutions.
-    """)
+    """
+    )
     return
 
 
@@ -136,22 +136,22 @@ def _(mo):
 
                 Instead of finding just one "best" set of features, GEMSS discovers **several most likely feature combinations** that predict your target variable comparably well. This is valuable when:
 
-                - You have precious few samples and many more features (common e.g. in life sciences)
-                - Multiple underlying mechanisms might explain your data
-                - You are striving for an interpretable model
-                - You want to engineer a multitude of nonlinear and combined features from your original set for exploratory purposes
-                - Your features are correlated
+                - You have precious few samples and many more features (common e.g. in life sciences).
+                - Multiple underlying mechanisms might explain your data.
+                - You are striving for an interpretable model.
+                - You want to engineer a multitude of nonlinear and combined features from your original set for exploratory purposes.
+                - Your features are correlated.
                 - When there is domain knowledge to be mined (a human in the loop).
 
                 **Example:** Instead of "use features A, B, C", you might discover three solutions: {A, B, C}, {D, E, F}, {A, E, G} — each explaining the data through a different mechanism.
 
                 ### General workflow overview
 
-                **I. Data loading** - Upload and configure your dataset <br>
-                **II. Algorithm setup** - Configure hyperparameters of GEMSS feature selector <br>
-                **III. Feature selection** - Run Bayesian inference to discover multiple components that describe your data <br>
-                **IV. Solution recovery** - Extract one sparse solution from each component, obtaining an ensemble of feature sets <br>
-                **V. Model evaluation** [not implemented in full] - Validate each solution by creating a full predictive model <br>
+                **I. Data loading** - Upload and configure your dataset. <br>
+                **II. Algorithm setup** - Configure hyperparameters of GEMSS feature selector. <br>
+                **III. Feature selection** - Run Bayesian inference to discover multiple components that describe your data. <br>
+                **IV. Solution recovery** - Extract one sparse solution from each component, obtaining an ensemble of feature sets. <br>
+                **V. Model evaluation** - Validate each solution by a simple linear/logistic model. Full modeling not implemented in this app. <br>
 
                 Each step builds on the previous one, so please follow the workflow in order.
                 """
@@ -159,15 +159,22 @@ def _(mo):
         }
     )
 
-    mo.vstack([intro_help, mo.md("<br>"),])
+    mo.vstack(
+        [
+            intro_help,
+            mo.md("<br>"),
+        ]
+    )
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     ## **1. Set up input and output**
-    """)
+    """
+    )
     return
 
 
@@ -204,7 +211,11 @@ def _(mo):
         }
     )
 
-    mo.vstack([data_help,])
+    mo.vstack(
+        [
+            data_help,
+        ]
+    )
     return
 
 
@@ -212,16 +223,15 @@ def _(mo):
 def _(current_dir, mo):
     # Save configuration
     checkbox_save_results = mo.ui.checkbox(
-        value=True, label="Save results",
+        value=True,
+        label="Save results",
     )
     save_dir_input = mo.ui.text(
         value=f"{current_dir}\\results",
         label="Parent directory for saving this experiment",
     )
 
-    save_experiment_id = mo.ui.number(
-        1, 1000, value=1, step=1, label="Experiment ID"
-    )
+    save_experiment_id = mo.ui.number(1, 1000, value=1, step=1, label="Experiment ID")
     save_history_name = mo.ui.text(
         value="search_history_results",
         label="History filename (no extension)",
@@ -232,7 +242,6 @@ def _(current_dir, mo):
     save_features_name = mo.ui.text(
         value="all_candidate_solutions", label="Features filename (no extension)"
     )
-
 
     mo.vstack(
         [
@@ -265,12 +274,14 @@ def _(
     if save_results:
         _display = mo.vstack(
             [
-                mo.md(f"*Output files will be saved in: {save_dir_input.value}/experiment_{save_experiment_id.value}*/"),
+                mo.md(
+                    f"*Output files will be saved in: {save_dir_input.value}/experiment_{save_experiment_id.value}*/"
+                ),
                 mo.accordion(
-                {
-                    " Edit save location": mo.vstack(
+                    {
+                        " Edit save location": mo.vstack(
                             [
-                           save_dir_input,
+                                save_dir_input,
                                 save_experiment_id,
                             ]
                         )
@@ -309,9 +320,7 @@ def _(
     # configure saving options, if saving is enabled
     if save_results:
         # Prepare directory
-        experiment_dir = (
-            f"{save_dir_input.value}/experiment_{save_experiment_id.value}"
-        )
+        experiment_dir = f"{save_dir_input.value}/experiment_{save_experiment_id.value}"
         os.makedirs(experiment_dir, exist_ok=True)
 
         # Prepare save paths
@@ -340,7 +349,6 @@ def _(mo):
     file_uploader = mo.ui.file(
         kind="button", label="Upload CSV dataset", filetypes=[".csv"]
     )
-
 
     mo.vstack(
         [
@@ -390,9 +398,7 @@ def _(file_uploader, io, mo, pd):
                 mo.md(
                     f"✅ **Data loaded:** `{file_uploader.value[0].name}` ({df_raw.shape[0]} rows, {df_raw.shape[1]} cols)"
                 ),
-                mo.vstack(
-                    [index_col_selector, label_col_selector, scaling_selector]
-                ),
+                mo.vstack([index_col_selector, label_col_selector, scaling_selector]),
             ]
         )
     else:
@@ -401,13 +407,21 @@ def _(file_uploader, io, mo, pd):
         label_col_selector = None
         scaling_selector = None
 
-    mo.vstack(
-        [
-            mo.md("**Your loaded dataset:**"),
-            mo.ui.table(df_raw),
-            mo.md("<br>"),
-        ]
-    ) if df_raw is not None else mo.vstack([mo.md("---"),])
+    (
+        mo.vstack(
+            [
+                mo.md("**Your loaded dataset:**"),
+                mo.ui.table(df_raw),
+                mo.md("<br>"),
+            ]
+        )
+        if df_raw is not None
+        else mo.vstack(
+            [
+                mo.md("---"),
+            ]
+        )
+    )
     return (
         allowed_missing_percentage_selector,
         df_raw,
@@ -506,11 +520,13 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     ## **2. The feature selection algorithm**
 
     Configure parameters of the GEMSS feature selection algorithm.
-    """)
+    """
+    )
     return
 
 
@@ -533,9 +549,7 @@ def _(df_processed, mo):
 
     # Advanced Settings
     adv_iter = mo.ui.number(500, 20000, value=3500, step=250, label="Iterations")
-    adv_lr = mo.ui.number(
-        0.0000, 0.1, value=0.002, step=0.0001, label="Learning rate"
-    )
+    adv_lr = mo.ui.number(0.0000, 0.1, value=0.002, step=0.0001, label="Learning rate")
     adv_batch = mo.ui.number(
         8,
         256,
@@ -644,7 +658,7 @@ def _(df_processed, mo):
 
 @app.cell
 def _(df_processed, mo):
-    mo.stop(df_processed is None, "") 
+    mo.stop(df_processed is None, "")
 
     # The big RUN FEATURE SELECTION button
     run_btn = mo.ui.run_button(label="Run feature selection", kind="success")
@@ -760,11 +774,13 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     ## **3. Algorithm progress history**
 
     Assess convergence and features in the components. If needed, adjust the algorithm's parameters and rerun.
-    """)
+    """
+    )
     return
 
 
@@ -789,7 +805,9 @@ def _(
         mu=True,
         alpha=False,
         original_feature_names_mapping=feature_map,
-        subsample_history_for_plotting=True if ((adv_iter.value > 4000) or (n_features > 80)) else False,
+        subsample_history_for_plotting=(
+            True if ((adv_iter.value > 4000) or (n_features > 80)) else False
+        ),
     )
 
     alphas_plots = get_final_alphas_plot(
@@ -798,7 +816,6 @@ def _(
         show_pie_chart=True,
     )
     alpha_piechart = alphas_plots[0]
-
 
     # Elbo convergence help text
     elbo_help = mo.accordion(
@@ -893,11 +910,13 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     ## **4. Recover solutions from components**
 
     Each component can be handled in multiple ways to yield feature sets = candidate solutions. Select your strategy.
-    """)
+    """
+    )
     return
 
 
@@ -906,18 +925,10 @@ def _(df_processed, history, mo, sparsity_est):
     mo.stop(history is None, "")  # Show only after feature selector is run
 
     # checkboxes to pick solution types
-    checkbox_out20_sol = mo.ui.checkbox(
-        label="Outliers with STD > 2.0", value=True
-    )
-    checkbox_out25_sol = mo.ui.checkbox(
-        label="Outliers with STD > 2.5", value=True
-    )
-    checkbox_out30_sol = mo.ui.checkbox(
-        label="Outliers with STD > 3.0", value=True
-    )
-    checkbox_out35_sol = mo.ui.checkbox(
-        label="Outliers with STD > 3.5", value=False
-    )
+    checkbox_out20_sol = mo.ui.checkbox(label="Outliers with STD > 2.0", value=True)
+    checkbox_out25_sol = mo.ui.checkbox(label="Outliers with STD > 2.5", value=True)
+    checkbox_out30_sol = mo.ui.checkbox(label="Outliers with STD > 3.0", value=True)
+    checkbox_out35_sol = mo.ui.checkbox(label="Outliers with STD > 3.5", value=False)
     checkbox_top_sol = mo.ui.checkbox(label="Top few features", value=False)
     checkbox_full_sol = mo.ui.checkbox(
         label="All features with mu > threshold", value=False
@@ -1118,7 +1129,7 @@ def _(
     )
     mo.stop(
         (top_n_features_selector.value is None) or (top_n_features_selector.value < 1),
-        mo.md("Please set 'top few features' to value 1 or more.")
+        mo.md("Please set 'top few features' to value 1 or more."),
     )
 
     # Define which outliers are to be recovered
@@ -1155,14 +1166,18 @@ def _(
 
     mo.stop(
         all_solutions == {},
-        mo.md("Cannot proceed. Please pick a solution type to recover.")
+        mo.md("Cannot proceed. Please pick a solution type to recover."),
     )
 
     # Extract which features are contained in which solution type
     # Get overviews and simple performance metrics
-    solution_summary = {}  # one dateframe per solution type: feature names with mu values
+    solution_summary = (
+        {}
+    )  # one dateframe per solution type: feature names with mu values
     all_feature_sets = {}  # features per component, for each solution type
-    unique_features_found = {}  # all unique features across all components of a solution type
+    unique_features_found = (
+        {}
+    )  # all unique features across all components of a solution type
     regression_metrics_l1 = {}
     regression_metrics_l2 = {}
 
@@ -1176,17 +1191,17 @@ def _(
         if checkbox_regression_l2.value and (df_raw is not None):
             regression_metrics_l2[_type] = solve_any_regression(
                 solutions=all_feature_sets[_type],
-                df=df_raw, # df_processed,
+                df=df_raw,  # df_processed,
                 response=y,
                 apply_scaling=scaling_selector.value,
-                penalty="l1",
+                penalty="l2",
                 verbose=False,
             )
         # l1-regularized
         if checkbox_regression_l1.value and (df_raw is not None):
             regression_metrics_l1[_type] = solve_any_regression(
                 solutions=all_feature_sets[_type],
-                df=df_raw, #df_processed,
+                df=df_raw,  # df_processed,
                 response=y,
                 apply_scaling=scaling_selector.value,
                 penalty="l1",
@@ -1194,9 +1209,7 @@ def _(
             )
 
     # Save candidate solutions
-    msg_features_json = save_feature_lists_json(
-        all_feature_sets, features_path_json
-    )
+    msg_features_json = save_feature_lists_json(all_feature_sets, features_path_json)
     msg_features_txt = save_feature_lists_txt(all_feature_sets, features_path_txt)
 
     # Stack all the outputs in the correct order
@@ -1229,7 +1242,7 @@ def _(
         task_type = detect_task(y)
 
         # Get quick validation with a simple regression
-        if (checkbox_regression_l2.value or checkbox_regression_l1.value):
+        if checkbox_regression_l2.value or checkbox_regression_l1.value:
             regression_type = "logistic" if task_type == "classification" else "linear"
 
         # l2-regularized
@@ -1257,173 +1270,6 @@ def _(
     # Return all displays stacked vertically
     mo.vstack(_displays)
     return all_feature_sets, all_solutions, task_type, unique_features_found
-
-
-@app.cell
-def _(mo):
-    mo.md(r"""
-    ## **5. Modeling with candidate solutions** [non-commercial use only]
-
-    Using an advanced algorithm to create and evaluate models for each feature set of the chosen solution type. Proper train-test cross-validation is run.
-
-    **WARNING:** For downstream modeling, we use TabPFN, whose free licence can be used only for research purposes. [(Read more.)](https://huggingface.co/Prior-Labs/tabpfn_2_5)
-    """)
-    return
-
-
-@app.cell
-def _(all_solutions, mo):
-    # pick one solution type for further evaluation
-    mo.stop(
-        all_solutions is None,
-        mo.md(
-            "*Must recover solutions from components first. Click button above.*"
-        ),
-    )
-
-    radio_solutions = mo.ui.radio(
-        options=all_solutions.keys(),
-        label="Choose one solution type:",
-    )
-
-    mo.vstack(
-        [
-            radio_solutions,
-        ]
-    )
-    return (radio_solutions,)
-
-
-@app.cell
-def _(mo, radio_solutions):
-    mo.stop(
-        radio_solutions.value is None,
-        output=mo.md("*Cannot proceed to modeling. Pick a solution type.*"),
-    )
-
-    # The big RUN button
-    model_btn = mo.ui.run_button(label="Model with TabPFN (non-commercial use only)", kind="success")
-    checkbox_shap = mo.ui.checkbox(
-        value=False,
-        label="Compute feature importances in the model (Shapley values).",
-    )
-
-    mo.vstack(
-        [
-            mo.md("<br>"),
-            checkbox_shap,
-            model_btn,
-            mo.md("<br>"),
-            mo.md("---"),
-        ]
-    )
-    return checkbox_shap, model_btn
-
-
-@app.cell
-def _(
-    all_feature_sets,
-    all_solutions,
-    checkbox_shap,
-    df_raw,
-    experiment_dir,
-    mo,
-    model_btn,
-    pd,
-    radio_solutions,
-    save_results,
-    tabpfn_evaluate,
-    task_type,
-    unique_features_found,
-    y,
-):
-    mo.stop(
-        not model_btn.value,
-        output=mo.md("*Solutions prepared. Press button to start modeling.*"),
-    )
-
-    # Get the selected solution type
-    selected_solution_type = radio_solutions.value
-    selected_solution = all_solutions[selected_solution_type]
-
-    _eval_displays = []
-    _eval_displays.append(
-        mo.md(
-            f"""
-            ### Evaluating: **{selected_solution_type}**
-            - Task type: **{task_type}**
-            - Number of components: **{len(selected_solution)}**
-            - Computing SHAP explanations: **{"Yes" if checkbox_shap.value else "No"}**
-            """
-        )
-    )
-
-    # Get features for each component
-    component_features = all_feature_sets[selected_solution_type]
-    component_features["all_selected_features"] = unique_features_found[
-        selected_solution_type
-    ]
-
-    # Evaluate each component with TabPFN
-    tabpfn_results = {}
-    for component_name, feature_list in component_features.items():
-        # Get the feature subset
-        X_component = df_raw[feature_list] # df_processed[feature_list]
-
-        # Run TabPFN evaluation
-        tabpfn_results[component_name] = tabpfn_evaluate(
-            X_component,
-            y,
-            apply_scaling=None,  # Already scaled during preprocessing
-            outer_cv_folds=2,
-            tabpfn_kwargs=None,
-            random_state=42,
-            verbose=False,
-            explain=checkbox_shap.value
-            if component_name != "all_selected_features"
-            else False,
-            shap_sample_size=50,
-        )
-
-    # Show average scores (exclude non-scalar values)
-    all_scores = pd.DataFrame(
-        {
-            _comp: {
-                k: v
-                for k, v in _result["average_scores"].items()
-                if k not in ["confusion_matrix_sum", "class_distribution"]
-            }
-            for _comp, _result in tabpfn_results.items()
-        }
-    )
-    _eval_displays.append(mo.ui.table(all_scores))
-
-    # Show Shapley values if computed
-    for _comp, _result in tabpfn_results.items():
-        if "shap_explanations" in _result:
-            _eval_displays.append(
-                mo.md(
-                    f"**Shapley values:** feature importances in the model from {_comp}"
-                )
-            )
-            _eval_displays.append(mo.ui.table(pd.DataFrame(_result["shap_explanations"])))
-            _eval_displays.append(mo.md("<br>"))
-
-    # Save results if enabled
-    if save_results:
-        scores_path = f"{experiment_dir}/tabpfn_scores_{selected_solution_type.replace(' ', '_')}.csv"
-        all_scores.to_csv(scores_path)
-        _eval_displays.append(
-            mo.md(f"📊 **Results saved to:** `{scores_path.split('/')[-1]}`<br><br>"),
-        )
-
-    mo.vstack(_eval_displays)
-    return
-
-
-@app.cell
-def _():
-    return
 
 
 if __name__ == "__main__":
