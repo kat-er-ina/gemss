@@ -1,10 +1,7 @@
 import marimo
 
-__generated_with = "0.19.7"
-app = marimo.App(
-    width="full",
-    layout_file="layouts/explore_custom_dataset_app.slides.json",
-)
+__generated_with = "0.19.6"
+app = marimo.App(width="full")
 
 
 @app.cell
@@ -13,7 +10,7 @@ def _():
     import os
 
     # Add the parent directory to sys.path so 'gemss' can be imported
-    current_dir = os.path.dirname(os.path.abspath("__file__"))
+    current_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.abspath(os.path.join(current_dir, ".."))
     if parent_dir not in sys.path:
         sys.path.append(parent_dir)
@@ -119,13 +116,11 @@ def _(current_dir, mo, os):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     # 💎 **GEMSS Explorer** [non-commercial]
 
     This app helps you discover **multiple distinct feature sets** that explain your data using GEMSS: Gaussian Ensemble for Multiple Sparse Solutions.
-    """
-    )
+    """)
     return
 
 
@@ -158,7 +153,7 @@ def _(mo):
                 **V. Model evaluation** - Validate each solution by a simple linear/logistic regression model and then a full predictive model.
 
                 Each step builds on the previous one, so please follow the workflow in order.
-                
+
                 Model evaluation requires agreement with the [license of TabPFN](https://huggingface.co/Prior-Labs/tabpfn_2_5#licensing) modeling tool.
                 """
             )
@@ -176,11 +171,9 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     ## **1. Set up input and output**
-    """
-    )
+    """)
     return
 
 
@@ -237,7 +230,9 @@ def _(current_dir, mo):
         label="Parent directory for saving this experiment",
     )
 
-    save_experiment_id = mo.ui.number(1, 1000, value=1, step=1, label="Experiment ID")
+    save_experiment_id = mo.ui.number(
+        1, 1000, value=1, step=1, label="Experiment ID"
+    )
     save_history_name = mo.ui.text(
         value="search_history_results",
         label="History filename (no extension)",
@@ -314,42 +309,6 @@ def _(
 
 
 @app.cell
-def _(
-    os,
-    save_dir_input,
-    save_experiment_id,
-    save_features_name,
-    save_history_name,
-    save_results,
-    save_setup_name,
-):
-    # configure saving options, if saving is enabled
-    if save_results:
-        # Prepare directory
-        experiment_dir = f"{save_dir_input.value}/experiment_{save_experiment_id.value}"
-        os.makedirs(experiment_dir, exist_ok=True)
-
-        # Prepare save paths
-        history_path = f"{experiment_dir}/{save_history_name.value}.json"
-        setup_path = f"{experiment_dir}/{save_setup_name.value}.json"
-        features_path_json = f"{experiment_dir}/{save_features_name.value}.json"
-        features_path_txt = f"{experiment_dir}/{save_features_name.value}.txt"
-    else:
-        experiment_dir = None
-        history_path = None
-        setup_path = None
-        features_path_json = None
-        features_path_txt = None
-    return (
-        experiment_dir,
-        features_path_json,
-        features_path_txt,
-        history_path,
-        setup_path,
-    )
-
-
-@app.cell
 def _(mo):
     # UI Components for Data Loading
     file_uploader = mo.ui.file(
@@ -404,7 +363,9 @@ def _(file_uploader, io, mo, pd):
                 mo.md(
                     f"✅ **Data loaded:** `{file_uploader.value[0].name}` ({df_raw.shape[0]} rows, {df_raw.shape[1]} cols)"
                 ),
-                mo.vstack([index_col_selector, label_col_selector, scaling_selector]),
+                mo.vstack(
+                    [index_col_selector, label_col_selector, scaling_selector]
+                ),
             ]
         )
     else:
@@ -453,7 +414,9 @@ def _(
     scaling_selector,
 ):
     # Stop if data not loaded
-    mo.stop(df_raw is None, mo.md("*Please upload your dataset to proceed.*<br><hr>"))
+    mo.stop(
+        df_raw is None, mo.md("*Please upload your dataset to proceed.*<br><hr>")
+    )
 
     # Data Preprocessing
     try:
@@ -526,13 +489,11 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     ## **2. The feature selection algorithm**
 
     Configure parameters of the GEMSS feature selection algorithm.
-    """
-    )
+    """)
     return
 
 
@@ -555,7 +516,9 @@ def _(df_processed, mo):
 
     # Advanced Settings
     adv_iter = mo.ui.number(500, 20000, value=3500, step=250, label="Iterations")
-    adv_lr = mo.ui.number(0.0000, 0.1, value=0.002, step=0.0001, label="Learning rate")
+    adv_lr = mo.ui.number(
+        0.0000, 0.1, value=0.002, step=0.0001, label="Learning rate"
+    )
     adv_batch = mo.ui.number(
         8,
         256,
@@ -691,15 +654,9 @@ def _(
     adv_var_slab,
     adv_var_spike,
     df_raw,
-    experiment_dir,
-    history_path,
     mo,
     n_candidates,
     run_btn,
-    save_constants_json,
-    save_results,
-    save_selector_history_json,
-    setup_path,
     sparsity_est,
     y,
 ):
@@ -711,7 +668,7 @@ def _(
     # 2. Stop if button not pressed
     mo.stop(not run_btn.value, mo.md("*Ready to run. Click start above.*"))
 
-    # Optimization
+    # Optimization: class setup
     selector = BayesianFeatureSelector(
         n_features=X.shape[1],
         n_components=n_candidates.value,
@@ -726,36 +683,102 @@ def _(
         n_iter=adv_iter.value,
     )
 
+    # Run optimizer
     history = selector.optimize(
         regularize=adv_jaccard.value,
         lambda_jaccard=adv_lambda.value,
         verbose=True,
     )
+    return (history,)
 
+
+@app.cell
+def _(
+    X,
+    adv_batch,
+    adv_iter,
+    adv_jaccard,
+    adv_lambda,
+    adv_lr,
+    adv_var_slab,
+    adv_var_spike,
+    n_candidates,
+    os,
+    save_dir_input,
+    save_experiment_id,
+    save_features_name,
+    save_history_name,
+    save_results,
+    save_setup_name,
+    sparsity_est,
+):
+    # Saving setup
+    if save_results:
+        # Configure saving options, if saving is enabled
+        # Prepare directory
+        experiment_dir = (
+            f"{save_dir_input.value}/experiment_{save_experiment_id.value}"
+        )
+        os.makedirs(experiment_dir, exist_ok=True)
+
+        # Prepare save paths
+        history_path = f"{experiment_dir}/{save_history_name.value}.json"
+        setup_path = f"{experiment_dir}/{save_setup_name.value}.json"
+        features_path_json = f"{experiment_dir}/{save_features_name.value}.json"
+        features_path_txt = f"{experiment_dir}/{save_features_name.value}.txt"
+
+        # Define constants that are to be saved
+        constants = {
+            "N_SAMPLES": X.shape[0],
+            "N_FEATURES": X.shape[1],
+            "N_CANDIDATE_SOLUTIONS": n_candidates.value,
+            "SPARSITY": sparsity_est.value,
+            "PRIOR_SPARSITY": sparsity_est.value,
+            "PRIOR_TYPE": "sss",
+            "VAR_SPIKE": adv_var_spike.value,
+            "VAR_SLAB": adv_var_slab.value,
+            "N_ITER": adv_iter.value,
+            "LEARNING_RATE": adv_lr.value,
+            "BATCH_SIZE": adv_batch.value,
+            "IS_REGULARIZED": adv_jaccard.value,
+            "LAMBDA_JACCARD": adv_lambda.value,
+        }
+    else:
+        experiment_dir = None
+        history_path = None
+        setup_path = None
+        features_path_json = None
+        features_path_txt = None
+    return (
+        constants,
+        experiment_dir,
+        features_path_json,
+        features_path_txt,
+        history_path,
+        setup_path,
+    )
+
+
+@app.cell
+def _(
+    constants,
+    experiment_dir,
+    history,
+    history_path,
+    mo,
+    save_constants_json,
+    save_results,
+    save_selector_history_json,
+    setup_path,
+):
     # Save history and setup immediately after optimization
-    constants = {
-        "N_SAMPLES": X.shape[0],
-        "N_FEATURES": X.shape[1],
-        "N_CANDIDATE_SOLUTIONS": n_candidates.value,
-        "SPARSITY": sparsity_est.value,
-        "PRIOR_SPARSITY": sparsity_est.value,
-        "PRIOR_TYPE": "sss",
-        "VAR_SPIKE": adv_var_spike.value,
-        "VAR_SLAB": adv_var_slab.value,
-        "N_ITER": adv_iter.value,
-        "LEARNING_RATE": adv_lr.value,
-        "BATCH_SIZE": adv_batch.value,
-        "IS_REGULARIZED": adv_jaccard.value,
-        "LAMBDA_JACCARD": adv_lambda.value,
-    }
-
     if save_results:
         # Save history and constants
         msg_history = save_selector_history_json(history, history_path)
         msg_constants = save_constants_json(constants, setup_path)
 
         # Stack output messages
-        mo.vstack(
+        _display = mo.vstack(
             [
                 mo.md("✅ **Optimization Complete!**"),
                 mo.md(f"📁 Optimization history saved to: `{experiment_dir}`"),
@@ -767,7 +790,7 @@ def _(
             ]
         )
     else:
-        mo.vstack(
+        _display = mo.vstack(
             [
                 mo.md("✅ **Optimization Complete!**"),
                 mo.md("<br>"),
@@ -775,18 +798,18 @@ def _(
                 mo.md("<br>"),
             ]
         )
-    return (history,)
+
+    _display
+    return
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     ## **3. Algorithm progress history**
 
     Assess convergence and features in the components. If needed, adjust the algorithm's parameters and rerun.
-    """
-    )
+    """)
     return
 
 
@@ -916,13 +939,11 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     ## **4. Recover solutions from components**
 
     Each component can be handled in multiple ways to yield feature sets = candidate solutions. Select your strategy.
-    """
-    )
+    """)
     return
 
 
@@ -931,10 +952,18 @@ def _(df_processed, history, mo, sparsity_est):
     mo.stop(history is None, "")  # Show only after feature selector is run
 
     # checkboxes to pick solution types
-    checkbox_out20_sol = mo.ui.checkbox(label="Outliers with STD > 2.0", value=True)
-    checkbox_out25_sol = mo.ui.checkbox(label="Outliers with STD > 2.5", value=True)
-    checkbox_out30_sol = mo.ui.checkbox(label="Outliers with STD > 3.0", value=True)
-    checkbox_out35_sol = mo.ui.checkbox(label="Outliers with STD > 3.5", value=False)
+    checkbox_out20_sol = mo.ui.checkbox(
+        label="Outliers with STD > 2.0", value=True
+    )
+    checkbox_out25_sol = mo.ui.checkbox(
+        label="Outliers with STD > 2.5", value=True
+    )
+    checkbox_out30_sol = mo.ui.checkbox(
+        label="Outliers with STD > 3.0", value=True
+    )
+    checkbox_out35_sol = mo.ui.checkbox(
+        label="Outliers with STD > 3.5", value=False
+    )
     checkbox_top_sol = mo.ui.checkbox(label="Top few features", value=False)
     checkbox_full_sol = mo.ui.checkbox(
         label="All features with mu > threshold", value=False
@@ -1134,7 +1163,8 @@ def _(
         mo.md("*Ready to recover solutions from components. Click button above.*"),
     )
     mo.stop(
-        (top_n_features_selector.value is None) or (top_n_features_selector.value < 1),
+        (top_n_features_selector.value is None)
+        or (top_n_features_selector.value < 1),
         mo.md("Please set 'top few features' to value 1 or more."),
     )
 
@@ -1177,13 +1207,9 @@ def _(
 
     # Extract which features are contained in which solution type
     # Get overviews and simple performance metrics
-    solution_summary = (
-        {}
-    )  # one dateframe per solution type: feature names with mu values
+    solution_summary = {}  # one dateframe per solution type: feature names with mu values
     all_feature_sets = {}  # features per component, for each solution type
-    unique_features_found = (
-        {}
-    )  # all unique features across all components of a solution type
+    unique_features_found = {}  # all unique features across all components of a solution type
     regression_metrics_l1 = {}
     regression_metrics_l2 = {}
 
@@ -1215,15 +1241,21 @@ def _(
             )
 
     # Save candidate solutions
-    msg_features_json = save_feature_lists_json(all_feature_sets, features_path_json)
+    msg_features_json = save_feature_lists_json(
+        all_feature_sets, features_path_json
+    )
     msg_features_txt = save_feature_lists_txt(all_feature_sets, features_path_txt)
 
     # Stack all the outputs in the correct order
     if save_results:
         _displays = [
             mo.md(f"📁 **All recovered solutions saved to:** `{experiment_dir}`"),
-            mo.md(f"- {msg_features_txt.split('Candidate solutions saved to ')[1]}"),
-            mo.md(f"- {msg_features_json.split('Candidate solutions saved to ')[1]}"),
+            mo.md(
+                f"- {msg_features_txt.split('Candidate solutions saved to ')[1]}"
+            ),
+            mo.md(
+                f"- {msg_features_json.split('Candidate solutions saved to ')[1]}"
+            ),
             mo.md("---"),
             mo.md("<br><br>"),
         ]
@@ -1249,7 +1281,9 @@ def _(
 
         # Get quick validation with a simple regression
         if checkbox_regression_l2.value or checkbox_regression_l1.value:
-            regression_type = "logistic" if task_type == "classification" else "linear"
+            regression_type = (
+                "logistic" if task_type == "classification" else "linear"
+            )
 
         # l2-regularized
         if checkbox_regression_l2.value:
@@ -1280,15 +1314,13 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     ## **5. Modeling with candidate solutions** [non-commercial use only]
 
     Using an advanced algorithm to create and evaluate models for each feature set of the chosen solution type. Proper train-test cross-validation is run.
 
     **WARNING:** For downstream modeling, we use TabPFN, whose free licence can be used only for research purposes. [(Read more.)](https://huggingface.co/Prior-Labs/tabpfn_2_5)
-    """
-    )
+    """)
     return
 
 
@@ -1297,7 +1329,9 @@ def _(all_solutions, mo):
     # pick one solution type for further evaluation
     mo.stop(
         all_solutions is None,
-        mo.md("*Must recover solutions from components first. Click button above.*"),
+        mo.md(
+            "*Must recover solutions from components first. Click button above.*"
+        ),
     )
 
     radio_solutions = mo.ui.radio(
@@ -1439,7 +1473,9 @@ def _(
         scores_path = f"{experiment_dir}/tabpfn_scores_{selected_solution_type.replace(' ', '_')}.csv"
         all_scores.to_csv(scores_path)
         _eval_displays.append(
-            mo.md(f"📊 **Results saved to:** `{scores_path.split('/')[-1]}`<br><br>"),
+            mo.md(
+                f"📊 **Results saved to:** `{scores_path.split('/')[-1]}`<br><br>"
+            ),
         )
 
     mo.vstack(_eval_displays)
