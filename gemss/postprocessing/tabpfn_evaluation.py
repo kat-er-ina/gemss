@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.model_selection import StratifiedKFold, KFold
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from tabpfn import TabPFNClassifier, TabPFNRegressor
-
+import shap
 from sklearn.metrics import (
     r2_score,
     mean_squared_error,
@@ -16,39 +16,7 @@ from sklearn.metrics import (
     recall_score,
     confusion_matrix,
 )
-
-import shap
-
-
-def detect_task(y, n_class_threshold=10) -> str:
-    """
-    Detect if the task should be treated as classification or regression.
-    Rules:
-    - If the target has 2 or fewer unique values, it's classification.
-    - If the target is of integer or boolean type and has fewer unique values than the threshold, it's classification.
-    - Otherwise, it's regression.
-
-    Parameters
-    ----------
-    y : array-like
-        Target vector.
-    n_class_threshold : int, optional
-        Maximum number of unique integer values to consider as classification.
-
-    Returns
-    -------
-    str
-        "classification" or "regression"
-    """
-    y = np.asarray(y)
-    unique = np.unique(y)
-    if len(unique) <= 2:
-        return "classification"
-    elif (pd.api.types.is_integer_dtype(y) or pd.api.types.is_bool_dtype(y)) and len(
-        unique
-    ) <= n_class_threshold:
-        return "classification"
-    return "regression"
+from gemss.postprocessing.simple_regressions import detect_task
 
 
 def regression_metrics(y_true, y_pred, n_features):

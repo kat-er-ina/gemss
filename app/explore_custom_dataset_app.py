@@ -57,12 +57,12 @@ def _():
         get_unique_features,
     )
     from gemss.postprocessing.simple_regressions import (
+        detect_task,
         solve_any_regression,
         show_regression_metrics,
     )
     from gemss.postprocessing.tabpfn_evaluation import (
         tabpfn_evaluate,
-        detect_task,
     )
     from gemss.data_handling.data_processing import (
         preprocess_features,
@@ -1337,7 +1337,6 @@ def _(
     unique_features_found,
     y,
 ):
-    import shap
     mo.stop(
         not model_btn.value,
         output=mo.md("*Solutions prepared. Press button to start modeling.*"),

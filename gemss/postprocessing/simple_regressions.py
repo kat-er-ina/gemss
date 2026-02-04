@@ -41,6 +41,37 @@ MAX_ALLOWED_NAN_RATIO = 0.9  # maximum proportion of missing values to run regre
 MIN_ALLOWED_SAMPLES = 15  # minimum number of samples to run regression
 
 
+def detect_task(y: Union[pd.Series, np.ndarray], n_class_threshold: int = 10) -> str:
+    """
+    Detect if the task should be treated as classification or regression.
+    Rules:
+    - If the target has 2 or fewer unique values, it's classification.
+    - If the target is of integer or boolean type and has fewer unique values than the threshold, it's classification.
+    - Otherwise, it's regression.
+
+    Parameters
+    ----------
+    y : Union[pd.Series, np.ndarray]
+        Target vector.
+    n_class_threshold : int, optional
+        Maximum number of unique integer values to consider as classification. 10 by default.
+
+    Returns
+    -------
+    str
+        "classification" or "regression"
+    """
+    y = np.asarray(y)
+    unique = np.unique(y)
+    if len(unique) <= 2:
+        return "classification"
+    elif (pd.api.types.is_integer_dtype(y) or pd.api.types.is_bool_dtype(y)) and len(
+        unique
+    ) <= n_class_threshold:
+        return "classification"
+    return "regression"
+
+
 def print_verbose_logistic_regression_results(
     stats: Dict[str, Any],
     penalty: str,
