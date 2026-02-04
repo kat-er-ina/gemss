@@ -538,7 +538,7 @@ def show_algorithm_progress_with_outliers(
     original_feature_names_mapping: Optional[Dict[str, str]] = None,
     detect_outliers: bool = False,
     use_medians_for_outliers: bool = False,
-    outlier_threshold_coeff: float = 3.0,
+    outlier_threshold_coeff: float = 2.5,
     subsample_history_for_plotting: bool = False,
 ) -> None:
     """
@@ -563,6 +563,13 @@ def show_algorithm_progress_with_outliers(
         A mapping from internal feature names (e.g., 'feature_0') to original feature names.
         If provided, the plots will use the original feature names where applicable.
         Default is None.
+    detect_outliers : bool, optional
+        If True, detect and display outlier features in the mu progress plots. Default is False.
+    use_medians_for_outliers : bool, optional
+        If True, use median and MAD for outlier detection; otherwise, use mean and STD.
+        Default is False.
+    outlier_threshold_coeff : float, optional
+        The coefficient for determining outliers based on deviation from mean/MAD. Default is 2.5.
     subsample_history_for_plotting: bool, optional
         If True, plot only every N-th iteration in order to save resources during plotting.
 
@@ -592,7 +599,7 @@ def show_algorithm_progress_with_outliers(
     if plot_alpha_progress:
         figures["alpha"].show(config={"displayModeBar": False})
 
-    if plot_mu_progress and detect_outliers:
+    if plot_mu_progress:
         # Optionally add info about outliers
         final_mus_df = pd.DataFrame(
             index=[
@@ -608,17 +615,22 @@ def show_algorithm_progress_with_outliers(
         n_components = len(history["mu"][0])
         for k in range(n_components):
             final_mus_df[f"component_{k}_mus"] = history["mu"][-1][k]
-            outlier_info = detect_outlier_features(
-                values=final_mus_df[f"component_{k}_mus"],
-                threshold_coeff=outlier_threshold_coeff,
-                use_median=use_medians_for_outliers,
-                replace_middle_by_zero=True,
-            )
-            outlier_dict = {f"component_{k}": outlier_info}
+
+            # show mu progress plots
             figures[f"mu_{k}"].show(config={"displayModeBar": False})
-            show_outlier_info(
-                outlier_info=outlier_dict,
-                component_numbers=k,
-                use_markdown=True,
-            )
+
+            if detect_outliers:
+                outlier_info = detect_outlier_features(
+                    values=final_mus_df[f"component_{k}_mus"],
+                    threshold_coeff=outlier_threshold_coeff,
+                    use_median=use_medians_for_outliers,
+                    replace_middle_by_zero=True,
+                )
+                outlier_dict = {f"component_{k}": outlier_info}
+
+                show_outlier_info(
+                    outlier_info=outlier_dict,
+                    component_numbers=k,
+                    use_markdown=True,
+                )
     return
