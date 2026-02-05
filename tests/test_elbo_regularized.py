@@ -1,3 +1,12 @@
+"""Tests for the regularized ELBO (Evidence Lower Bound) in BayesianFeatureSelector.
+
+- test_elbo_regularized_matches_manual_penalty: elbo_regularized equals ELBO minus
+  lambda_jaccard * manual average Jaccard over latent supports.
+- test_elbo_regularized_batch_size_one_no_penalty: with batch size 1, regularized
+  ELBO equals unregularized ELBO (no Jaccard penalty).
+- test_elbo_regularized_lambda_zero_matches_elbo: lambda_jaccard=0 gives the same
+  value as plain elbo().
+"""
 import numpy as np
 import torch
 

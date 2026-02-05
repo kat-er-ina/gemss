@@ -1,3 +1,12 @@
+"""Tests for BayesianFeatureSelector.optimize() and optimization workflow.
+
+- test_optimize_history_shapes: optimize() returns history with keys elbo, mu,
+  var, alpha; correct lengths and shapes; finite ELBO; alpha sums to 1.
+- test_optimize_regularized_callback: with regularize=True and log_callback,
+  callback is invoked at expected iterations and ELBO stays finite.
+- test_optimize_with_missing_values: optimize() runs and returns finite ELBO
+  when X contains missing values (NaNs).
+"""
 import numpy as np
 import torch
 

@@ -1,3 +1,15 @@
+"""Tests for StructuredSpikeAndSlabPrior (log_prob and sampling).
+
+- test_structured_log_prob_matches_enumeration: log_prob(z) matches manual
+  average log-prob over all fixed-sparsity support sets.
+- test_structured_log_prob_preserves_batch_shape: log_prob returns correct
+  batch shape (e.g. (2, 3)) for batched z.
+- test_structured_log_prob_batch_size_one: log_prob works for single-sample
+  input and returns shape (1,).
+- test_structured_log_prob_sampling_uses_rng_and_coeff: with
+  n_support_samples and sample_more_priors_coeff, log_prob uses RNG and
+  matches manual log_prob over the sampled supports.
+"""
 import itertools
 
 import numpy as np

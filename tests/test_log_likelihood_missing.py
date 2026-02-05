@@ -1,3 +1,12 @@
+"""Tests for log-likelihood with missing data in BayesianFeatureSelector.
+
+- test_log_likelihood_with_missing_matches_manual: _log_likelihood_with_missing
+  matches manual sum of Gaussian log-likelihoods over observed entries only.
+- test_log_likelihood_with_missing_all_missing_returns_zero: when all X and
+  response are missing, returns zero log-likelihood per sample.
+- test_log_likelihood_with_missing_skips_nan_response: rows with NaN in y are
+  skipped; result matches likelihood over non-NaN rows only.
+"""
 import numpy as np
 import torch
 
