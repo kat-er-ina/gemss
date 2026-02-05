@@ -7,6 +7,7 @@
 - test_elbo_regularized_lambda_zero_matches_elbo: lambda_jaccard=0 gives the same
   value as plain elbo().
 """
+
 import numpy as np
 import torch
 

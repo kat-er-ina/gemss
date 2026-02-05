@@ -9,11 +9,19 @@
 - test_structured_log_prob_sampling_uses_rng_and_coeff: with
   n_support_samples and sample_more_priors_coeff, log_prob uses RNG and
   matches manual log_prob over the sampled supports.
+- test_structured_log_prob_sparsity_zero: sparsity=0 (all spike, single empty
+  support); log_prob matches manual.
+- test_structured_prior_raises_when_zero_support_samples: when sampling
+  supports (large n_features), log_prob(..., n_support_samples=0) raises
+  ValueError (zero supports).
 """
+
 import itertools
 
 import numpy as np
 import torch
+
+import pytest
 
 from gemss.feature_selection.models import StructuredSpikeAndSlabPrior
 
@@ -161,3 +169,37 @@ def test_structured_log_prob_sampling_uses_rng_and_coeff() -> None:
     expected = _manual_log_prob(z, n_features, var_slab, var_spike, supports)
 
     assert torch.allclose(actual, expected, rtol=1e-5, atol=1e-6)
+
+
+def test_structured_log_prob_sparsity_zero() -> None:
+    torch.manual_seed(0)
+    n_features = 3
+    sparsity = 0
+    var_slab = 2.0
+    var_spike = 0.5
+    prior = StructuredSpikeAndSlabPrior(
+        n_features=n_features,
+        sparsity=sparsity,
+        var_slab=var_slab,
+        var_spike=var_spike,
+    )
+    z = torch.tensor([[0.1, -0.3, 0.5], [1.0, -0.4, 0.2]], dtype=torch.float32)
+    supports = list(itertools.combinations(range(n_features), sparsity))
+    expected = _manual_log_prob(z, n_features, var_slab, var_spike, supports)
+    actual = prior.log_prob(z)
+    assert actual.shape == (2,)
+    assert torch.allclose(actual, expected, rtol=1e-5, atol=1e-6)
+
+
+def test_structured_prior_raises_when_zero_support_samples() -> None:
+    n_features = 11
+    sparsity = 4
+    prior = StructuredSpikeAndSlabPrior(
+        n_features=n_features,
+        sparsity=sparsity,
+        var_slab=1.0,
+        var_spike=0.1,
+    )
+    z = torch.randn(2, n_features)
+    with pytest.raises(ValueError, match="at least one support"):
+        prior.log_prob(z, n_support_samples=0)

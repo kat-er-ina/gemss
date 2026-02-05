@@ -6,9 +6,18 @@
   callback is invoked at expected iterations and ELBO stays finite.
 - test_optimize_with_missing_values: optimize() runs and returns finite ELBO
   when X contains missing values (NaNs).
+- test_optimize_raises_when_y_contains_nan: constructor raises ValueError when
+  y contains NaN.
+- test_optimize_regularize_lambda_zero_uses_elbo: with regularize=True and
+  lambda_jaccard=0, optimization runs and returns finite ELBO (unregularized path).
+- test_optimize_without_callback: optimize(log_callback=None) runs and returns
+  full history.
 """
+
 import numpy as np
 import torch
+
+import pytest
 
 from gemss.feature_selection.inference import BayesianFeatureSelector
 
@@ -113,3 +122,56 @@ def test_optimize_with_missing_values() -> None:
 
     assert len(history["elbo"]) == 3
     assert np.isfinite(history["elbo"]).all()
+
+
+def test_optimize_raises_when_y_contains_nan() -> None:
+    X = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32)
+    y = np.array([1.0, float("nan")], dtype=np.float32)
+    with pytest.raises(ValueError, match="Response variable.*NaN"):
+        BayesianFeatureSelector(
+            n_features=X.shape[1],
+            n_components=1,
+            X=X,
+            y=y,
+            batch_size=2,
+            n_iter=1,
+            device="cpu",
+        )
+
+
+def test_optimize_regularize_lambda_zero_uses_elbo() -> None:
+    torch.manual_seed(42)
+    X, y = _make_dataset(seed=42)
+    selector = BayesianFeatureSelector(
+        n_features=X.shape[1],
+        n_components=2,
+        X=X,
+        y=y,
+        n_iter=5,
+        batch_size=4,
+        device="cpu",
+    )
+    history = selector.optimize(
+        regularize=True,
+        lambda_jaccard=0.0,
+        verbose=False,
+    )
+    assert len(history["elbo"]) == 5
+    assert np.isfinite(history["elbo"]).all()
+
+
+def test_optimize_without_callback() -> None:
+    torch.manual_seed(0)
+    X, y = _make_dataset(seed=0)
+    selector = BayesianFeatureSelector(
+        n_features=X.shape[1],
+        n_components=2,
+        X=X,
+        y=y,
+        n_iter=3,
+        batch_size=4,
+        device="cpu",
+    )
+    history = selector.optimize(log_callback=None, verbose=False)
+    assert set(history.keys()) == {"elbo", "mu", "var", "alpha"}
+    assert len(history["elbo"]) == 3
