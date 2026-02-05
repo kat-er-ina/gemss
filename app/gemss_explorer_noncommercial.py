@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.19.6"
+__generated_with = "0.19.7"
 app = marimo.App(width="full")
 
 
@@ -116,13 +116,11 @@ def _(current_dir, mo, os):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     # 💎 **GEMSS Explorer** [non-commercial]
 
     This app helps you discover **multiple distinct feature sets** that explain your data using GEMSS: Gaussian Ensemble for Multiple Sparse Solutions.
-    """
-    )
+    """)
     return
 
 
@@ -173,11 +171,9 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     ## **1. Set up input and output**
-    """
-    )
+    """)
     return
 
 
@@ -487,13 +483,11 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     ## **2. The feature selection algorithm**
 
     Configure parameters of the GEMSS feature selection algorithm.
-    """
-    )
+    """)
     return
 
 
@@ -801,13 +795,11 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     ## **3. Algorithm progress history**
 
     Assess convergence and features in the components. If needed, adjust the algorithm's parameters and rerun.
-    """
-    )
+    """)
     return
 
 
@@ -937,13 +929,11 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     ## **4. Recover solutions from components**
 
     Each component can be handled in multiple ways to yield feature sets = candidate solutions. Select your strategy.
-    """
-    )
+    """)
     return
 
 
@@ -1235,12 +1225,12 @@ def _(
                 verbose=False,
             )
 
-    # Save candidate solutions
-    msg_features_json = save_feature_lists_json(all_feature_sets, features_path_json)
-    msg_features_txt = save_feature_lists_txt(all_feature_sets, features_path_txt)
-
-    # Stack all the outputs in the correct order
     if save_results:
+        # Save candidate solutions
+        msg_features_json = save_feature_lists_json(all_feature_sets, features_path_json)
+        msg_features_txt = save_feature_lists_txt(all_feature_sets, features_path_txt)
+
+        # Stack all the outputs in the correct order
         _displays = [
             mo.md(f"📁 **All recovered solutions saved to:** `{experiment_dir}`"),
             mo.md(f"- {msg_features_txt.split('Candidate solutions saved to ')[1]}"),
@@ -1301,15 +1291,13 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     ## **5. Modeling with candidate solutions** [non-commercial use only]
 
     Using an advanced algorithm to create and evaluate models for each feature set of the chosen solution type. Proper train-test cross-validation is run.
 
     **WARNING:** For downstream modeling, we use TabPFN, whose free licence can be used only for research purposes. [(Read more.)](https://huggingface.co/Prior-Labs/tabpfn_2_5)
-    """
-    )
+    """)
     return
 
 

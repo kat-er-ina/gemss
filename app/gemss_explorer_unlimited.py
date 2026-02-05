@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.19.6"
+__generated_with = "0.19.7"
 app = marimo.App(width="full")
 
 
@@ -1234,14 +1234,14 @@ def _(
                 verbose=False,
             )
 
-    # Save candidate solutions
-    msg_features_json = save_feature_lists_json(
-        all_feature_sets, features_path_json
-    )
-    msg_features_txt = save_feature_lists_txt(all_feature_sets, features_path_txt)
-
-    # Stack all the outputs in the correct order
     if save_results:
+        # Save candidate solutions
+        msg_features_json = save_feature_lists_json(
+            all_feature_sets, features_path_json
+        )
+        msg_features_txt = save_feature_lists_txt(all_feature_sets, features_path_txt)
+
+        # Stack all the outputs in the correct order
         _displays = [
             mo.md(f"📁 **All recovered solutions saved to:** `{experiment_dir}`"),
             mo.md(
