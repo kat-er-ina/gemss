@@ -21,17 +21,20 @@ optimize(...)          : Runs the main optimization loop.
 """
 
 from time import time
-from typing import Literal, Dict, List
-from IPython.display import display, Markdown
+from typing import Dict, List, Literal
+
 import torch
+from IPython.display import Markdown, display
 from torch.optim import Adam
+
+from gemss.utils.utils import myprint
+
 from .models import (
-    StudentTPrior,
+    GaussianMixture,
     SpikeAndSlabPrior,
     StructuredSpikeAndSlabPrior,
-    GaussianMixture,
+    StudentTPrior,
 )
-from gemss.utils.utils import myprint
 
 
 class BayesianFeatureSelector:
@@ -141,6 +144,18 @@ class BayesianFeatureSelector:
                 "Response variable (y) contains NaN values. Please remove samples with missing responses before feature selection."
             )
 
+        # Precompute NaN-related information for X to avoid repeated computation
+        self._has_missing_X = torch.isnan(self.X).any().item()
+        if self._has_missing_X:
+            self._X_observed_mask = ~torch.isnan(self.X)
+            self._X_filled = torch.nan_to_num(self.X, nan=0.0)
+            # Samples that have at least one observed feature (y is guaranteed non-NaN)
+            self._valid_sample_mask = self._X_observed_mask.any(dim=1)
+        else:
+            self._X_observed_mask = None
+            self._X_filled = None
+            self._valid_sample_mask = None
+
         self.batch_size = batch_size
         self.n_iter = n_iter
 
@@ -180,8 +195,8 @@ class BayesianFeatureSelector:
         torch.Tensor
             Log-likelihood values for each sample, shape (batch_size,).
         """
-        # Check if X has missing values
-        if torch.isnan(self.X).any():
+        # Use precomputed flag to check if X has missing values
+        if self._has_missing_X:
             return self._log_likelihood_with_missing(z)
         else:
             # Standard computation for complete data
@@ -207,46 +222,22 @@ class BayesianFeatureSelector:
             Log-likelihood values, shape (batch_size,).
         """
         batch_size = z.shape[0]
-        n_samples = self.X.shape[0]
 
-        # Compute log-likelihood for each data sample separately
-        log_likes = []
+        # These are guaranteed non-None since this method is only called when _has_missing_X is True
+        assert self._valid_sample_mask is not None and self._X_filled is not None
 
-        for i in range(n_samples):
-            x_i = self.X[i]  # [n_features]
-            y_i = self.y[i]  # scalar
-
-            # Skip if response is missing (shouldn't happen if properly preprocessed)
-            if torch.isnan(y_i):
-                continue
-
-            # Find observed features for this sample
-            observed_mask = ~torch.isnan(x_i)  # [n_features]
-
-            if observed_mask.sum() == 0:
-                # If no features observed, skip this sample
-                continue
-
-            # Use only observed features for prediction
-            x_obs = x_i[observed_mask]  # [n_observed]
-            z_obs = z[:, observed_mask]  # [batch_size, n_observed]
-
-            # Compute prediction using observed features only
-            pred_i = torch.matmul(z_obs, x_obs)  # [batch_size]
-
-            # Compute log-likelihood for this sample
-            # Scale by number of observed features to maintain comparable magnitudes
-            mse_i = (pred_i - y_i) ** 2
-            log_like_i = -0.5 * mse_i
-
-            log_likes.append(log_like_i)
-
-        if len(log_likes) == 0:
-            # If no valid samples, return zero log-likelihood
+        # Combine precomputed X mask with dynamic y NaN check (y could be modified after init)
+        valid_mask = self._valid_sample_mask & ~torch.isnan(self.y)
+        if not valid_mask.any():
             return torch.zeros(batch_size, device=z.device)
 
-        # Sum log-likelihoods across all data samples
-        total_log_like = torch.stack(log_likes, dim=0).sum(dim=0)  # [batch_size]
+        # Use precomputed X with NaNs filled with zeros
+        pred = torch.matmul(z, self._X_filled.T)  # [batch_size, n_samples]
+        residual = pred - torch.nan_to_num(self.y, nan=0.0).unsqueeze(0)
+        log_likes = -0.5 * (residual**2)
+
+        valid_mask = valid_mask.to(dtype=log_likes.dtype, device=log_likes.device)
+        total_log_like = (log_likes * valid_mask.unsqueeze(0)).sum(dim=1)
 
         return total_log_like
 
@@ -320,23 +311,21 @@ class BayesianFeatureSelector:
             sigmoid_coeff * torch.abs(z)
         )  # [batch_size, n_features]
 
-        # Compute pairwise Jaccard similarities
-        jaccard_vals = []
-        for i in range(batch_size):
-            for j in range(i + 1, batch_size):
-                intersection = (support_mask[i] * support_mask[j]).sum()  #
-                union = ((support_mask[i] + support_mask[j]) > 0).sum()
-                if union > 0:
-                    jaccard = intersection / union
-                else:
-                    jaccard = torch.tensor(0.0, device=z.device)
-                jaccard_vals.append(jaccard)
-
-        # Average Jaccard similarity
-        if len(jaccard_vals) > 0:
-            avg_jaccard = torch.stack(jaccard_vals).mean()
-        else:
+        # Compute pairwise Jaccard similarities (vectorized)
+        if batch_size < 2:
             avg_jaccard = torch.tensor(0.0, device=z.device)
+        else:
+            intersection = support_mask @ support_mask.T  # [batch_size, batch_size]
+            # Use |A ∪ B| = |A| + |B| - |A ∩ B| to avoid creating 3D tensor
+            support_sizes = support_mask.sum(dim=1)  # [batch_size]
+            union = support_sizes[:, None] + support_sizes[None, :] - intersection
+            jaccard = torch.where(
+                union > 0, intersection / union, torch.zeros_like(intersection)
+            )
+            pair_idx = torch.triu_indices(
+                batch_size, batch_size, offset=1, device=z.device
+            )
+            avg_jaccard = jaccard[pair_idx[0], pair_idx[1]].mean()
 
         # Regularized ELBO
         elbo_reg = self.elbo(z) - lambda_jaccard * avg_jaccard
@@ -428,7 +417,7 @@ class BayesianFeatureSelector:
             if verbose and nth_iteration and it > 0:
                 elapsed_time = time() - start_time
                 myprint(
-                    msg=f"**Iteration {it}:** elapsed time: {elapsed_time:.0f}s, remaining time: {elapsed_time/it * (self.n_iter - it):.0f}s, ELBO = {elbo.item()}"
+                    msg=f"**Iteration {it}:** elapsed time: {elapsed_time:.0f}s, remaining time: {elapsed_time / it * (self.n_iter - it):.0f}s, ELBO = {elbo.item()}"
                 )
         if verbose:
             myprint("Optimization complete.", use_markdown=True)
