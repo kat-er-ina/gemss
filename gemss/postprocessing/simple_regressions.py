@@ -135,8 +135,17 @@ def print_verbose_logistic_regression_results(
         )
     )
 
-    display(Markdown("**Coefficients of the logistic regression model:**"))
-    display(stats["nonzero_coefficients"])
+    display(
+        Markdown(
+            f"**{stats['n_nonzero_coefficients']} non-zero features with coefficients:**"
+        )
+    )
+    display(
+        [
+            f"{stats['nonzero_feature_names'][i]}: {stats['nonzero_coefficients'][i]}"
+            for i in range(len(stats["nonzero_coefficients"]))
+        ]
+    )
 
     if show_cm_figure:
         # Show confusion matrix using Plotly
@@ -249,6 +258,7 @@ def solve_with_logistic_regression(
         "confusion_matrix [TN, FP, FN, TP]": cm.ravel(),
         "n_nonzero_coefficients": len(coefficients),
         "nonzero_coefficients": coefficients,
+        "nonzero_feature_names": coefficients.index.tolist(),
     }
 
     # Print results
@@ -312,8 +322,17 @@ def print_verbose_linear_regression_results(
     display(Markdown(f"**MAE:** {stats['MAE']}"))
     if not np.isnan(stats["MAPE"]):
         display(Markdown(f"**MAPE:** {stats['MAPE']}%"))
-    display(Markdown(f"**{stats['n_nonzero_coefficients']} Non-zero coefficients:**"))
-    display(stats["nonzero_coefficients"])
+    display(
+        Markdown(
+            f"**{stats['n_nonzero_coefficients']} non-zero features with coefficients:**"
+        )
+    )
+    display(
+        [
+            f"{stats['nonzero_feature_names'][i]}: {stats['nonzero_coefficients'][i]}"
+            for i in range(len(stats["nonzero_coefficients"]))
+        ]
+    )
 
     if illustrate_predicted_vs_actual:
         if y_actual is not None and y_pred is not None:
@@ -423,6 +442,7 @@ def solve_with_linear_regression(
         ),
         "n_nonzero_coefficients": len(coefficients),
         "nonzero_coefficients": coefficients,
+        "nonzero_feature_names": coefficients.index.tolist(),
     }
 
     # Print results
