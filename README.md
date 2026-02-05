@@ -45,7 +45,7 @@ GEMSS provides a comprehensive framework for Bayesian feature selection with the
 
 ## Citation
 
-If you use GEMSS in your research, please cite:
+If you use GEMSS in your research, please cite the [technical report](./technical_report.pdf):
 
 ```bibtex
 @misc{GEMSS2026,
@@ -63,6 +63,7 @@ The repository is organized into core packages, interactive notebooks, batch exp
 
 ```
 gemss/
+  technical_report.pdf       # Preprint paper on GEMSS
   app/                       # Interactive marimo app
     gemss_explorer_noncommercial.py   # GEMSS explorer app with non-commercial TabPFN modeling add-on
     gemss_explorer_unlimited.py       # GEMSS explorer app for unlimited use
@@ -118,7 +119,7 @@ uv sync
 
 ### 3. Register the Jupyter kernel (optional)
 
-**Note:** This step is only required if you plan to use Jupyter notebooks. The marimo app doesn't need kernel registration.
+**Note:** This step is only required if you plan to use notebooks. The marimo app doesn't need kernel registration.
 
 To run Jupyter notebooks with the correct Python environment, register the kernel:
 
@@ -126,7 +127,7 @@ To run Jupyter notebooks with the correct Python environment, register the kerne
 uv run python -m ipykernel install --user --name=gemss --display-name="Python (gemss)"
 ```
 
-This makes the `gemss` environment available as a kernel in Jupyter and VS Code notebooks. When opening a notebook, select "Python (gemss)" from the kernel picker.
+This makes the environment available. When opening a notebook, select "Python (gemss)" from the kernel picker.
 
 To verify the kernel is registered, run:
 
@@ -140,31 +141,16 @@ GEMSS can be applied to both custom datasets and synthetic data for validation a
 
 ### **GEMSS Explorer:** an interactive application (recommended)
 
-The easiest way to use GEMSS is through the interactive marimo app. There are two versions:
-
-- unlimited - contains all the basic functionalities and is free to use in any settings, including commercial
-- non-commercial - same as 'unlimited' but also includes the TabPFN modeling tool
-
-Run the apps by
+The easiest way to use GEMSS is through the interactive marimo app:
 
 ```bash
-uv run marimo run app/gemss_explorer_unlimited.py
-```
-or
-
-```bash
-uv run marimo run app/gemss_explorer_noncommercial.py
+uv run marimo run app/gemss_explorer_unlimited.py      # Commercial use allowed
+uv run marimo run app/gemss_explorer_noncommercial.py  # Includes TabPFN modeling
 ```
 
-The app provides a complete guided workflow:
-- Upload and preprocess your CSV data
-- Configure algorithm parameters (with built-in help)
-- Run feature selection and visualize convergence
-- Recover multiple sparse solutions
-- Evaluate solutions with TabPFN (optional)
-- Export results automatically
+The app provides a complete guided workflow from data upload through solution recovery and evaluation.
 
-**Data requirements:** CSV format with numerical features. Missing values are handled natively. Binary classification and regression supported.
+**For detailed documentation, data requirements, and workflow overview, see [app/README.md](app/README.md).**
 
 ### Jupyter notebooks
 
@@ -179,11 +165,6 @@ Launch notebooks with:
 ```bash
 uv run jupyter notebook notebooks/demo.ipynb
 ```
-
-### Batch experiments
-
-For systematic benchmarking and parameter sweeps, see the [Proof-of-concept experiments](#proof-of-concept-experiments) section below.
-
 
 ## Proof-of-concept experiments
 
