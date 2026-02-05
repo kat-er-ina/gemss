@@ -844,7 +844,7 @@ def _(
     elbo_help = mo.accordion(
         {
             " 📖 Guide": mo.md(
-                """
+                r"""
                 The [ELBO (Evidence Lower BOund)](https://en.wikipedia.org/wiki/Evidence_lower_bound) is the objective function that the algorithm maximizes, possibly combined with penalization: $ELBO - \lambda * penalty$
 
                 The objective function's value should steadily increase and eventually plateau just below zero.
