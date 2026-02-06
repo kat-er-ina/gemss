@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Any, Literal, Protocol
 
 import numpy as np
 import pandas as pd
@@ -125,8 +125,12 @@ def classification_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, 
     return metrics
 
 
+class Predictable(Protocol):
+    def predict(self, X: np.ndarray) -> np.ndarray: ...
+
+
 def _compute_shap_explanation(
-    model: Any,
+    model: Predictable,
     X: np.ndarray,
     feature_names: list[str] | None = None,
 ) -> tuple[dict[str, float], np.ndarray]:
