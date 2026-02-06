@@ -3,7 +3,7 @@ name = "gemss"
 version = "0.1.0"
 description = "GEMSS: Gaussian Ensemble for Multiple Sparse Solutions."
 readme = "README.md"
-requires-python = "==3.13.*"
+requires-python = ">=3.10,<4.0"
 authors = [
   { name = "Katerina Henclova", email = "katerina.henclova@datamole.ai" }
 ]
