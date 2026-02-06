@@ -10,6 +10,10 @@ Modules:
 - recommendation_messages: Message templates for recommendations
 """
 
-from .performance_tests import *
-from .recommendation_messages import *
-from .recommendations import *
+from .performance_tests import PerformanceTests
+from .recommendation_messages import (
+    RECOMMENDATION_MESSAGES,
+    get_available_recommendation_keys,
+    get_recommendation_message,
+)
+from .recommendations import RecommendationEngine
