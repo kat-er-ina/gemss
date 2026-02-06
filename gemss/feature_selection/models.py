@@ -6,8 +6,9 @@ Implements:
 - Core parameter structures
 """
 
-import numpy as np
 import itertools
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -158,44 +159,52 @@ class StructuredSpikeAndSlabPrior:
         """
         batch_shape = z.shape[:-1]
         z_flat = z.view(-1, self.n_features)
-        logps = []
         if self._all_supports is not None:
-            supports = self._all_supports
+            supports_tensor = torch.tensor(
+                self._all_supports, dtype=torch.long, device=z.device
+            )
         else:
             if self.sample_more_priors_coeff:
                 n_support_samples = np.round(
                     n_support_samples * self.sample_more_priors_coeff
                 ).astype(int)
-            # Sample supports
-            supports = [
-                torch.randperm(self.n_features)[: self.sparsity].tolist()
-                for _ in range(n_support_samples)
-            ]
-        for support in supports:
-            mask = torch.zeros(self.n_features, dtype=torch.bool, device=z.device)
-            if len(support) > 0:  # Only set mask if support is not empty
-                mask[list(support)] = True
-            # Slab for mask, spike for others
-            logp = torch.zeros(z_flat.shape[0], device=z.device)
-            # Slab part
-            if mask.any():  # Only compute if there are slab features
-                logp += -0.5 * torch.sum(
-                    (z_flat[:, mask] / self.var_slab) ** 2
-                    + torch.log(torch.tensor(self.var_slab, device=z.device)),
-                    dim=1,
+            # Sample supports (vectorized) on the same device as z
+            n_support_samples = int(n_support_samples)
+            if self.sparsity == 0:
+                supports_tensor = torch.empty(
+                    n_support_samples, 0, dtype=torch.long, device=z.device
                 )
-            # Spike part
-            if (~mask).any():  # Only compute if there are spike features
-                logp += -0.5 * torch.sum(
-                    (z_flat[:, ~mask] / self.var_spike) ** 2
-                    + torch.log(torch.tensor(self.var_spike, device=z.device)),
-                    dim=1,
-                )
-            logps.append(logp)
+            else:
+                scores = torch.rand(n_support_samples, self.n_features, device=z.device)
+                supports_tensor = torch.topk(scores, k=self.sparsity, dim=1).indices
+
+        n_supports = supports_tensor.shape[0]
+        if n_supports == 0:
+            raise ValueError(
+                "StructuredSpikeAndSlabPrior requires at least one support."
+            )
+
+        if self.sparsity == 0:
+            supports_tensor = supports_tensor[:, :0]
+
+        var_slab = torch.as_tensor(self.var_slab, device=z.device, dtype=z.dtype)
+        var_spike = torch.as_tensor(self.var_spike, device=z.device, dtype=z.dtype)
+        slab_const = torch.log(var_slab)
+        spike_const = torch.log(var_spike)
+
+        slab_term = -0.5 * ((z_flat / var_slab) ** 2 + slab_const)
+        spike_term = -0.5 * ((z_flat / var_spike) ** 2 + spike_const)
+
+        total_spike = spike_term.sum(dim=1)
+        if self.sparsity == 0:
+            logps = total_spike[:, None].expand(-1, n_supports)
+        else:
+            delta = slab_term - spike_term
+            logps = total_spike[:, None] + delta[:, supports_tensor].sum(dim=-1)
+
         # Average over supports
-        logps = torch.stack(logps, dim=1)  # [batch, n_supports]
         logp_avg = torch.logsumexp(logps, dim=1) - torch.log(
-            torch.tensor(len(supports), dtype=torch.float)
+            torch.as_tensor(n_supports, dtype=z.dtype, device=z.device)
         )
         return logp_avg.view(*batch_shape)
 
