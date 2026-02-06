@@ -167,7 +167,7 @@ def tabpfn_evaluate(
     random_state: int | None = None,
     verbose: bool = False,
     explain: bool = False,
-    shap_sample_size: int | None = None,  # optional max number of samples to use for SHAP explanations
+    shap_sample_size: int | None = None,
 ) -> dict[str, Any]:
     """
     Evaluate TabPFN Classifier or Regressor using cross-validation. Optionally standardizes

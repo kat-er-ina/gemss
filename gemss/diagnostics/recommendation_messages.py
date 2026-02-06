@@ -5,7 +5,6 @@ This module contains all the message content for different recommendation scenar
 Each message dictionary contains standardized keys for consistent display formatting.
 """
 
-
 # Message templates for different recommendation scenarios
 RECOMMENDATION_MESSAGES: dict[str, dict[str, str]] = {
     'feature_ordering_failed_sparsity_gap_failed': {

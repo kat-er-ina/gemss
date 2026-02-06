@@ -4,6 +4,7 @@ Utility functions for feature selection project.
 
 import json
 from collections.abc import Callable
+from pathlib import Path
 from typing import TextIO, TypedDict
 
 import numpy as np
@@ -446,7 +447,7 @@ def save_feature_lists_txt(
         raise ValueError("'all_features_lists' is empty; nothing to save.")
 
     try:
-        with open(filename, 'w', encoding='utf-8') as f:
+        with Path(filename).open('w', encoding='utf-8') as f:
             for title, feature_dict in all_features_lists.items():
                 f.write(f'### {title}\n\n')
                 for component, features in feature_dict.items():
@@ -507,7 +508,7 @@ def save_feature_lists_json(
 
     data = {'sections': sections}
     try:
-        with open(filename, 'w', encoding='utf-8') as f:
+        with Path(filename).open('w', encoding='utf-8') as f:
             json.dump(data, f)
         return f'Candidate solutions saved to JSON file for further processing: {filename}.'
     except Exception as e:
@@ -558,11 +559,10 @@ def load_feature_lists_json(
     """
     if not isinstance(filename, str) or not filename.strip():
         raise ValueError('Filename must be a non-empty string.')
-    import os
 
-    if not os.path.exists(filename):
+    if not Path(filename).exists():
         raise FileNotFoundError(f"File '{filename}' not found.")
-    with open(filename, encoding='utf-8') as f:
+    with Path(filename).open(encoding='utf-8') as f:
         data = json.load(f)
     if not isinstance(data, dict):
         raise ValueError('Top-level JSON must be an object.')
@@ -649,14 +649,11 @@ def save_selector_history_json(history: SelectorHistory, filename: str) -> str:
         return f'Inconsistent lengths in history: {lengths}; nothing saved.'
 
     # Create parent directory if needed
-    import os
-
-    parent = os.path.dirname(os.path.abspath(filename))
-    if parent and not os.path.exists(parent):
-        try:
-            os.makedirs(parent, exist_ok=True)
-        except Exception as e:
-            return f"Could not create directory '{parent}': {e}"
+    parent = Path(filename).resolve().parent
+    try:
+        parent.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        return f"Could not create directory '{parent}': {e}"
 
     # Build serializable structure
     try:
@@ -670,7 +667,7 @@ def save_selector_history_json(history: SelectorHistory, filename: str) -> str:
         return f'Failed to serialize history arrays: {e}'
 
     try:
-        with open(filename, 'w', encoding='utf-8') as jf:
+        with Path(filename).open('w', encoding='utf-8') as jf:
             json.dump(serializable_history, jf)
         return f"Saved history to '{filename}'"
     except Exception as e:
@@ -708,11 +705,10 @@ def load_selector_history_json(
     """
     if not isinstance(filename, str) or not filename.strip():
         raise ValueError('Filename must be a non-empty string.')
-    import os
 
-    if not os.path.exists(filename):
+    if not Path(filename).exists():
         raise FileNotFoundError(f"History file '{filename}' not found.")
-    with open(filename, encoding='utf-8') as f:
+    with Path(filename).open(encoding='utf-8') as f:
         data = json.load(f)
     if not isinstance(data, dict):
         raise ValueError('History JSON must be an object (dict) at top level.')
@@ -771,16 +767,13 @@ def save_constants_json(constants: dict[str, object], filename: str) -> str:
         json.dumps(constants)
     except Exception as e:
         return f'Constants not JSON serializable: {e}'
-    import os
-
-    parent = os.path.dirname(os.path.abspath(filename))
-    if parent and not os.path.exists(parent):
-        try:
-            os.makedirs(parent, exist_ok=True)
-        except Exception as e:
-            return f"Could not create directory '{parent}': {e}"
+    parent = Path(filename).resolve().parent
     try:
-        with open(filename, 'w', encoding='utf-8') as f:
+        parent.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        return f"Could not create directory '{parent}': {e}"
+    try:
+        with Path(filename).open('w', encoding='utf-8') as f:
             json.dump(constants, f)
         return f"Saved constants to '{filename}'"
     except Exception as e:
@@ -821,11 +814,10 @@ def load_constants_json(filename: str) -> tuple[dict[str, object], str]:
     """
     if not isinstance(filename, str) or not filename.strip():
         raise ValueError('Filename must be a non-empty string.')
-    import os
 
-    if not os.path.exists(filename):
+    if not Path(filename).exists():
         raise FileNotFoundError(f"Constants file '{filename}' not found.")
-    with open(filename, encoding='utf-8') as f:
+    with Path(filename).open(encoding='utf-8') as f:
         data = json.load(f)
     if not isinstance(data, dict):
         raise ValueError('Constants JSON must have a dict as the top-level object.')

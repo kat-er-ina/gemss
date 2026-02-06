@@ -120,7 +120,7 @@ class ConfigurationManager:
         """Load and cache JSON file contents."""
         file_path = self._config_dir / filename
         try:
-            with open(file_path) as f:
+            with file_path.open() as f:
                 return json.load(f)
         except FileNotFoundError:
             raise FileNotFoundError(f'Configuration file not found: {file_path}')

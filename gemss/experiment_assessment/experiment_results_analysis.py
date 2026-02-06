@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from typing import Literal
 
@@ -139,7 +138,7 @@ def load_experiment_results(
     for tier_id in tier_id_list:
         results_path = results_root / f'tier{tier_id}' / 'tier_summary_metrics.csv'
 
-        if os.path.exists(results_path):
+        if results_path.exists():
             df_tier = pd.read_csv(results_path)
             if verbose:
                 display(
