@@ -117,6 +117,35 @@ Navigate to the repository root and sync the environment. This command will crea
 uv sync
 ```
 
+⚠️ **Troubleshooting: important for Windows users:** `uv` is incompatible with the Windows Store Python distribution due to file system restrictions.
+
+If `uv sync` fails with an error like `Failed to build ... Failed to create temporary virtualenv ... The file cannot be accessed by the system. (os error 1920)`, this indicates that `uv` is trying to use the wrong version of Python. 
+
+To resolve this issue:
+
+1. **Check which Python installations you have:**
+   ```powershell
+   Get-Command python -All | Select-Object Source
+   ```
+
+2. **Install Python 3.13 using uv** (if not already installed):
+   ```powershell
+   uv python install 3.13
+   ```
+
+3. **Find the uv-managed Python path:**
+   ```powershell
+   uv python list
+   ```
+   Look for a path like `C:\Users\<YourUser>\AppData\Roaming\uv\python\cpython-3.13.11-windows-x86_64-none\python.exe`
+
+4. **Run uv sync with the correct Python:**
+   ```powershell
+   uv sync --python C:\Users\<YourUser>\AppData\Roaming\uv\python\cpython-<YourVersion>-windows-x86_64-none\python.exe
+   ```
+
+Alternatively, uninstall the Windows Store Python and install Python 3.13 from [python.org](https://www.python.org/downloads/), then run `uv sync` without the `--python` flag.
+
 ### 3. Register the Jupyter kernel (optional)
 
 **Note:** This step is only required if you plan to use notebooks. The marimo app doesn't need kernel registration.
