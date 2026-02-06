@@ -126,7 +126,7 @@ def test_optimize_with_missing_values() -> None:
 def test_optimize_raises_when_y_contains_nan() -> None:
     X = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32)
     y = np.array([1.0, float('nan')], dtype=np.float32)
-    with pytest.raises(ValueError, match='Response variable.*NaN'):
+    with pytest.raises(ValueError, match='Response.*contains NaN'):
         BayesianFeatureSelector(
             n_features=X.shape[1],
             n_components=1,
