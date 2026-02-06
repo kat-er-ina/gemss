@@ -41,7 +41,7 @@ The app will open in your default web browser at `http://localhost:2718`.
 
 ## Using the apps
 
-The marimo framework provides several built-in features that enhance the GEMSS workflow:
+The marimo framework provides several built-in features:
 
 - **Export tables:** Click the download icon on any displayed table to export as CSV
 - **Interactive plots:** Use Plotly controls (hover for details, click-drag to zoom, double-click to reset, camera icon to download as PNG)
