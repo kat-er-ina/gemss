@@ -359,7 +359,7 @@ class BayesianFeatureSelector:
             Regularization strength for penalty in the ELBO computation (default: 10.0). Higher values
             encourage more diverse solutions (lesser overlap). Used only if regularize=True.
         verbose : bool, optional
-            If True, print optimization settings and progress (default: True).
+            If True, print optimization progress (default: True).
 
         Returns
         -------
@@ -370,17 +370,6 @@ class BayesianFeatureSelector:
             - 'var': list of mixture variances per iteration
             - 'alpha': list of mixture weights per iteration
         """
-
-        if verbose:
-            myprint(msg=f"Running GEMSS feature selector:", header=4)
-            myprint(msg=f"- desired number of solutions: {self.n_components}")
-            myprint(msg=f"- number of iterations: {self.n_iter}")
-
-            if regularize and (lambda_jaccard != 0):
-                myprint(msg=f"  - regularization with penalization: {lambda_jaccard}")
-            else:
-                myprint(msg="- no regularization")
-
         history = {"elbo": [], "mu": [], "var": [], "alpha": []}
         start_time = time()
         for it in range(self.n_iter):

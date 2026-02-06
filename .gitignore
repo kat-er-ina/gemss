@@ -31,3 +31,7 @@ data/
 # Ignore private files and select folders
 private/
 notebooks/private/
+
+# Ignore running marimo files
+app/__marimo__/*
+app/results/*

@@ -41,6 +41,37 @@ MAX_ALLOWED_NAN_RATIO = 0.9  # maximum proportion of missing values to run regre
 MIN_ALLOWED_SAMPLES = 15  # minimum number of samples to run regression
 
 
+def detect_task(y: Union[pd.Series, np.ndarray], n_class_threshold: int = 10) -> str:
+    """
+    Detect if the task should be treated as classification or regression.
+    Rules:
+    - If the target has 2 or fewer unique values, it's classification.
+    - If the target is of integer or boolean type and has fewer unique values than the threshold, it's classification.
+    - Otherwise, it's regression.
+
+    Parameters
+    ----------
+    y : Union[pd.Series, np.ndarray]
+        Target vector.
+    n_class_threshold : int, optional
+        Maximum number of unique integer values to consider as classification. 10 by default.
+
+    Returns
+    -------
+    str
+        "classification" or "regression"
+    """
+    y = np.asarray(y)
+    unique = np.unique(y)
+    if len(unique) <= 2:
+        return "classification"
+    elif (pd.api.types.is_integer_dtype(y) or pd.api.types.is_bool_dtype(y)) and len(
+        unique
+    ) <= n_class_threshold:
+        return "classification"
+    return "regression"
+
+
 def print_verbose_logistic_regression_results(
     stats: Dict[str, Any],
     penalty: str,
@@ -104,8 +135,17 @@ def print_verbose_logistic_regression_results(
         )
     )
 
-    display(Markdown("**Coefficients of the logistic regression model:**"))
-    display(stats["nonzero_coefficients"])
+    display(
+        Markdown(
+            f"**{stats['n_nonzero_coefficients']} non-zero features with coefficients:**"
+        )
+    )
+    display(
+        [
+            f"{stats['nonzero_feature_names'][i]}: {stats['nonzero_coefficients'][i]}"
+            for i in range(len(stats["nonzero_coefficients"]))
+        ]
+    )
 
     if show_cm_figure:
         # Show confusion matrix using Plotly
@@ -218,6 +258,7 @@ def solve_with_logistic_regression(
         "confusion_matrix [TN, FP, FN, TP]": cm.ravel(),
         "n_nonzero_coefficients": len(coefficients),
         "nonzero_coefficients": coefficients,
+        "nonzero_feature_names": coefficients.index.tolist(),
     }
 
     # Print results
@@ -281,8 +322,17 @@ def print_verbose_linear_regression_results(
     display(Markdown(f"**MAE:** {stats['MAE']}"))
     if not np.isnan(stats["MAPE"]):
         display(Markdown(f"**MAPE:** {stats['MAPE']}%"))
-    display(Markdown(f"**{stats['n_nonzero_coefficients']} Non-zero coefficients:**"))
-    display(stats["nonzero_coefficients"])
+    display(
+        Markdown(
+            f"**{stats['n_nonzero_coefficients']} non-zero features with coefficients:**"
+        )
+    )
+    display(
+        [
+            f"{stats['nonzero_feature_names'][i]}: {stats['nonzero_coefficients'][i]}"
+            for i in range(len(stats["nonzero_coefficients"]))
+        ]
+    )
 
     if illustrate_predicted_vs_actual:
         if y_actual is not None and y_pred is not None:
@@ -392,6 +442,7 @@ def solve_with_linear_regression(
         ),
         "n_nonzero_coefficients": len(coefficients),
         "nonzero_coefficients": coefficients,
+        "nonzero_feature_names": coefficients.index.tolist(),
     }
 
     # Print results
@@ -447,6 +498,10 @@ def solve_any_regression(
     pd.DataFrame
         DataFrame summarizing regression metrics for all candidate solutions.
     """
+    # if response is a numpy array, convert to pd.Series
+    if isinstance(response, np.ndarray):
+        response = pd.Series(response)
+
     if set(np.unique(response.dropna())).__len__() == 2:
         is_binary = True
     else:

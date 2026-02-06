@@ -244,7 +244,7 @@ def preprocess_features(
     n_total = X.size
     missing_pct = (n_missing / n_total) * 100
     myprint(
-        f"Dataset contains {n_missing}/{n_total} ({missing_pct:.1f}%) missing feature values. They will be handled natively by the model.",
+        f"Dataset contains {n_missing}/{n_total} ({missing_pct:.1f}%) missing feature values.",
         use_markdown=True,
     )
 

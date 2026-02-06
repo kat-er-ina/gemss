@@ -455,7 +455,7 @@ def save_feature_lists_txt(
             f.write(
                 "------------------------------------------------------------------------\n"
             )
-        return f"Candidate solutions saved to file {filename}."
+        return f"Candidate solutions saved to TXT file for viewing: {filename}."
     except Exception as e:
         return f"Problem saving to file {filename}: {e}"
 
@@ -511,7 +511,7 @@ def save_feature_lists_json(
     try:
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(data, f)
-        return f"Candidate solutions saved to JSON file {filename}."
+        return f"Candidate solutions saved to JSON file for further processing: {filename}."
     except Exception as e:
         return f"Problem saving JSON file {filename}: {e}"
 
