@@ -2,12 +2,12 @@
 Utility functions for feature selection project.
 """
 
-from IPython.display import display, Markdown
-from typing import Any, Dict, Optional, List
-import pandas as pd
 import json
-import numpy as np
+from typing import Any
 
+import numpy as np
+import pandas as pd
+from IPython.display import Markdown, display
 
 # TODO: move to a more general utils module along with other printing functions
 # TODO: add use_markdown parameter and use myprint function in print_nice_optimization_settings
@@ -17,11 +17,11 @@ import numpy as np
 
 def myprint(
     msg: str,
-    use_markdown: Optional[bool] = True,
-    bold: Optional[bool] = False,
-    header: Optional[int] = 0,
-    code: Optional[bool] = False,
-    file: Optional[Any] = None,
+    use_markdown: bool | None = True,
+    bold: bool | None = False,
+    header: int | None = 0,
+    code: bool | None = False,
+    file: Any | None = None,
 ) -> None:
     """
     Print a message using Markdown formatting if specified, otherwise in plain text.
@@ -66,9 +66,9 @@ def format_summary_row_feature_with_mu(row):
 
 
 def get_solution_summary_df(
-    data_dict: Dict[str, pd.DataFrame],
+    data_dict: dict[str, pd.DataFrame],
     value_column: str = 'Feature',
-    format_function: Optional[callable] = format_summary_row_feature_with_mu,
+    format_function: callable | None = format_summary_row_feature_with_mu,
 ) -> pd.DataFrame:
     """
     Convert a dictionary of DataFrames into a summary DataFrame where each column
@@ -144,11 +144,11 @@ def get_solution_summary_df(
 
 
 def show_solution_summary(
-    solution_data: Dict[str, pd.DataFrame],
+    solution_data: dict[str, pd.DataFrame],
     title: str = 'Solution summary',
     value_column: str = 'Feature',
-    format_function: Optional[callable] = format_summary_row_feature_with_mu,
-    use_markdown: Optional[bool] = True,
+    format_function: callable | None = format_summary_row_feature_with_mu,
+    use_markdown: bool | None = True,
 ) -> None:
     """
     Display solutions or data in a DataFrame format where each column corresponds to a component
@@ -251,8 +251,8 @@ def show_solution_summary(
 
 def generate_feature_names(
     n_features: int,
-    original_feature_names_mapping: Optional[Dict[str, str]] = None,
-) -> List[str]:
+    original_feature_names_mapping: dict[str, str] | None = None,
+) -> list[str]:
     """
     Helper function to generate feature names consistently.
 
@@ -278,10 +278,10 @@ def generate_feature_names(
 
 def dataframe_to_ascii_table(
     df: pd.DataFrame,
-    title: Optional[str] = None,
-    max_col_width: Optional[int] = None,
+    title: str | None = None,
+    max_col_width: int | None = None,
     precision: int = 3,
-) -> List[str]:
+) -> list[str]:
     """
     Convert a pandas DataFrame to a nicely formatted ASCII table using | and _.
 
@@ -302,7 +302,6 @@ def dataframe_to_ascii_table(
     List[str]
         List of strings representing each line of the ASCII table.
     """
-    import numpy as np
 
     if df.empty:
         lines = []
@@ -390,7 +389,7 @@ def dataframe_to_ascii_table(
 
 
 def display_feature_lists(
-    features_dict: Dict[str, List[str]],
+    features_dict: dict[str, list[str]],
     title: str = 'Feature lists for candidate solutions',
     use_markdown: bool = True,
 ) -> None:
@@ -401,7 +400,7 @@ def display_feature_lists(
 
 
 def save_feature_lists_txt(
-    all_features_lists: Dict[str, Dict[str, List[str]]],
+    all_features_lists: dict[str, dict[str, list[str]]],
     filename: str,
 ) -> str:
     """Save multiple dictionaries of candidate feature lists to a plain text file.
@@ -459,7 +458,7 @@ def save_feature_lists_txt(
 
 
 def save_feature_lists_json(
-    all_features_lists: Dict[str, List[str]],
+    all_features_lists: dict[str, list[str]],
     filename: str,
 ) -> str:
     """Save multiple dictionaries of candidate feature lists to a structured JSON file.
@@ -493,9 +492,9 @@ def save_feature_lists_json(
     if not isinstance(filename, str) or not filename.strip():
         raise ValueError('Filename must be a non-empty string.')
 
-    sections: List[Dict[str, Any]] = []
+    sections: list[dict[str, Any]] = []
     for title, feature_dict in all_features_lists.items():
-        components_out: Dict[str, List[str]] = {}
+        components_out: dict[str, list[str]] = {}
         for component, features in feature_dict.items():
             # Ensure list of strings
             if not isinstance(features, list):
@@ -516,7 +515,7 @@ def save_feature_lists_json(
 
 def load_feature_lists_json(
     filename: str,
-) -> tuple[Dict[str, Dict[str, List[str]]], str]:
+) -> tuple[dict[str, dict[str, list[str]]], str]:
     """Load the dictionary of all candidate solutions saved by ``save_feature_lists_json``.
 
     Reads the JSON file produced by ``save_feature_lists_json`` and reconstructs
@@ -562,7 +561,7 @@ def load_feature_lists_json(
 
     if not os.path.exists(filename):
         raise FileNotFoundError(f"File '{filename}' not found.")
-    with open(filename, 'r', encoding='utf-8') as f:
+    with open(filename, encoding='utf-8') as f:
         data = json.load(f)
     if not isinstance(data, dict):
         raise ValueError('Top-level JSON must be an object.')
@@ -570,7 +569,7 @@ def load_feature_lists_json(
     if not isinstance(sections, list):
         raise ValueError("JSON missing 'sections' list.")
 
-    all_features_lists: Dict[str, Dict[str, List[str]]] = {}
+    all_features_lists: dict[str, dict[str, list[str]]] = {}
     for i, section in enumerate(sections):
         if not isinstance(section, dict):
             raise ValueError(f'Section index {i} is not an object.')
@@ -581,7 +580,7 @@ def load_feature_lists_json(
         if not isinstance(components, dict):
             raise ValueError(f"Section '{title}' missing 'components' dict.")
 
-        component_dict: Dict[str, List[str]] = {}
+        component_dict: dict[str, list[str]] = {}
         for comp, feats in components.items():
             if not isinstance(comp, str):
                 raise ValueError(f"Component key '{comp}' in section '{title}' not a string.")
@@ -669,7 +668,7 @@ def save_selector_history_json(history, filename) -> str:
 
 def load_selector_history_json(
     filename: str,
-) -> tuple[Dict[str, Any], str]:
+) -> tuple[dict[str, Any], str]:
     """Load optimization history saved by ``save_selector_history_json``.
 
     Opens the JSON file, validates required keys (``elbo``, ``mu``, ``var``, ``alpha``),
@@ -702,7 +701,7 @@ def load_selector_history_json(
 
     if not os.path.exists(filename):
         raise FileNotFoundError(f"History file '{filename}' not found.")
-    with open(filename, 'r', encoding='utf-8') as f:
+    with open(filename, encoding='utf-8') as f:
         data = json.load(f)
     if not isinstance(data, dict):
         raise ValueError('History JSON must be an object (dict) at top level.')
@@ -777,7 +776,7 @@ def save_constants_json(constants, filename) -> str:
         return f"Failed writing constants to '{filename}': {e}"
 
 
-def load_constants_json(filename: str) -> tuple[Dict[str, Any], str]:
+def load_constants_json(filename: str) -> tuple[dict[str, Any], str]:
     """Load configuration constants saved by ``save_constants_json``.
 
     Opens the JSON file, validates it exists and that the top-level object is a
@@ -815,7 +814,7 @@ def load_constants_json(filename: str) -> tuple[Dict[str, Any], str]:
 
     if not os.path.exists(filename):
         raise FileNotFoundError(f"Constants file '{filename}' not found.")
-    with open(filename, 'r', encoding='utf-8') as f:
+    with open(filename, encoding='utf-8') as f:
         data = json.load(f)
     if not isinstance(data, dict):
         raise ValueError('Constants JSON must have a dict as the top-level object.')

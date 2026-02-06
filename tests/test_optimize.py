@@ -15,10 +15,8 @@
 """
 
 import numpy as np
-import torch
-
 import pytest
-
+import torch
 from gemss.feature_selection.inference import BayesianFeatureSelector
 
 

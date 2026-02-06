@@ -3,26 +3,27 @@ Module for detecting and displaying outlier features in candidate solutions
 based on the z-score of their mu values.
 """
 
-from IPython.display import display
-from typing import List, Optional, Dict, Any, Union
-import pandas as pd
+from typing import Any
+
 import numpy as np
+import pandas as pd
+from IPython.display import display
 
 from gemss.utils.utils import (
-    myprint,
     generate_feature_names,
     get_solution_summary_df,
+    myprint,
     show_solution_summary,
 )
 
 
 def _create_outlier_info_for_component(
-    history: Dict[str, List[Any]],
+    history: dict[str, list[Any]],
     component: int,
-    feature_names: List[str],
+    feature_names: list[str],
     outlier_threshold_coeff: float,
     use_medians_for_outliers: bool,
-) -> Dict[str, List[float]]:
+) -> dict[str, list[float]]:
     """
     Helper function to create outlier info for a single component.
 
@@ -63,9 +64,9 @@ def _create_outlier_info_for_component(
 def detect_outlier_features(
     values: pd.Series,
     threshold_coeff=3,
-    use_median: Optional[bool] = False,
-    replace_middle_by_zero: Optional[bool] = False,
-) -> Dict[str, List[float]]:
+    use_median: bool | None = False,
+    replace_middle_by_zero: bool | None = False,
+) -> dict[str, list[float]]:
     """
     Detects outlier features based on their deviation from the mean (i.e. z-score) or median. Return the names of the outliers.
 
@@ -127,7 +128,7 @@ def detect_outlier_features(
 
 
 def get_outlier_info_df(
-    outlier_info: Dict[str, List[float]],
+    outlier_info: dict[str, list[float]],
     component_no: int,
 ) -> pd.DataFrame:
     """
@@ -168,9 +169,9 @@ def get_outlier_info_df(
 
 
 def show_outlier_info(
-    outlier_info: Dict[str, List[float]],
-    component_numbers: Optional[Union[int, List[int]]] = None,
-    use_markdown: Optional[bool] = True,
+    outlier_info: dict[str, list[float]],
+    component_numbers: int | list[int] | None = None,
+    use_markdown: bool | None = True,
 ) -> None:
     """
     Display outlier information for specified components.
@@ -240,11 +241,11 @@ def show_outlier_info(
 
 
 def get_outlier_solutions(
-    history: Dict[str, List[Any]],
-    use_medians_for_outliers: Optional[bool] = False,
-    outlier_threshold_coeff: Optional[float] = 3.0,
-    original_feature_names_mapping: Optional[Dict[str, str]] = None,
-) -> Dict[str, pd.DataFrame]:
+    history: dict[str, list[Any]],
+    use_medians_for_outliers: bool | None = False,
+    outlier_threshold_coeff: float | None = 3.0,
+    original_feature_names_mapping: dict[str, str] | None = None,
+) -> dict[str, pd.DataFrame]:
     """
     Compute the outliers features from the optimization history and summarize the results
     across all components.
@@ -299,10 +300,10 @@ def get_outlier_solutions(
 
 
 def get_outlier_summary_from_history(
-    history: Dict[str, List[Any]],
-    use_medians_for_outliers: Optional[bool] = False,
-    outlier_threshold_coeff: Optional[float] = 3.0,
-    original_feature_names_mapping: Optional[Dict[str, str]] = None,
+    history: dict[str, list[Any]],
+    use_medians_for_outliers: bool | None = False,
+    outlier_threshold_coeff: float | None = 3.0,
+    original_feature_names_mapping: dict[str, str] | None = None,
 ) -> pd.DataFrame:
     """
     Compute the outliers features from the optimization history and return a summary DataFrame.
@@ -381,10 +382,10 @@ def show_outlier_summary(
 
 
 def show_outlier_features_by_component(
-    history: Dict[str, List],
-    use_median: Optional[bool] = False,
-    outlier_threshold_coeff: Optional[float] = 3,
-    original_feature_names_mapping: Optional[Dict[str, str]] = None,
+    history: dict[str, list],
+    use_median: bool | None = False,
+    outlier_threshold_coeff: float | None = 3,
+    original_feature_names_mapping: dict[str, str] | None = None,
     use_markdown: bool = True,
 ) -> None:
     """

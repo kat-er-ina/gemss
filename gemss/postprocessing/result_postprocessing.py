@@ -3,29 +3,29 @@ This module provides functions to recover, display and analyze solutions
 from the optimization history of the Bayesian feature selection algorithm.
 """
 
-from typing import Dict, List, Tuple, Literal, Any, Optional, Union, Set
+from typing import Any
+
 import numpy as np
 import pandas as pd
-from IPython.display import display, Markdown
-import plotly.graph_objects as go
-from sklearn.preprocessing import StandardScaler
-from gemss.utils.utils import myprint
-from gemss.utils.visualizations import compare_parameters, get_algorithm_progress_plots
+from IPython.display import Markdown, display
+
 from gemss.postprocessing.outliers import (
-    get_outlier_solutions,
     detect_outlier_features,
+    get_outlier_solutions,
     show_outlier_info,
 )
+from gemss.utils.utils import myprint
+from gemss.utils.visualizations import compare_parameters, get_algorithm_progress_plots
 
 
 def get_full_solutions(
-    search_history: Dict[str, List[Any]],
+    search_history: dict[str, list[Any]],
     desired_sparsity: int,
-    min_mu_threshold: Optional[float] = 1e-6,
-    original_feature_names_mapping: Optional[Dict[str, str]] = None,
-) -> Tuple[
-    Dict[str, pd.DataFrame],
-    Dict[str, Union[np.ndarray, int]],
+    min_mu_threshold: float | None = 1e-6,
+    original_feature_names_mapping: dict[str, str] | None = None,
+) -> tuple[
+    dict[str, pd.DataFrame],
+    dict[str, np.ndarray | int],
 ]:
     """
     Recover full non-zero solutions and the corresponding final parameters from the optimization history.
@@ -62,7 +62,7 @@ def get_full_solutions(
     # from each component, get the two features that zero out the last
     final_mu = np.zeros((n_components, n_features))
     final_var = np.zeros((n_components, n_features))
-    final_alpha = np.zeros((n_components))
+    final_alpha = np.zeros(n_components)
     final_iteration = np.zeros((n_components), dtype=int)
 
     # A dictionary to store the solutions found for each component
@@ -125,9 +125,9 @@ def get_full_solutions(
 
 
 def get_top_solutions(
-    full_solutions: Dict[str, pd.DataFrame],
+    full_solutions: dict[str, pd.DataFrame],
     top_n: int,
-) -> Dict[str, pd.DataFrame]:
+) -> dict[str, pd.DataFrame]:
     """
     Extract the top few features from full non-zero solutions based on their mu values.
 
@@ -159,8 +159,8 @@ def get_top_solutions(
 
 
 def get_features_from_solutions(
-    solutions: Dict[str, pd.DataFrame],
-) -> Dict[str, List[float]]:
+    solutions: dict[str, pd.DataFrame],
+) -> dict[str, list[float]]:
     """
     Extract the lists of features of a given set of solutions.
 
@@ -182,17 +182,17 @@ def get_features_from_solutions(
 
 
 def recover_solutions(
-    search_history: Dict[str, List[Any]],
+    search_history: dict[str, list[Any]],
     desired_sparsity: int,
-    min_mu_threshold: Optional[float] = 1e-6,
-    use_median_for_outlier_detection: Optional[bool] = False,
-    outlier_deviation_thresholds: Optional[List[float]] = [2.5, 3.5],
-    original_feature_names_mapping: Optional[Dict[str, str]] = None,
-) -> Tuple[
-    Dict[str, pd.DataFrame],
-    Dict[str, pd.DataFrame],
-    Dict[str, Dict[str, pd.DataFrame]],
-    Dict[str, Union[np.ndarray, int]],
+    min_mu_threshold: float | None = 1e-6,
+    use_median_for_outlier_detection: bool | None = False,
+    outlier_deviation_thresholds: list[float] | None = [2.5, 3.5],
+    original_feature_names_mapping: dict[str, str] | None = None,
+) -> tuple[
+    dict[str, pd.DataFrame],
+    dict[str, pd.DataFrame],
+    dict[str, dict[str, pd.DataFrame]],
+    dict[str, np.ndarray | int],
 ]:
     """
     Recover solutions from the optimization history by identifying features that
@@ -290,10 +290,10 @@ def recover_solutions(
 
 
 def compare_true_and_found_features(
-    features_found: Union[List[str], set],
-    true_support_features: List[str],
+    features_found: list[str] | set,
+    true_support_features: list[str],
     n_total_features: int,
-    use_markdown: Optional[bool] = True,
+    use_markdown: bool | None = True,
 ) -> None:
     """
     Print an overview of features found vs true support features.
@@ -347,8 +347,8 @@ def compare_true_and_found_features(
 
 
 def get_features_from_long_solutions(
-    solutions: Dict[str, pd.DataFrame],
-) -> Dict[str, List[str]]:
+    solutions: dict[str, pd.DataFrame],
+) -> dict[str, list[str]]:
     """
     Extract features from full non-zero solutions.
 
@@ -369,7 +369,7 @@ def get_features_from_long_solutions(
     return extracted_solutions
 
 
-def get_unique_features(solutions: Dict[str, Dict[str, List[Any]]]) -> List[str]:
+def get_unique_features(solutions: dict[str, dict[str, list[Any]]]) -> list[str]:
     """
     Returns the list of features contained in all of the solutions. Each feature is listed only once.
 
@@ -388,8 +388,8 @@ def get_unique_features(solutions: Dict[str, Dict[str, List[Any]]]) -> List[str]
 
 
 def show_unique_features(
-    solutions: Dict[str, Dict[str, List[Any]]],
-    use_markdown: Optional[bool] = True,
+    solutions: dict[str, dict[str, list[Any]]],
+    use_markdown: bool | None = True,
 ) -> None:
     """
     Display the unique features found across all solutions.
@@ -422,8 +422,8 @@ def show_unique_features(
 
 
 def show_unique_features_from_full_solutions(
-    solutions: Dict[str, pd.DataFrame],
-    use_markdown: Optional[bool] = True,
+    solutions: dict[str, pd.DataFrame],
+    use_markdown: bool | None = True,
 ) -> None:
     """
     Display the unique features found across all full non-zero solutions.
@@ -445,9 +445,9 @@ def show_unique_features_from_full_solutions(
 
 
 def show_features_in_solutions(
-    solutions: Dict[str, Dict[str, List[Any]]],
-    history: Dict[str, List[np.ndarray]],
-    constants: Dict[str, float],
+    solutions: dict[str, dict[str, list[Any]]],
+    history: dict[str, list[np.ndarray]],
+    constants: dict[str, float],
     use_markdown: bool = True,
 ) -> None:
     """
@@ -497,8 +497,8 @@ def show_features_in_solutions(
 
 
 def show_final_parameter_comparison(
-    true_parameters: Dict[str, Any],
-    final_parameters: Dict[str, Any],
+    true_parameters: dict[str, Any],
+    final_parameters: dict[str, Any],
 ) -> None:
     """
     Display a comparison between true parameters and final estimated parameters.
@@ -527,11 +527,11 @@ def show_final_parameter_comparison(
 
 # This function cannot be in visualizations.py due to circular import issues (outlier functions)
 def show_algorithm_progress_with_outliers(
-    history: Dict[str, List[Any]],
+    history: dict[str, list[Any]],
     plot_elbo_progress: bool = True,
     plot_mu_progress: bool = True,
     plot_alpha_progress: bool = True,
-    original_feature_names_mapping: Optional[Dict[str, str]] = None,
+    original_feature_names_mapping: dict[str, str] | None = None,
     detect_outliers: bool = False,
     use_medians_for_outliers: bool = False,
     outlier_threshold_coeff: float = 2.5,

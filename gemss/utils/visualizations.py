@@ -2,8 +2,8 @@
 Diagnostics and plotting for Bayesian feature selection.
 """
 
-from IPython.display import display, Markdown
-from typing import Any, List, Dict, Optional
+from typing import Any
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -11,7 +11,7 @@ import plotly.graph_objs as go
 
 
 def get_elbo_plot(
-    history: Dict[str, List[float]],
+    history: dict[str, list[float]],
 ) -> go.Figure:
     """
     Get ELBO progress over optimization iterations (Plotly Figure).
@@ -33,7 +33,7 @@ def get_elbo_plot(
 
 
 def plot_elbo(
-    history: Dict[str, List[float]],
+    history: dict[str, list[float]],
 ) -> None:
     """
     Plot ELBO progress over optimization iterations (Plotly).
@@ -53,9 +53,9 @@ def plot_elbo(
 
 
 def get_mu_plot(
-    history: Dict[str, np.ndarray],
+    history: dict[str, np.ndarray],
     component: int = 0,
-    original_feature_names_mapping: Dict[str, str] = None,
+    original_feature_names_mapping: dict[str, str] = None,
 ) -> go.Figure:
     """
     Get trajectory of mixture means for a given component (Plotly Figure).
@@ -110,9 +110,9 @@ def get_mu_plot(
 
 
 def plot_mu(
-    history: Dict[str, np.ndarray],
+    history: dict[str, np.ndarray],
     component: int = 0,
-    original_feature_names_mapping: Dict[str, str] = None,
+    original_feature_names_mapping: dict[str, str] = None,
 ) -> None:
     """
     Plot trajectory of mixture means for a given component (Plotly).
@@ -141,7 +141,7 @@ def plot_mu(
 
 
 def get_alpha_plot(
-    history: Dict[str, np.ndarray],
+    history: dict[str, np.ndarray],
 ) -> go.Figure:
     """
     Get mixture weights (alpha) progress over iterations (Plotly Figure).
@@ -175,7 +175,7 @@ def get_alpha_plot(
 
 
 def plot_alpha(
-    history: Dict[str, np.ndarray],
+    history: dict[str, np.ndarray],
 ) -> None:
     """
     Plot mixture weights (alpha) progress over iterations (Plotly).
@@ -197,7 +197,7 @@ def plot_alpha(
 def get_correlation_with_response_plot(
     df: pd.DataFrame,
     y: pd.Series,
-    support_features: List[str],
+    support_features: list[str],
 ) -> go.Figure:
     """
     Get bar plot of features' correlation with binary response (Plotly Figure).
@@ -240,7 +240,7 @@ def get_correlation_with_response_plot(
 def show_correlations_with_response(
     df: pd.DataFrame,
     y: pd.Series,
-    support_features: List[str],
+    support_features: list[str],
 ) -> None:
     """
     Show bar plot of features' correlation with binary response.
@@ -265,8 +265,8 @@ def show_correlations_with_response(
 
 def get_correlation_matrix_plot(
     df: pd.DataFrame,
-    width: Optional[int],
-    height: Optional[int],
+    width: int | None,
+    height: int | None,
 ) -> go.Figure:
     """
     Get correlation matrix heatmap (Plotly Figure).
@@ -299,8 +299,8 @@ def get_correlation_matrix_plot(
 
 def show_correlation_matrix(
     df: pd.DataFrame,
-    width: Optional[int] = None,
-    height: Optional[int] = None,
+    width: int | None = None,
+    height: int | None = None,
 ) -> None:
     """
     Show correlation matrix heatmap.
@@ -325,7 +325,7 @@ def show_correlation_matrix(
 
 def get_label_histogram_plot(
     y: np.ndarray,
-    nbins: Optional[int] = 10,
+    nbins: int | None = 10,
 ) -> go.Figure:
     """
     Get histogram of continuous labels y using Plotly (Plotly Figure).
@@ -373,7 +373,7 @@ def get_label_histogram_plot(
 
 def show_label_histogram(
     y: np.ndarray,
-    nbins: Optional[int] = 10,
+    nbins: int | None = 10,
 ) -> None:
     """
     Show histogram of continuous labels y using Plotly.
@@ -423,8 +423,8 @@ def get_label_piechart(
 
 
 def get_features_in_components_plot(
-    solutions: Dict[str, List[str]],
-    features_to_show: List[str] = None,
+    solutions: dict[str, list[str]],
+    features_to_show: list[str] = None,
 ) -> go.Figure:
     """
     Get heatmap of which features are found in each component (Plotly Figure).
@@ -471,8 +471,8 @@ def get_features_in_components_plot(
 
 
 def show_features_in_components(
-    solutions: Dict[str, List[str]],
-    features_to_show: List[str] = None,
+    solutions: dict[str, list[str]],
+    features_to_show: list[str] = None,
 ) -> None:
     """
     Show a heatmap of which features are found in each component.
@@ -496,7 +496,7 @@ def show_features_in_components(
 
 
 def get_compare_parameters_plot(
-    parameters: Dict[str, Any],
+    parameters: dict[str, Any],
     final_mu: np.ndarray,
 ) -> go.Figure:
     """
@@ -568,7 +568,7 @@ def get_compare_parameters_plot(
 
 
 def compare_parameters(
-    parameters: Dict[str, Any],
+    parameters: dict[str, Any],
     final_mu: np.ndarray,
 ) -> None:
     """
@@ -704,10 +704,10 @@ def show_predicted_vs_actual_response(
 
 
 def get_final_alphas_plot(
-    history: Dict[str, List[Any]],
+    history: dict[str, list[Any]],
     show_bar_plot: bool = True,
     show_pie_chart: bool = True,
-) -> List[go.Figure]:
+) -> list[go.Figure]:
     """
     Get final mixture weights as bar plot and/or pie chart using Plotly (Plotly Figures).
 
@@ -753,7 +753,7 @@ def get_final_alphas_plot(
 
 
 def show_final_alphas(
-    history: Dict[str, List[Any]],
+    history: dict[str, list[Any]],
     show_bar_plot: bool = True,
     show_pie_chart: bool = True,
 ) -> None:
@@ -780,8 +780,8 @@ def show_final_alphas(
 
 
 def get_subsampled_history(
-    history: Dict[str, List[Any]],
-) -> Dict[str, List[Any]]:
+    history: dict[str, list[Any]],
+) -> dict[str, list[Any]]:
     """
     Subsample the history dictionary for plotting purposes.
 
@@ -813,13 +813,13 @@ def get_subsampled_history(
 
 
 def get_algorithm_progress_plots(
-    history: Dict[str, List[Any]],
+    history: dict[str, list[Any]],
     elbo: bool = True,
     mu: bool = True,
     alpha: bool = True,
-    original_feature_names_mapping: Optional[Dict[str, str]] = None,
+    original_feature_names_mapping: dict[str, str] | None = None,
     subsample_history_for_plotting: bool = False,
-) -> Dict[str, go.Figure]:
+) -> dict[str, go.Figure]:
     """
     Get the progress of the algorithm by plotting the evolution of
     ELBO, mixture means, and weights. This function uses Plotly for interactive visualizations.
@@ -880,11 +880,11 @@ def get_algorithm_progress_plots(
 
 
 def show_algorithm_progress(
-    history: Dict[str, List[Any]],
+    history: dict[str, list[Any]],
     plot_elbo_progress: bool = True,
     plot_mu_progress: bool = True,
     plot_alpha_progress: bool = True,
-    original_feature_names_mapping: Optional[Dict[str, str]] = None,
+    original_feature_names_mapping: dict[str, str] | None = None,
     subsample_history_for_plotting: bool = False,
 ) -> None:
     """

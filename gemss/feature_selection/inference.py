@@ -21,10 +21,9 @@ optimize(...)          : Runs the main optimization loop.
 """
 
 from time import time
-from typing import Dict, List, Literal
+from typing import Literal
 
 import torch
-from IPython.display import Markdown, display
 from torch.optim import Adam
 
 from gemss.utils.utils import myprint
@@ -329,7 +328,7 @@ class BayesianFeatureSelector:
         regularize: bool = False,
         lambda_jaccard: float = 10.0,
         verbose: bool = True,
-    ) -> Dict[str, List[float]]:
+    ) -> dict[str, list[float]]:
         """
         Main optimization loop for the feature selector.
 

@@ -1,21 +1,23 @@
 from typing import Literal
+
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import StratifiedKFold, KFold
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from tabpfn import TabPFNClassifier, TabPFNRegressor
 import shap
 from sklearn.metrics import (
-    r2_score,
-    mean_squared_error,
     accuracy_score,
     balanced_accuracy_score,
-    roc_auc_score,
-    f1_score,
-    precision_score,
-    recall_score,
     confusion_matrix,
+    f1_score,
+    mean_squared_error,
+    precision_score,
+    r2_score,
+    recall_score,
+    roc_auc_score,
 )
+from sklearn.model_selection import KFold, StratifiedKFold
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from tabpfn import TabPFNClassifier, TabPFNRegressor
+
 from gemss.postprocessing.simple_regressions import detect_task
 
 
@@ -279,6 +281,6 @@ def tabpfn_evaluate(
         )
         result['shap_explanations'] = pd.Series(
             shap_importance,
-            name=f'Shapley value',
+            name='Shapley value',
         ).sort_values(ascending=False)
     return result

@@ -2,7 +2,6 @@
 Contains functions to perform  analysis of experiments per each tested case.
 """
 
-from typing import Dict, Tuple
 import pandas as pd
 
 BASELINE_NOISE_LEVEL = 0.1
@@ -206,7 +205,7 @@ HEATMAP_PARAM_PER_CASE[47] = ['[NOISE_STD, NAN_RATIO] COMBINATION', 'BINARIZE']
 ################################################################################################
 
 
-def get_df_cases(df: pd.DataFrame) -> Dict[int, pd.DataFrame]:
+def get_df_cases(df: pd.DataFrame) -> dict[int, pd.DataFrame]:
     """
     Splits the main dataframe into multiple dataframes corresponding to different tested cases.
 
@@ -414,7 +413,7 @@ def get_df_cases(df: pd.DataFrame) -> Dict[int, pd.DataFrame]:
     return df_cases
 
 
-def concatenate_cases(df_cases: Dict[int, pd.DataFrame]) -> pd.DataFrame:
+def concatenate_cases(df_cases: dict[int, pd.DataFrame]) -> pd.DataFrame:
     """
     Concatenate all case dataframes into a single dataframe with an additional column 'CASE_ID'.
 

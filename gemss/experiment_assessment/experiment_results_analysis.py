@@ -1,12 +1,12 @@
 import os
-from typing import Dict, List, Literal, Tuple, Optional
-from IPython.display import display, Markdown
+from typing import Literal
+
 import pandas as pd
+from IPython.display import Markdown, display
 
 from gemss.config.constants import EXPERIMENT_RESULTS_DIR
 from gemss.experiment_assessment.case_analysis import (
     CASE_DESCRIPTION,
-    CASE_SET_RANGES,
     case2set,
 )
 
@@ -107,10 +107,10 @@ THRESHOLDED_METRICS = [m for m in CORE_METRICS if THRESHOLDS_FOR_METRIC.get(m) i
 
 
 def load_experiment_results(
-    tier_id_list: List[int] = [1, 2, 3, 4, 5, 6, 7],
+    tier_id_list: list[int] = [1, 2, 3, 4, 5, 6, 7],
     results_dir: str = None,
     verbose: bool = True,
-) -> Tuple[pd.DataFrame, List[str]]:
+) -> tuple[pd.DataFrame, list[str]]:
     """
     Load experiment results from specified tiers into a single DataFrame.
 
@@ -246,7 +246,7 @@ def pivot_df_by_solution_type(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def get_all_experiment_results(
-    tier_id_list: List[int] = [1, 2, 3, 4, 5, 6, 7],
+    tier_id_list: list[int] = [1, 2, 3, 4, 5, 6, 7],
     verbose: bool = True,
 ) -> pd.DataFrame:
     """
@@ -275,10 +275,10 @@ def get_all_experiment_results(
 
 def get_average_metrics_per_group(
     df: pd.DataFrame,
-    group_identifier: Optional[str] = 'TIER_ID',
+    group_identifier: str | None = 'TIER_ID',
     aggregation_func: Literal['mean', 'median'] = 'mean',
     verbose: bool = False,
-) -> Dict[str, pd.DataFrame]:
+) -> dict[str, pd.DataFrame]:
     """
     Calculate mean or median performance metrics per group (e.g., per tier or case).
 
@@ -394,10 +394,10 @@ def get_average_metrics_per_case(
 def get_best_solution_type_per_group(
     average_metrics: dict,
     group_identifier: str = 'TIER_ID',
-    metric: Optional[str] = DEFAULT_METRIC,
+    metric: str | None = DEFAULT_METRIC,
     aggregation_func: Literal['mean', 'median', None] = None,
     verbose: bool = False,
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     Identify the best solution type per group based on the chosen performance metric.
 
@@ -451,10 +451,10 @@ def get_best_solution_type_per_group(
 def choose_best_solution_per_group(
     df: pd.DataFrame,
     group_identifier: str = 'TIER_ID',
-    metric: Optional[str] = DEFAULT_METRIC,
+    metric: str | None = DEFAULT_METRIC,
     aggregation_func: Literal['mean', 'median'] = 'mean',
     verbose: bool = False,
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     Wrapper function to get the best solution types per group (e.g., 'TIER_ID' or 'CASE_ID')
     based on a chosen performance metric.
@@ -497,7 +497,7 @@ def choose_best_solution_per_group(
 
 def filter_df_best_solutions(
     df: pd.DataFrame,
-    best_solutions: Dict[str, str],
+    best_solutions: dict[str, str],
     group_identifier: str = 'TIER_ID',
     verbose: bool = False,
 ) -> pd.DataFrame:
@@ -532,8 +532,8 @@ def filter_df_best_solutions(
     if verbose:
         display(Markdown(f'### Filtered data with best solutions per **{group_identifier}**'))
         display(Markdown(f'- Total number of records: {len(df_filtered)}'))
-        display(Markdown(f'- Solution types included:'))
-        display((pd.Series(best_solutions.values()).value_counts().to_frame()))
+        display(Markdown('- Solution types included:'))
+        display(pd.Series(best_solutions.values()).value_counts().to_frame())
 
         display(
             Markdown(
@@ -564,8 +564,8 @@ def filter_df_best_solutions(
 def analyze_metric_results(
     df: pd.DataFrame,
     group_identifier: Literal['TIER_ID', 'CASE_ID', None],
-    identifiers_list: Optional[List[str]] = None,
-    solution_type: Optional[str] = 'all types',
+    identifiers_list: list[str] | None = None,
+    solution_type: str | None = 'all types',
     metric_name: Literal[
         'Recall',
         'Precision',
@@ -578,8 +578,8 @@ def analyze_metric_results(
         'Global_Miss_Rate',
         'Global_FDR',
     ] = DEFAULT_METRIC,
-    thresholds: Dict[str, float] = None,
-    verbose: Optional[bool] = True,
+    thresholds: dict[str, float] = None,
+    verbose: bool | None = True,
 ) -> pd.DataFrame:
     """
     Analyze the distribution of a specified metric for a given solution type.
@@ -689,7 +689,7 @@ def analyze_metric_results(
 
     # Print summary stats
     if verbose:
-        display(Markdown(f'#### Statistics:'))
+        display(Markdown('#### Statistics:'))
         display(Markdown(f'- **Total experiments:** {len(df_plot)}'))
         display(Markdown(f'- **Mean {metric_name}:** {df_plot[metric_name].mean():.3f}'))
         display(Markdown(f'- **Median {metric_name}:** {df_plot[metric_name].median():.3f}\n'))
@@ -698,7 +698,7 @@ def analyze_metric_results(
 
 def compute_performance_overview(
     df_cases: pd.DataFrame,
-    select_metrics: List[str],
+    select_metrics: list[str],
 ) -> pd.DataFrame:
     df_performance_overview = pd.DataFrame()
 
@@ -752,7 +752,7 @@ def compute_performance_overview(
 
 def show_performance_overview(
     df_performance_overview: pd.DataFrame,
-    select_metrics: List[str],
+    select_metrics: list[str],
 ):
     # Show each metric block separately for better readability
     for select_metric in select_metrics:

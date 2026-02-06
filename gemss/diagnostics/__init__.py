@@ -11,5 +11,5 @@ Modules:
 """
 
 from .performance_tests import *
-from .recommendations import *
 from .recommendation_messages import *
+from .recommendations import *

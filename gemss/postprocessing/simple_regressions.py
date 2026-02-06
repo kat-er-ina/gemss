@@ -6,27 +6,26 @@ Includes:
 - Function to show the results
 """
 
-from IPython.display import display, Markdown
-from typing import Any, Dict, Optional, Union, List
 import warnings
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
-from typing import Literal
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from IPython.display import Markdown, display
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import ElasticNetCV, LassoCV, LogisticRegressionCV, RidgeCV
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
-    roc_auc_score,
+    confusion_matrix,
     f1_score,
     mean_squared_error,
-    r2_score,
-    confusion_matrix,
     precision_score,
+    r2_score,
+    roc_auc_score,
 )
-from sklearn.linear_model import LogisticRegressionCV, RidgeCV, LassoCV, ElasticNetCV
-from sklearn.exceptions import ConvergenceWarning
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from gemss.utils.utils import myprint
 from gemss.utils.visualizations import (
@@ -41,7 +40,7 @@ MAX_ALLOWED_NAN_RATIO = 0.9  # maximum proportion of missing values to run regre
 MIN_ALLOWED_SAMPLES = 15  # minimum number of samples to run regression
 
 
-def detect_task(y: Union[pd.Series, np.ndarray], n_class_threshold: int = 10) -> str:
+def detect_task(y: pd.Series | np.ndarray, n_class_threshold: int = 10) -> str:
     """
     Detect if the task should be treated as classification or regression.
     Rules:
@@ -73,7 +72,7 @@ def detect_task(y: Union[pd.Series, np.ndarray], n_class_threshold: int = 10) ->
 
 
 def print_verbose_logistic_regression_results(
-    stats: Dict[str, Any],
+    stats: dict[str, Any],
     penalty: str,
     confusion_matrix: np.ndarray,
     show_cm_figure: bool = True,
@@ -155,9 +154,9 @@ def solve_with_logistic_regression(
     y: pd.Series | np.ndarray,
     apply_scaling: Literal['standard', 'minmax', None] = None,
     penalty: Literal['l1', 'l2', 'elasticnet'] = 'l2',
-    verbose: Optional[bool] = False,
-    show_cm_figure: Optional[bool] = True,
-) -> Dict[str, Any]:
+    verbose: bool | None = False,
+    show_cm_figure: bool | None = True,
+) -> dict[str, Any]:
     """
     Solve a logistic regression problem with the specified penalty.
 
@@ -260,11 +259,11 @@ def solve_with_logistic_regression(
 
 
 def print_verbose_linear_regression_results(
-    stats: Dict[str, Any],
+    stats: dict[str, Any],
     model_name: str,
     illustrate_predicted_vs_actual: bool = False,
-    y_actual: Optional[Union[pd.Series, np.ndarray]] = None,
-    y_pred: Optional[np.ndarray] = None,
+    y_actual: pd.Series | np.ndarray | None = None,
+    y_pred: np.ndarray | None = None,
 ) -> None:
     """
     Print detailed linear regression results in a formatted display.
@@ -327,9 +326,9 @@ def solve_with_linear_regression(
     y: pd.Series | np.ndarray,
     apply_scaling: Literal['standard', 'minmax', None] = None,
     penalty: Literal['l1', 'l2', 'elasticnet'] = 'l2',
-    verbose: Optional[bool] = True,
-    illustrate_predicted_vs_actual: Optional[bool] = False,
-) -> Dict[str, Any]:
+    verbose: bool | None = True,
+    illustrate_predicted_vs_actual: bool | None = False,
+) -> dict[str, Any]:
     """
     Solve a linear regression problem with the specified penalty.
 
@@ -435,13 +434,13 @@ def solve_with_linear_regression(
 
 
 def solve_any_regression(
-    solutions: Dict[str, List[str]],
+    solutions: dict[str, list[str]],
     df: pd.DataFrame,
-    response: Union[pd.Series, np.ndarray],
+    response: pd.Series | np.ndarray,
     apply_scaling: Literal['standard', 'minmax', None] = None,
     penalty: Literal['l1', 'l2', 'elasticnet'] = 'l1',
-    verbose: Optional[bool] = False,
-    use_markdown: Optional[bool] = True,
+    verbose: bool | None = False,
+    use_markdown: bool | None = True,
 ) -> pd.DataFrame:
     """
     Compute regression/classification for each candidate solution using the identified features.
@@ -558,7 +557,7 @@ def solve_any_regression(
 def show_regression_metrics(
     metrics_df: pd.DataFrame,
     title: str = 'Results on training data',
-    use_markdown: Optional[bool] = True,
+    use_markdown: bool | None = True,
 ) -> None:
     """
     Show regression metrics from a DataFrame.

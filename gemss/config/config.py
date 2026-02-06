@@ -25,11 +25,12 @@ Usage:
 """
 
 import json
+from collections import OrderedDict
+from functools import cache, lru_cache
 from pathlib import Path
-from typing import Dict, Any, Literal, Optional, OrderedDict
-from functools import lru_cache
+from typing import Any, Literal
 
-from .constants import CONFIG_FILES, PROJECT_NAME
+from .constants import CONFIG_FILES
 
 
 class ConfigurationManager:
@@ -114,20 +115,20 @@ class ConfigurationManager:
         self._config_dir = Path(__file__).parent
         self._cache = {}
 
-    @lru_cache(maxsize=None)
-    def _load_json_file(self, filename: str) -> Dict[str, Any]:
+    @cache
+    def _load_json_file(self, filename: str) -> dict[str, Any]:
         """Load and cache JSON file contents."""
         file_path = self._config_dir / filename
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path) as f:
                 return json.load(f)
         except FileNotFoundError:
             raise FileNotFoundError(f'Configuration file not found: {file_path}')
         except json.JSONDecodeError as e:
             raise ValueError(f'Invalid JSON in {file_path}: {e}')
 
-    @lru_cache(maxsize=None)
-    def get_artificial_dataset_params(self) -> Dict[str, Any]:
+    @cache
+    def get_artificial_dataset_params(self) -> dict[str, Any]:
         """Get artificial dataset generation parameters (for development/demo only)."""
         params = self._load_json_file(CONFIG_FILES['ARTIFICIAL_DATASET'])
         # Use explicit order defined by ARTIFICIAL_DATASET_PARAMS list
@@ -137,8 +138,8 @@ class ConfigurationManager:
                 ordered_params[k] = params[k]
         return dict(ordered_params)
 
-    @lru_cache(maxsize=None)
-    def get_algorithm_params(self) -> Dict[str, Any]:
+    @cache
+    def get_algorithm_params(self) -> dict[str, Any]:
         """Get algorithm parameters."""
         params = self._load_json_file(CONFIG_FILES['ALGORITHM'])
         # Use explicit order defined by ALGORITHM_PARAMS list
@@ -148,8 +149,8 @@ class ConfigurationManager:
                 ordered_params[k] = params[k]
         return dict(ordered_params)
 
-    @lru_cache(maxsize=None)
-    def get_postprocessing_params(self) -> Dict[str, Any]:
+    @cache
+    def get_postprocessing_params(self) -> dict[str, Any]:
         """Get postprocessing parameters."""
         params = self._load_json_file(CONFIG_FILES['POSTPROCESSING'])
         # Use explicit order defined by POSTPROCESSING_PARAMS list
@@ -160,7 +161,7 @@ class ConfigurationManager:
         return dict(ordered_params)
 
     @lru_cache(maxsize=1)
-    def get_all_params(self) -> Dict[str, Any]:
+    def get_all_params(self) -> dict[str, Any]:
         """Get all parameters in a single dictionary, preserving fixed order."""
         all_params = OrderedDict()
 
@@ -186,7 +187,7 @@ class ConfigurationManager:
         # but the order is explicitly set by the OrderedDict logic above.
         return dict(all_params)
 
-    def get_params_by_category(self, category: str) -> Dict[str, Any]:
+    def get_params_by_category(self, category: str) -> dict[str, Any]:
         """Get parameters filtered by category (efficient, uses cached dicts)."""
         if category in ('artificial_dataset', 'dataset'):
             return self.get_artificial_dataset_params()
@@ -259,12 +260,12 @@ def check_sparsities(artificial_dataset: bool = True) -> None:
     print(f' - Desired sparsity: {DESIRED_SPARSITY}')
 
 
-def as_dict() -> Dict[str, Any]:
+def as_dict() -> dict[str, Any]:
     """Return all configuration parameters as a dictionary."""
     return _config_manager.get_all_params().copy()
 
 
-def get_core_algorithm_params() -> Dict[str, Any]:
+def get_core_algorithm_params() -> dict[str, Any]:
     """
     Get core algorithm parameters only (excludes artificial dataset parameters).
 
@@ -291,7 +292,7 @@ def get_core_algorithm_params() -> Dict[str, Any]:
     return dict(core_params)
 
 
-def get_params_by_category(category: str) -> Dict[str, Any]:
+def get_params_by_category(category: str) -> dict[str, Any]:
     """
     Get parameters filtered by category.
 
@@ -310,7 +311,7 @@ def get_params_by_category(category: str) -> Dict[str, Any]:
 
 
 def get_current_config(
-    constants: Optional[Dict[str, Any]] = None,
+    constants: dict[str, Any] | None = None,
     constant_type: Literal[
         'algorithm',
         'postprocessing',
@@ -383,7 +384,7 @@ def get_current_config(
 
 
 def display_current_config(
-    constants: Optional[Dict[str, Any]] = None,
+    constants: dict[str, Any] | None = None,
     constant_type: Literal[
         'algorithm',
         'postprocessing',
@@ -404,7 +405,7 @@ def display_current_config(
         'algorithm', 'postprocessing', 'algorithm_and_postprocessing', 'dataset', 'all'
     """
     try:
-        from IPython.display import display, Markdown
+        from IPython.display import Markdown, display
     except ImportError:
         print('IPython not available. Cannot display formatted configuration.')
         return

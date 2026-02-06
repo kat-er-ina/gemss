@@ -4,14 +4,15 @@ Data preprocessing utilities for user-provided datasets.
 
 """
 
-from IPython.display import display, Markdown
-from typing import Dict, Literal, Optional, Tuple
-import pandas as pd
-import numpy as np
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from typing import Literal
 
-from gemss.utils.utils import myprint
+import numpy as np
+import pandas as pd
+from IPython.display import Markdown, display
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+
 from gemss.config.constants import DATA_DIR
+from gemss.utils.utils import myprint
 
 
 def load_data(
@@ -62,7 +63,7 @@ def get_feature_name_mapping(df: pd.DataFrame) -> dict:
 def preprocess_non_numeric_features(
     df: pd.DataFrame,
     how: Literal['drop', 'onehot'] = 'drop',
-    verbose: Optional[bool] = True,
+    verbose: bool | None = True,
 ) -> pd.DataFrame:
     """
     Process non-numeric features in the DataFrame.
@@ -110,11 +111,11 @@ def preprocess_features(
     df: pd.DataFrame,
     response: pd.Series,
     dropna: Literal['response', 'all', 'none'] = 'response',
-    allowed_missing_percentage: Optional[float] = None,
+    allowed_missing_percentage: float | None = None,
     drop_non_numeric_features: bool = True,
     apply_scaling: Literal['standard', 'minmax', None] = None,
-    verbose: Optional[bool] = True,
-) -> Tuple[np.ndarray, np.ndarray, Dict[str, str]]:
+    verbose: bool | None = True,
+) -> tuple[np.ndarray, np.ndarray, dict[str, str]]:
     """
     Preprocess the features by cleaning na values and applying scaling, if specified.
 

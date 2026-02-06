@@ -14,7 +14,6 @@
 
 import numpy as np
 import torch
-
 from gemss.feature_selection.inference import BayesianFeatureSelector
 
 

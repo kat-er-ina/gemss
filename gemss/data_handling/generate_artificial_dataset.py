@@ -1,12 +1,12 @@
-from IPython.display import Markdown, display
-from typing import Dict, List
+
 import numpy as np
 import pandas as pd
+from IPython.display import Markdown, display
 
 from gemss.config.constants import DATA_DIR
 from gemss.utils.visualizations import (
-    show_correlations_with_response,
     show_correlation_matrix,
+    show_correlations_with_response,
     show_label_histogram,
 )
 
@@ -227,7 +227,7 @@ def generate_artificial_dataset(
     save_to_csv=False,
     print_data_overview=True,
     show_feature_correlations=False,
-) -> tuple[pd.DataFrame, pd.Series, Dict[str, List[str]], pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.Series, dict[str, list[str]], pd.DataFrame]:
     """
     Generate an artificial binary classification dataset with multiple sparse solutions.
 

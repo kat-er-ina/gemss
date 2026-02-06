@@ -10,6 +10,6 @@ Modules:
 - utils: Utility functions for optimization settings display
 """
 
+from ..utils.utils import *
 from .inference import *
 from .models import *
-from ..utils.utils import *

@@ -5,8 +5,8 @@ This module contains essential project-related constants including file names,
 paths, and project metadata used throughout the configuration system.
 """
 
-from typing import Final
 from pathlib import Path
+from typing import Final
 
 # Configuration file names
 CONFIG_FILES: Final = {

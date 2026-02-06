@@ -1,20 +1,15 @@
 """ """
 
-from typing import List, Dict, Literal, Optional, Tuple
-from IPython.display import display, Markdown
+from typing import Literal
+
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
 
 from gemss.experiment_assessment.experiment_results_analysis import (
-    CATEGORY_ORDER,
     COVERAGE_METRICS,
-    DEFAULT_ASI_SI_COMPARISON_THRESHOLDS,
-    DEFAULT_F1SCORE_THRESHOLDS,
-    DEFAULT_PRECISION_THRESHOLDS,
-    DEFAULT_RECALL_THRESHOLDS,
-    THRESHOLDS_FOR_METRIC,
     DEFAULT_AGGREGATION_FUNC,
+    DEFAULT_ASI_SI_COMPARISON_THRESHOLDS,
     DEFAULT_METRIC,
     analyze_metric_results,
 )
@@ -67,12 +62,12 @@ def plot_solution_grouped(
     df: pd.DataFrame,
     metric_name: str,
     x_axis: str,
-    color_by: Optional[str],
-    symbol_by: Optional[str],
+    color_by: str | None,
+    symbol_by: str | None,
     group_identifier: Literal['TIER_ID', 'CASE_ID', None],
-    identifiers_list: Optional[List[str]] = None,
-    solution_type: Optional[str] = 'all types',
-    hover_params: Optional[List[str]] = None,
+    identifiers_list: list[str] | None = None,
+    solution_type: str | None = 'all types',
+    hover_params: list[str] | None = None,
 ) -> None:
     """
     Plot a metric for a given solution type, grouped by a specified parameter.
@@ -288,12 +283,12 @@ def plot_solution_grouped(
 
 def plot_solution_comparison(
     df: pd.DataFrame,
-    solution_types: List[str],
+    solution_types: list[str],
     metric_name: str,
     x_axis: str,
     group_identifier: Literal['TIER_ID', 'CASE_ID', None],
-    identifiers_list: Optional[List[str]] = None,
-    hover_params: Optional[List[str]] = None,
+    identifiers_list: list[str] | None = None,
+    hover_params: list[str] | None = None,
 ) -> None:
     """
     Plot a comparison of a metric across different solution types.
@@ -386,10 +381,10 @@ def plot_solution_comparison(
 def plot_si_asi_scatter(
     df: pd.DataFrame,
     color_by: str,
-    hover_params: List[str],
+    hover_params: list[str],
     group_identifier: Literal['TIER_ID', 'CASE_ID', None],
-    identifiers_list: Optional[List[str]] = None,
-    solution_type: Optional[str] = 'all types',
+    identifiers_list: list[str] | None = None,
+    solution_type: str | None = 'all types',
 ) -> None:
     """
     Plot a scatter plot of Adjusted Success Index (ASI) vs Success Index (SI).
@@ -430,8 +425,8 @@ def plot_si_asi_scatter(
         solution_type = 'all'  # for display purposes
     df_plot = df_plot.copy()
 
-    si_col = f'Success_Index'
-    asi_col = f'Adjusted_Success_Index'
+    si_col = 'Success_Index'
+    asi_col = 'Adjusted_Success_Index'
 
     if si_col not in df.columns:
         print(f'Metrics not found for {solution_type}')
@@ -488,7 +483,7 @@ def plot_si_asi_scatter(
 
 def plot_category_counts(
     df_category_counts: pd.DataFrame,
-    title: Optional[str] = None,
+    title: str | None = None,
 ) -> None:
     """
     Visualize the distribution of performance categories as a bar chart.
@@ -527,8 +522,8 @@ def plot_category_counts(
 def plot_metric_analysis_overview(
     df: pd.DataFrame,
     group_identifier: Literal['TIER_ID', 'CASE_ID', None],
-    identifiers_list: Optional[List[str]] = None,
-    solution_type: Optional[str] = 'all types',
+    identifiers_list: list[str] | None = None,
+    solution_type: str | None = 'all types',
     metric_name: Literal[
         'Recall',
         'Precision',
@@ -541,9 +536,9 @@ def plot_metric_analysis_overview(
         'Global_Miss_Rate',
         'Global_FDR',
     ] = DEFAULT_METRIC,
-    thresholds: Dict[str, float] = None,
-    custom_title: Optional[str] = None,
-    verbose: Optional[bool] = True,
+    thresholds: dict[str, float] = None,
+    custom_title: str | None = None,
+    verbose: bool | None = True,
 ) -> None:
     """
     Analyze and visualize the distribution of a specified metric for a given solution type.
@@ -610,10 +605,10 @@ def plot_heatmap(
     x_axis: str,
     y_axis: str,
     group_identifier: Literal['TIER_ID', 'CASE_ID', None],
-    identifiers_list: Optional[List[str]] = None,
-    solution_type: Optional[str] = 'all types',
+    identifiers_list: list[str] | None = None,
+    solution_type: str | None = 'all types',
     aggregation_func: Literal['mean', 'median'] = DEFAULT_AGGREGATION_FUNC,
-    title: Optional[str] = None,
+    title: str | None = None,
 ) -> None:
     """
     Plot a heatmap showing the interaction of two parameters on a metric.
@@ -706,7 +701,7 @@ def plot_heatmap(
 def plot_metric_vs_hyperparam(
     df_grouped: pd.DataFrame,
     hyperparam: str,
-    solution_options: List[str],
+    solution_options: list[str],
 ) -> None:
     """
     Add a line for each solution and each metric that ranges [0,1], colored by

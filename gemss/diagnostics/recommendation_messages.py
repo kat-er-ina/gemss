@@ -5,11 +5,9 @@ This module contains all the message content for different recommendation scenar
 Each message dictionary contains standardized keys for consistent display formatting.
 """
 
-from typing import Dict
-
 
 # Message templates for different recommendation scenarios
-RECOMMENDATION_MESSAGES: Dict[str, Dict[str, str]] = {
+RECOMMENDATION_MESSAGES: dict[str, dict[str, str]] = {
     'feature_ordering_failed_sparsity_gap_failed': {
         'section_header': 'Critical issues detected',
         'title': 'Feature ordering and sparsity gap test failed',
@@ -115,7 +113,7 @@ RECOMMENDATION_MESSAGES: Dict[str, Dict[str, str]] = {
 }
 
 
-def get_recommendation_message(key: str) -> Dict[str, str]:
+def get_recommendation_message(key: str) -> dict[str, str]:
     """
     Get recommendation message dictionary for a given key.
 

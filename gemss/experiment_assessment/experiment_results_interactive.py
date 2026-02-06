@@ -1,34 +1,33 @@
 """ """
 
-from typing import List, Dict, Literal, Tuple
-from IPython.display import display, Markdown
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objs as go
+from typing import Literal
+
 import ipywidgets as widgets
-from ipywidgets import interact, interactive, fixed
+import pandas as pd
+from IPython.display import Markdown, display
+from ipywidgets import fixed, interact
 
 from gemss.experiment_assessment.experiment_results_analysis import (
     ALL_PARAMETERS,
     COVERAGE_METRICS,
     DEFAULT_AGGREGATION_FUNC,
+    DEFAULT_METRIC,
     DEFAULT_SOLUTION,
     THRESHOLDS_FOR_METRIC,
-    DEFAULT_METRIC,
 )
 from gemss.experiment_assessment.experiment_results_visualizations import (
+    plot_heatmap,
     plot_metric_analysis_overview,
+    plot_si_asi_scatter,
     plot_solution_comparison,
     plot_solution_grouped,
-    plot_heatmap,
-    plot_si_asi_scatter,
 )
 
 
 def show_interactive_performance_overview(
     df: pd.DataFrame,
     group_identifier: Literal['TIER_ID', 'CASE_ID'] = 'TIER_ID',
-    metrics_list: List[str] = ['Recall', 'Precision', 'F1_Score'],
+    metrics_list: list[str] = ['Recall', 'Precision', 'F1_Score'],
     show_metric_thresholds: bool = True,
 ) -> None:
     """
@@ -61,7 +60,7 @@ def show_interactive_performance_overview(
         for metric, thresholds in THRESHOLDS_FOR_METRIC.items():
             if (metric in metrics_list) and (thresholds is not None):
                 df_thresholds[metric] = pd.Series(thresholds)
-        display(Markdown(f'### Performance thresholds for selected metrics'))
+        display(Markdown('### Performance thresholds for selected metrics'))
         display(df_thresholds)
 
     if group_identifier == 'TIER_ID':
@@ -71,7 +70,7 @@ def show_interactive_performance_overview(
     else:
         group_identifier_description = group_identifier + ':'
 
-    display(Markdown(f'### Quick performance overview'))
+    display(Markdown('### Quick performance overview'))
     interact(
         plot_metric_analysis_overview,
         df=fixed(df),

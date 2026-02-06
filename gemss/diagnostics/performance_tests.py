@@ -6,9 +6,10 @@ optimization history to detect potential issues or warnings about the optimizer'
 performance and convergence behavior.
 """
 
-from typing import Dict, List, Any, Optional, Union
+from typing import Any
+
 import numpy as np
-from IPython.display import display, Markdown
+from IPython.display import Markdown, display
 
 
 class PerformanceTests:
@@ -69,8 +70,8 @@ class PerformanceTests:
 
     def __init__(
         self,
-        history: Dict[str, List[Any]],
-        desired_sparsity: Optional[Union[int, float]] = None,
+        history: dict[str, list[Any]],
+        desired_sparsity: int | float | None = None,
     ) -> None:
         """
         Initialize the performance tests system with optimization history.
@@ -110,7 +111,7 @@ class PerformanceTests:
     def run_all_tests(
         self,
         verbose: bool = True,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Run all available performance tests.
 
@@ -137,8 +138,8 @@ class PerformanceTests:
 
     def test_top_feature_ordering(
         self,
-        top_n_features: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        top_n_features: int | None = None,
+    ) -> dict[str, Any]:
         """
         Test whether the top N features with highest absolute mu values change
         between the first and last iteration.
@@ -246,10 +247,10 @@ class PerformanceTests:
 
     def test_sparsity_gap(
         self,
-        desired_sparsity: Optional[int] = None,
-        difference_coefficient_boundary: Optional[float] = None,
+        desired_sparsity: int | None = None,
+        difference_coefficient_boundary: float | None = None,
         difference_coefficient_extreme: float = 2.0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Test whether there is sufficient separation between selected and non-selected features
         based on their absolute mu values in the last iteration.
@@ -363,12 +364,12 @@ class PerformanceTests:
 
         if status == 'FAILED':
             message = (
-                f'Significant number of components have poor separation between selected and not selected features:\n'
+                'Significant number of components have poor separation between selected and not selected features:\n'
                 + self._format_component_summary(n_failed_components, n_warning_components)
             )
         elif status == 'WARNING':
             message = (
-                f'Some components have poor separation between selected and not selected features:\n'
+                'Some components have poor separation between selected and not selected features:\n'
                 + self._format_component_summary(n_failed_components, n_warning_components)
             )
         else:
@@ -489,7 +490,7 @@ class PerformanceTests:
 
     def _display_top_feature_ordering(
         self,
-        details: Dict[str, Any],
+        details: dict[str, Any],
     ) -> None:
         """
         Display detailed results for the top feature ordering test.
@@ -522,12 +523,12 @@ class PerformanceTests:
                 display(Markdown('- **Component passed.**'))
             elif comp_detail['intersection_count'] == details['n_features_tested']:
                 display(Markdown(f' - Common features: {comp_detail["common_features"]}'))
-                display(Markdown(f' - **Component failed.**'))
+                display(Markdown(' - **Component failed.**'))
             else:
                 display(Markdown(f' - Common features: {comp_detail["common_features"]}'))
                 display(Markdown(f' - Jaccard similarity = {jaccard:.3f}'))
 
-    def _display_sparsity_gap(self, details: Dict[str, Any]) -> None:
+    def _display_sparsity_gap(self, details: dict[str, Any]) -> None:
         """
         Display detailed results for the sparsity gap test.
 
@@ -621,7 +622,7 @@ class PerformanceTests:
             for result in passed_tests:
                 self._display_single_result(result)
 
-    def _display_single_result(self, result: Dict[str, Any]) -> None:
+    def _display_single_result(self, result: dict[str, Any]) -> None:
         """
         Display a single test result.
 
@@ -655,9 +656,9 @@ class PerformanceTests:
 
 
 def run_performance_diagnostics(
-    history: Dict[str, List[Any]],
-    desired_sparsity: Optional[Union[int, float]] = None,
-    verbose: Optional[bool] = True,
+    history: dict[str, list[Any]],
+    desired_sparsity: int | float | None = None,
+    verbose: bool | None = True,
 ) -> PerformanceTests:
     """
     Convenience function to run performance diagnostics on optimization history.

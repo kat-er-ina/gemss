@@ -6,10 +6,13 @@ and generating specific parameter adjustment recommendations based on the
 diagnostic outcomes.
 """
 
-from typing import Dict, List, Any, Optional
-from IPython.display import display, Markdown
-from .recommendation_messages import get_recommendation_message
+from typing import Any
+
+from IPython.display import Markdown, display
+
 from gemss.config import display_current_config
+
+from .recommendation_messages import get_recommendation_message
 
 
 class RecommendationEngine:
@@ -52,7 +55,7 @@ class RecommendationEngine:
     def __init__(
         self,
         diagnostics,
-        constants: Optional[Dict[str, Any]] = None,
+        constants: dict[str, Any] | None = None,
     ) -> None:
         """
         Initialize the recommendation engine with diagnostic results.
@@ -67,9 +70,9 @@ class RecommendationEngine:
         """
         self.diagnostics = diagnostics
         self.constants = constants
-        self.recommendation_keys: List[str] = []
+        self.recommendation_keys: list[str] = []
         self.severity_level: str = ''
-        self.test_status: Dict[str, str] = {}
+        self.test_status: dict[str, str] = {}
 
         # Analyze test results upon initialization
         self.analyze_test_results()
@@ -108,7 +111,7 @@ class RecommendationEngine:
         if not self._has_only_success():
             display_parameter_adjustment_summary()
 
-    def get_recommendation_summary(self) -> Dict[str, Any]:
+    def get_recommendation_summary(self) -> dict[str, Any]:
         """
         Get a structured summary of recommendations.
 
@@ -128,7 +131,7 @@ class RecommendationEngine:
             'has_issues': not self._has_only_success(),
         }
 
-    def export_recommendations_to_dict(self) -> Dict[str, Any]:
+    def export_recommendations_to_dict(self) -> dict[str, Any]:
         """
         Export recommendations to a dictionary for logging or saving.
 
@@ -157,7 +160,7 @@ class RecommendationEngine:
             'constants': self.constants,
         }
 
-    def _categorize_test_results(self) -> Dict[str, str]:
+    def _categorize_test_results(self) -> dict[str, str]:
         """
         Categorize test results by type and status.
 
@@ -179,7 +182,7 @@ class RecommendationEngine:
 
         return test_status
 
-    def _determine_recommendation_keys(self) -> List[str]:
+    def _determine_recommendation_keys(self) -> list[str]:
         """
         Determine recommendation keys based on test result combinations.
 
@@ -312,7 +315,7 @@ class RecommendationEngine:
 
 
 # Convenience functions for backward compatibility
-def get_recommendation_keys(diagnostics) -> List[str]:
+def get_recommendation_keys(diagnostics) -> list[str]:
     """
     Get recommendation keys for diagnostics (backward compatibility).
 
@@ -399,7 +402,7 @@ def display_parameter_adjustment_summary() -> None:
 
 def display_recommendations(
     diagnostics,
-    constants: Optional[Dict[str, Any]] = None,
+    constants: dict[str, Any] | None = None,
 ) -> None:
     """
     Display parameter recommendations based on performance test results.

@@ -19,10 +19,8 @@
 import itertools
 
 import numpy as np
-import torch
-
 import pytest
-
+import torch
 from gemss.feature_selection.models import StructuredSpikeAndSlabPrior
 
 
