@@ -414,6 +414,7 @@ dependencies = [
 dev = [
     { name = "pytest" },
     { name = "pytest-xdist" },
+    { name = "ruff" },
 ]
 
 [package.metadata]
@@ -437,6 +438,7 @@ requires-dist = [
 dev = [
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },
+    { name = "ruff", specifier = ">=0.14.14" },
 ]
 
 [[package]]
@@ -1655,6 +1657,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/1e/6c/9e370934bfa30e889
 wheels = [
     { url = "https://files.pythonhosted.org/packages/40/6d/b6ee155462a0156b94312bdd82d2b92ea56e909740045a87ccb98bf52405/pymdown_extensions-10.20.1-py3-none-any.whl", hash = "sha256:24af7feacbca56504b313b7b418c4f5e1317bb5fea60f03d57be7fcc40912aa0", size = 268768, upload-time = "2026-01-24T05:56:54.537Z" },
 ]
+
 [[package]]
 name = "pytest"
 version = "9.0.2"
