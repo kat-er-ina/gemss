@@ -56,8 +56,8 @@ def get_full_solutions(
         - final_parameters: Dictionary with keys 'final iteration', 'final mu', 'final var', 'final alpha'
           containing the final parameters for each component at the iteration where features were selected.
     """
-    n_components = len(search_history["mu"][0])
-    n_features = len(search_history["mu"][0][0])
+    n_components = len(search_history['mu'][0])
+    n_features = len(search_history['mu'][0][0])
 
     # from each component, get the two features that zero out the last
     final_mu = np.zeros((n_components, n_features))
@@ -79,14 +79,10 @@ def get_full_solutions(
         features = []
         i = 1
         while len(features) < desired_sparsity:
-            arr = np.array(
-                search_history["mu"]
-            )  # shape [n_iter, n_components, n_features]
+            arr = np.array(search_history['mu'])  # shape [n_iter, n_components, n_features]
             mu_traj = arr[-i, k, :]
             features = [
-                f"feature_{j}"
-                for j in range(len(mu_traj))
-                if abs(mu_traj[j]) > min_mu_threshold
+                f'feature_{j}' for j in range(len(mu_traj)) if abs(mu_traj[j]) > min_mu_threshold
             ]
             i += 1
 
@@ -97,30 +93,30 @@ def get_full_solutions(
             feature_names = features
         df_features = pd.DataFrame(
             {
-                "Feature": feature_names,
-                "Mu value": [mu_traj[int(f.split("_")[1])] for f in features],
+                'Feature': feature_names,
+                'Mu value': [mu_traj[int(f.split('_')[1])] for f in features],
             }
         )
-        df_features["absolute_mu"] = np.abs(df_features["Mu value"])
+        df_features['absolute_mu'] = np.abs(df_features['Mu value'])
         df_features = (
-            df_features.sort_values(by="absolute_mu", ascending=False)
-            .drop(columns=["absolute_mu"])
+            df_features.sort_values(by='absolute_mu', ascending=False)
+            .drop(columns=['absolute_mu'])
             .reset_index(drop=True)
         )
-        full_solutions[f"component_{k}"] = df_features
+        full_solutions[f'component_{k}'] = df_features
 
         # Store the final parameters for this component at the iteration where features were selected
         final_iteration[k] = -(i - 1)
-        final_mu[k] = np.array(search_history["mu"])[final_iteration[k], k, :]
-        final_var[k] = np.array(search_history["var"])[final_iteration[k], k, :]
-        final_alpha[k] = np.array(search_history["alpha"])[final_iteration[k], k]
+        final_mu[k] = np.array(search_history['mu'])[final_iteration[k], k, :]
+        final_var[k] = np.array(search_history['var'])[final_iteration[k], k, :]
+        final_alpha[k] = np.array(search_history['alpha'])[final_iteration[k], k]
 
     # Get the final parameters
     final_parameters = {
-        "final iteration": final_iteration,  # the iteration from which the final parameters are taken
-        "final mu": final_mu,
-        "final var": final_var,
-        "final alpha": final_alpha,
+        'final iteration': final_iteration,  # the iteration from which the final parameters are taken
+        'final mu': final_mu,
+        'final var': final_var,
+        'final alpha': final_alpha,
     }
     return (
         full_solutions,
@@ -151,10 +147,10 @@ def get_top_solutions(
     top_solutions = {}
     for component, df in full_solutions.items():
         df_copy = df.copy()
-        df_copy["abs_mu"] = df_copy["Mu value"].abs()
+        df_copy['abs_mu'] = df_copy['Mu value'].abs()
         df_copy = (
-            df_copy.sort_values(by="abs_mu", ascending=False)
-            .drop(columns=["abs_mu"])
+            df_copy.sort_values(by='abs_mu', ascending=False)
+            .drop(columns=['abs_mu'])
             .reset_index(drop=True)
         )
         top_solutions[component] = df_copy.head(top_n)
@@ -181,7 +177,7 @@ def get_features_from_solutions(
     """
     feature_lists = {}
     for component, df in solutions.items():
-        feature_lists[component] = df["Feature"].tolist()
+        feature_lists[component] = df['Feature'].tolist()
     return feature_lists
 
 
@@ -252,12 +248,12 @@ def recover_solutions(
     """
     # Input validation
     if (desired_sparsity <= 0) or (not isinstance(desired_sparsity, int)):
-        raise ValueError("Desired_sparsity must be a positive integer.")
+        raise ValueError('Desired_sparsity must be a positive integer.')
 
-    required_keys = {"mu", "var", "alpha"}
+    required_keys = {'mu', 'var', 'alpha'}
     if not required_keys.issubset(search_history.keys()):
         missing_keys = required_keys - set(search_history.keys())
-        raise KeyError(f"Search_history missing required keys: {missing_keys}")
+        raise KeyError(f'Search_history missing required keys: {missing_keys}')
 
     # Get the full solutions
     full_solutions, final_parameters = get_full_solutions(
@@ -272,13 +268,13 @@ def recover_solutions(
 
     # Get the outlier solutions
     if use_median_for_outlier_detection:
-        std_or_mad = "MAD"
+        std_or_mad = 'MAD'
     else:
-        std_or_mad = "STD"
+        std_or_mad = 'STD'
 
     outlier_solutions = {}
     for deviation in outlier_deviation_thresholds:
-        outlier_solutions[f"{std_or_mad}_{deviation}"] = get_outlier_solutions(
+        outlier_solutions[f'{std_or_mad}_{deviation}'] = get_outlier_solutions(
             history=search_history,
             use_medians_for_outliers=use_median_for_outlier_detection,
             outlier_threshold_coeff=deviation,
@@ -322,31 +318,31 @@ def compare_true_and_found_features(
     missing_features = set(true_support_features) - features_found
     extra_features = features_found - set(true_support_features)
 
-    myprint(f"All features: {n_total_features}", use_markdown=use_markdown, header=3)
+    myprint(f'All features: {n_total_features}', use_markdown=use_markdown, header=3)
     myprint(
-        f"True support features: {len(true_support_features)} ({len(true_support_features)/n_total_features:.1%})",
+        f'True support features: {len(true_support_features)} ({len(true_support_features) / n_total_features:.1%})',
         use_markdown=use_markdown,
         header=3,
     )
-    myprint(f"{sorted(true_support_features)}", use_markdown=use_markdown)
+    myprint(f'{sorted(true_support_features)}', use_markdown=use_markdown)
     myprint(
-        f"All features found: {len(features_found)} ({len(features_found)/n_total_features:.1%})",
+        f'All features found: {len(features_found)} ({len(features_found) / n_total_features:.1%})',
         use_markdown=use_markdown,
         header=3,
     )
-    myprint(f"{sorted(features_found)}", use_markdown=use_markdown)
+    myprint(f'{sorted(features_found)}', use_markdown=use_markdown)
     myprint(
-        f"Missing true support features: {len(missing_features)}",
+        f'Missing true support features: {len(missing_features)}',
         use_markdown=use_markdown,
         header=3,
     )
-    myprint(f"{sorted(missing_features)}", use_markdown=use_markdown)
+    myprint(f'{sorted(missing_features)}', use_markdown=use_markdown)
     myprint(
-        f"Extra features found: {len(extra_features)} ({len(extra_features)/n_total_features:.1%})",
+        f'Extra features found: {len(extra_features)} ({len(extra_features) / n_total_features:.1%})',
         use_markdown=use_markdown,
         header=3,
     )
-    myprint(f"{sorted(extra_features)}", use_markdown=use_markdown)
+    myprint(f'{sorted(extra_features)}', use_markdown=use_markdown)
     return
 
 
@@ -369,7 +365,7 @@ def get_features_from_long_solutions(
     """
     extracted_solutions = {}
     for component, details in solutions.items():
-        extracted_solutions[component] = details["Feature"].tolist()
+        extracted_solutions[component] = details['Feature'].tolist()
     return extracted_solutions
 
 
@@ -413,12 +409,12 @@ def show_unique_features(
     unique_features = get_unique_features(solutions)
 
     myprint(
-        msg=f"Unique features across all solutions ({len(unique_features)} total):",
+        msg=f'Unique features across all solutions ({len(unique_features)} total):',
         use_markdown=use_markdown,
         header=2,
     )
     myprint(
-        msg=f"{sorted(unique_features)}",
+        msg=f'{sorted(unique_features)}',
         use_markdown=use_markdown,
         code=True,
     )
@@ -474,27 +470,27 @@ def show_features_in_solutions(
     None
     """
     myprint(
-        msg=f"Required sparsity = {constants['DESIRED_SPARSITY']}",
+        msg=f'Required sparsity = {constants["DESIRED_SPARSITY"]}',
         use_markdown=use_markdown,
         bold=True,
     )
 
     for component, features in solutions.items():
-        i = component.split("_")[-1]
-        alpha = history["alpha"][-1][int(i)]
+        i = component.split('_')[-1]
+        alpha = history['alpha'][-1][int(i)]
         myprint(
-            msg=f"Candidate solution no. {i}:",
+            msg=f'Candidate solution no. {i}:',
             use_markdown=use_markdown,
             header=2,
         )
         myprint(
-            msg=f"Component weight = {alpha:.3f}",
+            msg=f'Component weight = {alpha:.3f}',
             use_markdown=use_markdown,
             bold=True,
         )
         for feature in features:
             myprint(
-                msg=f"- {feature}",
+                msg=f'- {feature}',
                 use_markdown=use_markdown,
             )
     return
@@ -520,12 +516,12 @@ def show_final_parameter_comparison(
     """
 
     # Show final mixture means and weights
-    compare_parameters(true_parameters, final_parameters["final mu"])
+    compare_parameters(true_parameters, final_parameters['final mu'])
 
     # Show final alpha weights
-    display(Markdown("### Final mixture weights (alpha):"))
-    for i, alpha in enumerate(final_parameters["final alpha"]):
-        display(Markdown(f"- **Component {i}:** {alpha:.3f}"))
+    display(Markdown('### Final mixture weights (alpha):'))
+    for i, alpha in enumerate(final_parameters['final alpha']):
+        display(Markdown(f'- **Component {i}:** {alpha:.3f}'))
     return
 
 
@@ -582,7 +578,7 @@ def show_algorithm_progress_with_outliers(
     This function displays markdown output and plots as side effects.
     The function requires the corresponding keys in history for each plot type requested.
     """
-    myprint("Algorithm progress:", header=2, use_markdown=True)
+    myprint('Algorithm progress:', header=2, use_markdown=True)
 
     figures = get_algorithm_progress_plots(
         history,
@@ -594,39 +590,39 @@ def show_algorithm_progress_with_outliers(
     )
 
     if plot_elbo_progress:
-        figures["elbo"].show(config={"displayModeBar": False})
+        figures['elbo'].show(config={'displayModeBar': False})
 
     if plot_alpha_progress:
-        figures["alpha"].show(config={"displayModeBar": False})
+        figures['alpha'].show(config={'displayModeBar': False})
 
     if plot_mu_progress:
         # Optionally add info about outliers
         final_mus_df = pd.DataFrame(
             index=[
                 (
-                    original_feature_names_mapping[f"feature_{i}"]
+                    original_feature_names_mapping[f'feature_{i}']
                     if original_feature_names_mapping
-                    else f"feature_{i}"
+                    else f'feature_{i}'
                 )
-                for i in range(len(history["mu"][0][0]))
+                for i in range(len(history['mu'][0][0]))
             ]
         )
 
-        n_components = len(history["mu"][0])
+        n_components = len(history['mu'][0])
         for k in range(n_components):
-            final_mus_df[f"component_{k}_mus"] = history["mu"][-1][k]
+            final_mus_df[f'component_{k}_mus'] = history['mu'][-1][k]
 
             # show mu progress plots
-            figures[f"mu_{k}"].show(config={"displayModeBar": False})
+            figures[f'mu_{k}'].show(config={'displayModeBar': False})
 
             if detect_outliers:
                 outlier_info = detect_outlier_features(
-                    values=final_mus_df[f"component_{k}_mus"],
+                    values=final_mus_df[f'component_{k}_mus'],
                     threshold_coeff=outlier_threshold_coeff,
                     use_median=use_medians_for_outliers,
                     replace_middle_by_zero=True,
                 )
-                outlier_dict = {f"component_{k}": outlier_info}
+                outlier_dict = {f'component_{k}': outlier_info}
 
                 show_outlier_info(
                     outlier_info=outlier_dict,

@@ -93,9 +93,7 @@ def generate_multi_solution_data(
         # allow negative coefficients but not too close to zero
         coeff_min = 2.0
         coeff_max = 10.0
-        coeffs = rng.uniform(
-            coeff_min, coeff_max, size=[sparsity, sparsity]
-        ) * rng.choice(
+        coeffs = rng.uniform(coeff_min, coeff_max, size=[sparsity, sparsity]) * rng.choice(
             [-1, 1],
             size=sparsity,
             replace=True,
@@ -134,20 +132,19 @@ def generate_multi_solution_data(
     for k in range(n_solutions):
         parameters.append(
             {
-                "solution_index": k,
-                "support_indices": supports[k].tolist(),
-                "weights": solutions[k, supports[k]].tolist(),
-                "full_weights": solutions[k].tolist(),
-                "sparsity": sparsity,
+                'solution_index': k,
+                'support_indices': supports[k].tolist(),
+                'weights': solutions[k, supports[k]].tolist(),
+                'full_weights': solutions[k].tolist(),
+                'sparsity': sparsity,
             }
         )
     parameters_df = pd.DataFrame(parameters)
 
-    df = pd.DataFrame(X, columns=[f"feature_{j}" for j in range(n_features)])
-    response = pd.Series(y, name="binary_response")
+    df = pd.DataFrame(X, columns=[f'feature_{j}' for j in range(n_features)])
+    response = pd.Series(y, name='binary_response')
     generating_solutions = {
-        f"solution_{k}": [f"feature_{i}" for i in supports[k]]
-        for k in range(n_solutions)
+        f'solution_{k}': [f'feature_{i}' for i in supports[k]] for k in range(n_solutions)
     }
 
     return df, response, generating_solutions, parameters_df
@@ -181,36 +178,30 @@ def show_overview_of_generated_data(
     """
     n_samples, n_features = df.shape
     n_solutions = parameters.shape[0]
-    sparsity = parameters["sparsity"].iloc[0]
+    sparsity = parameters['sparsity'].iloc[0]
 
-    display(Markdown("### Artificial dataset"))
-    display(Markdown(f"- **Number of samples:** {n_samples}"))
-    display(Markdown(f"- **Number of features:** {n_features}"))
-    display(Markdown(f"- **Number of generating solutions:** {n_solutions}"))
+    display(Markdown('### Artificial dataset'))
+    display(Markdown(f'- **Number of samples:** {n_samples}'))
+    display(Markdown(f'- **Number of features:** {n_features}'))
+    display(Markdown(f'- **Number of generating solutions:** {n_solutions}'))
+    display(Markdown(f'- **Number of nonzero features per solution (sparsity):** {sparsity}'))
+
+    support_indices = parameters['support_indices'].sum()
+    support_features = list(set(f'feature_{i}' for i in support_indices))
     display(
-        Markdown(
-            f"- **Number of nonzero features per solution (sparsity):** {sparsity}"
-        )
+        Markdown(f'- **Nonzero features:** {len(support_features)}<br>{sorted(support_features)}')
     )
 
-    support_indices = parameters["support_indices"].sum()
-    support_features = list(set(f"feature_{i}" for i in support_indices))
-    display(
-        Markdown(
-            f"- **Nonzero features:** {len(support_features)}<br>{sorted(support_features)}"
-        )
-    )
-
-    display(Markdown("- **Parameters of the mixture components:**"))
+    display(Markdown('- **Parameters of the mixture components:**'))
     display(parameters)
 
     # Plot the distribution of labels y using Plotly
     is_binary = set(np.unique(y)) == {np.int64(0), np.int64(1)}
     if is_binary:
-        display(Markdown("- **Distribution of binary labels:**"))
+        display(Markdown('- **Distribution of binary labels:**'))
         display(pd.Series(y).value_counts(normalize=True))
     else:
-        display(Markdown("- **Distribution of continuous labels:**"))
+        display(Markdown('- **Distribution of continuous labels:**'))
         show_label_histogram(y, nbins=10)
 
     # Compute features' correlation with the binary response
@@ -218,7 +209,7 @@ def show_overview_of_generated_data(
 
     # Display the correlation matrix of the features
     if show_feature_correlations and (n_features <= 100):
-        display(Markdown("- **Correlation matrix of features:**"))
+        display(Markdown('- **Correlation matrix of features:**'))
         show_correlation_matrix(df)
     return
 
@@ -291,9 +282,7 @@ def generate_artificial_dataset(
     )
 
     if nan_ratio < 0.0 or nan_ratio > 1.0:
-        raise ValueError(
-            "The ratio of missing values (nan_ratio) must be between 0.0 and 1.0"
-        )
+        raise ValueError('The ratio of missing values (nan_ratio) must be between 0.0 and 1.0')
     elif nan_ratio > 0.0:
         # Introduce missing values randomly
         data = data.mask(np.random.rand(*data.shape) < nan_ratio)
@@ -307,23 +296,21 @@ def generate_artificial_dataset(
         )
 
     if save_to_csv:
-        suffix = f"{n_samples}x{n_features}_{n_solutions}sols_{sparsity}sparse_{noise_data_std}noise_{nan_ratio}nan_{random_seed}seed"
-        data.to_csv(DATA_DIR / f"artificial_dataset_{suffix}.csv")
-        pd.DataFrame(solutions).to_csv(DATA_DIR / f"artificial_support_{suffix}.csv")
-        parameters.to_csv(DATA_DIR / f"artificial_generating_solutions_{suffix}.csv")
+        suffix = f'{n_samples}x{n_features}_{n_solutions}sols_{sparsity}sparse_{noise_data_std}noise_{nan_ratio}nan_{random_seed}seed'
+        data.to_csv(DATA_DIR / f'artificial_dataset_{suffix}.csv')
+        pd.DataFrame(solutions).to_csv(DATA_DIR / f'artificial_support_{suffix}.csv')
+        parameters.to_csv(DATA_DIR / f'artificial_generating_solutions_{suffix}.csv')
 
         if binarize:
-            response.to_csv(DATA_DIR / f"artificial_binary_labels_{suffix}.csv")
+            response.to_csv(DATA_DIR / f'artificial_binary_labels_{suffix}.csv')
         else:
-            response.to_csv(DATA_DIR / f"artificial_continuous_labels_{suffix}.csv")
-        print(
-            f"Data and generating parameters saved to 'data/' directory with suffix '{suffix}'."
-        )
+            response.to_csv(DATA_DIR / f'artificial_continuous_labels_{suffix}.csv')
+        print(f"Data and generating parameters saved to 'data/' directory with suffix '{suffix}'.")
 
     return data, response, solutions, parameters
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     # Example parameters
     N_SAMPLES = 20
     N_FEATURES = 60

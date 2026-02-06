@@ -161,9 +161,7 @@ def test_structured_log_prob_sampling_uses_rng_and_coeff() -> None:
     actual = prior.log_prob(z, n_support_samples=n_support_samples)
 
     torch.random.set_rng_state(rng_state)
-    expected_samples = int(
-        np.round(n_support_samples * sample_more_priors_coeff).astype(int)
-    )
+    expected_samples = int(np.round(n_support_samples * sample_more_priors_coeff).astype(int))
     scores = torch.rand(expected_samples, n_features, device=z.device)
     supports = torch.topk(scores, k=sparsity, dim=1).indices.tolist()
     expected = _manual_log_prob(z, n_features, var_slab, var_spike, supports)
@@ -201,5 +199,5 @@ def test_structured_prior_raises_when_zero_support_samples() -> None:
         var_spike=0.1,
     )
     z = torch.randn(2, n_features)
-    with pytest.raises(ValueError, match="at least one support"):
+    with pytest.raises(ValueError, match='at least one support'):
         prior.log_prob(z, n_support_samples=0)

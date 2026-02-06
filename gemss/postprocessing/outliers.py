@@ -45,10 +45,10 @@ def _create_outlier_info_for_component(
         Dictionary containing outlier features and values.
     """
     if outlier_threshold_coeff <= 0:
-        raise ValueError("Threshold coefficient must be positive")
+        raise ValueError('Threshold coefficient must be positive')
     # Create series with feature names as index
     component_values = pd.Series(
-        data=history["mu"][-1][component],
+        data=history['mu'][-1][component],
         index=feature_names,
     )
 
@@ -90,11 +90,11 @@ def detect_outlier_features(
     """
     # Input validation
     if threshold_coeff <= 0:
-        raise ValueError("Threshold coefficient must be positive.")
+        raise ValueError('Threshold coefficient must be positive.')
 
     # Early return for empty data
     if values.empty:
-        return {"features": [], "values": []}
+        return {'features': [], 'values': []}
 
     # Calculate center point (middle value)
     if replace_middle_by_zero:
@@ -118,11 +118,11 @@ def detect_outlier_features(
 
     # Early return if no outliers found
     if not outlier_mask.any():
-        return {"features": [], "values": []}
+        return {'features': [], 'values': []}
 
     return {
-        "features": values.index[outlier_mask].tolist(),
-        "values": values[outlier_mask].tolist(),
+        'features': values.index[outlier_mask].tolist(),
+        'values': values[outlier_mask].tolist(),
     }
 
 
@@ -145,22 +145,22 @@ def get_outlier_info_df(
     pd.DataFrame
         A DataFrame containing the outlier features and their values for the specified component.
     """
-    component_key = f"component_{component_no}"
-    features = outlier_info[component_key]["features"]
-    values = outlier_info[component_key]["values"]
+    component_key = f'component_{component_no}'
+    features = outlier_info[component_key]['features']
+    values = outlier_info[component_key]['values']
 
     df = pd.DataFrame(
         {
-            "Feature": features,
-            "Mu value": np.round(values, 4),
+            'Feature': features,
+            'Mu value': np.round(values, 4),
         }
     )
 
     # Sort by absolute value (descending) without keeping the column
-    df["_sort_key"] = np.abs(values)
+    df['_sort_key'] = np.abs(values)
     df = (
-        df.sort_values(by="_sort_key", ascending=False)
-        .drop(columns=["_sort_key"])
+        df.sort_values(by='_sort_key', ascending=False)
+        .drop(columns=['_sort_key'])
         .reset_index(drop=True)
     )
 
@@ -190,15 +190,13 @@ def show_outlier_info(
     None
     """
     if not outlier_info:
-        myprint("No outlier information available.", use_markdown=use_markdown)
+        myprint('No outlier information available.', use_markdown=use_markdown)
         return
 
     if component_numbers is None:
         # Extract all available component numbers
         component_numbers = [
-            int(key.split("_")[1])
-            for key in outlier_info.keys()
-            if key.startswith("component_")
+            int(key.split('_')[1]) for key in outlier_info.keys() if key.startswith('component_')
         ]
 
     # Ensure component_numbers is always a list for consistent processing
@@ -208,33 +206,33 @@ def show_outlier_info(
     # Convert outlier info to DataFrame format for display
     formatted_outlier_info = {}
     for comp_num in component_numbers:
-        component_key = f"component_{comp_num}"
+        component_key = f'component_{comp_num}'
         if component_key in outlier_info:
-            outlier_count = len(outlier_info[component_key]["features"])
+            outlier_count = len(outlier_info[component_key]['features'])
             if outlier_count > 0:
                 formatted_outlier_info[component_key] = pd.DataFrame(
                     {
-                        "Feature": outlier_info[component_key]["features"],
-                        "Mu value": outlier_info[component_key]["values"],
+                        'Feature': outlier_info[component_key]['features'],
+                        'Mu value': outlier_info[component_key]['values'],
                     }
                 )
 
     if not formatted_outlier_info:
-        myprint("No outliers found in specified components.", use_markdown=use_markdown)
+        myprint('No outliers found in specified components.', use_markdown=use_markdown)
         return
 
     # Determine appropriate title
     if len(component_numbers) == 1:
         comp_num = component_numbers[0]
-        outlier_count = len(outlier_info[f"component_{comp_num}"]["features"])
-        title = f"{outlier_count} outlier features in component {comp_num}"
+        outlier_count = len(outlier_info[f'component_{comp_num}']['features'])
+        title = f'{outlier_count} outlier features in component {comp_num}'
     else:
-        title = f"Outlier features in {len(component_numbers)} components"
+        title = f'Outlier features in {len(component_numbers)} components'
 
     show_solution_summary(
         solution_data=formatted_outlier_info,
         title=title,
-        value_column="Feature",
+        value_column='Feature',
         use_markdown=use_markdown,
     )
 
@@ -269,11 +267,11 @@ def get_outlier_solutions(
         and each value is a DataFrame containing outlier features for that component.
     """
 
-    if "mu" not in history or not history["mu"]:
+    if 'mu' not in history or not history['mu']:
         raise KeyError("'mu' key not found in history or history['mu'] is empty")
 
-    n_components = len(history["mu"][0])
-    n_features = len(history["mu"][0][0])
+    n_components = len(history['mu'][0])
+    n_features = len(history['mu'][0][0])
 
     # Generate feature names using helper function
     feature_names = generate_feature_names(n_features, original_feature_names_mapping)
@@ -291,11 +289,11 @@ def get_outlier_solutions(
         )
 
         # Create outlier info dict in expected format
-        outlier_info_dict = {f"component_{component}": outlier_info}
+        outlier_info_dict = {f'component_{component}': outlier_info}
         component_df = get_outlier_info_df(outlier_info_dict, component)
 
         if not component_df.empty:
-            outlier_dataframes[f"component_{component}"] = component_df
+            outlier_dataframes[f'component_{component}'] = component_df
 
     return outlier_dataframes
 
@@ -337,7 +335,7 @@ def get_outlier_summary_from_history(
     if outlier_dataframes:
         return get_solution_summary_df(
             data_dict=outlier_dataframes,
-            value_column="Feature",
+            value_column='Feature',
         )
     else:
         return pd.DataFrame()
@@ -345,7 +343,7 @@ def get_outlier_summary_from_history(
 
 def show_outlier_summary(
     outlier_summary_df: pd.DataFrame,
-    title: str = "Outlier Summary",
+    title: str = 'Outlier Summary',
     use_markdown: bool = True,
 ) -> None:
     """
@@ -365,7 +363,7 @@ def show_outlier_summary(
     None
     """
     if outlier_summary_df.empty:
-        myprint("No outliers detected in any component.", use_markdown=use_markdown)
+        myprint('No outliers detected in any component.', use_markdown=use_markdown)
         return
 
     myprint(
@@ -418,8 +416,8 @@ def show_outlier_features_by_component(
     )
 
     # Display the results
-    n_components = len(history["mu"][0])
-    title = f"Summary of outlier features across all {n_components} components (threshold = {outlier_threshold_coeff} absolute deviations)"
+    n_components = len(history['mu'][0])
+    title = f'Summary of outlier features across all {n_components} components (threshold = {outlier_threshold_coeff} absolute deviations)'
 
     show_outlier_summary(
         outlier_summary_df=outlier_summary_df,

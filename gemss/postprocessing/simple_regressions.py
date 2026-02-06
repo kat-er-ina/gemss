@@ -34,8 +34,8 @@ from gemss.utils.visualizations import (
     show_predicted_vs_actual_response,
 )
 
-warnings.filterwarnings("ignore", category=UserWarning)
-warnings.filterwarnings("ignore", category=ConvergenceWarning)
+warnings.filterwarnings('ignore', category=UserWarning)
+warnings.filterwarnings('ignore', category=ConvergenceWarning)
 
 MAX_ALLOWED_NAN_RATIO = 0.9  # maximum proportion of missing values to run regression
 MIN_ALLOWED_SAMPLES = 15  # minimum number of samples to run regression
@@ -64,12 +64,12 @@ def detect_task(y: Union[pd.Series, np.ndarray], n_class_threshold: int = 10) ->
     y = np.asarray(y)
     unique = np.unique(y)
     if len(unique) <= 2:
-        return "classification"
+        return 'classification'
     elif (pd.api.types.is_integer_dtype(y) or pd.api.types.is_bool_dtype(y)) and len(
         unique
     ) <= n_class_threshold:
-        return "classification"
-    return "regression"
+        return 'classification'
+    return 'regression'
 
 
 def print_verbose_logistic_regression_results(
@@ -111,39 +111,33 @@ def print_verbose_logistic_regression_results(
 
     display(
         Markdown(
-            f"### Logistic regression with {penalty.upper()} penalty - performance on training set"
+            f'### Logistic regression with {penalty.upper()} penalty - performance on training set'
         )
     )
-    display(Markdown(f"**Number of samples:** {stats['n_samples']}"))
+    display(Markdown(f'**Number of samples:** {stats["n_samples"]}'))
     display(
         Markdown(
-            f"**Class distribution (0/1):** {stats['class_distribution']['class_0']:.1%} / {stats['class_distribution']['class_1']:.1%}"
+            f'**Class distribution (0/1):** {stats["class_distribution"]["class_0"]:.1%} / {stats["class_distribution"]["class_1"]:.1%}'
         )
     )
-    display(Markdown(f"**Accuracy:** {stats['accuracy']}"))
-    display(Markdown(f"**Balanced Accuracy:** {stats['balanced_accuracy']}"))
-    display(Markdown(f"**ROC-AUC:** {stats['roc_auc']}"))
-    display(Markdown(f"**Balanced F1 Score:** {stats['f1_score']}"))
+    display(Markdown(f'**Accuracy:** {stats["accuracy"]}'))
+    display(Markdown(f'**Balanced Accuracy:** {stats["balanced_accuracy"]}'))
+    display(Markdown(f'**ROC-AUC:** {stats["roc_auc"]}'))
+    display(Markdown(f'**Balanced F1 Score:** {stats["f1_score"]}'))
     display(
         Markdown(
-            f"**Precision (class 0/1):** {stats['precision_class_0']} / {stats['precision_class_1']}"
+            f'**Precision (class 0/1):** {stats["precision_class_0"]} / {stats["precision_class_1"]}'
         )
     )
     display(
-        Markdown(
-            f"**Recall (class 0/1):** {stats['recall_class_0']} / {stats['recall_class_1']}"
-        )
+        Markdown(f'**Recall (class 0/1):** {stats["recall_class_0"]} / {stats["recall_class_1"]}')
     )
 
-    display(
-        Markdown(
-            f"**{stats['n_nonzero_coefficients']} non-zero features with coefficients:**"
-        )
-    )
+    display(Markdown(f'**{stats["n_nonzero_coefficients"]} non-zero features with coefficients:**'))
     display(
         [
-            f"{stats['nonzero_feature_names'][i]}: {stats['nonzero_coefficients'][i]}"
-            for i in range(len(stats["nonzero_coefficients"]))
+            f'{stats["nonzero_feature_names"][i]}: {stats["nonzero_coefficients"][i]}'
+            for i in range(len(stats['nonzero_coefficients']))
         ]
     )
 
@@ -151,7 +145,7 @@ def print_verbose_logistic_regression_results(
         # Show confusion matrix using Plotly
         show_confusion_matrix(confusion_matrix=confusion_matrix)
     else:
-        display(Markdown("**Confusion Matrix:**"))
+        display(Markdown('**Confusion Matrix:**'))
         display(confusion_matrix)
     return
 
@@ -159,8 +153,8 @@ def print_verbose_logistic_regression_results(
 def solve_with_logistic_regression(
     X: pd.DataFrame,
     y: pd.Series | np.ndarray,
-    apply_scaling: Literal["standard", "minmax", None] = None,
-    penalty: Literal["l1", "l2", "elasticnet"] = "l2",
+    apply_scaling: Literal['standard', 'minmax', None] = None,
+    penalty: Literal['l1', 'l2', 'elasticnet'] = 'l2',
     verbose: Optional[bool] = False,
     show_cm_figure: Optional[bool] = True,
 ) -> Dict[str, Any]:
@@ -198,17 +192,17 @@ def solve_with_logistic_regression(
         Cs=10,
         cv=5,
         penalty=penalty,
-        solver="saga",
-        scoring="roc_auc",
+        solver='saga',
+        scoring='roc_auc',
         max_iter=2000,
         random_state=42,
         refit=True,
-        class_weight="balanced",
+        class_weight='balanced',
     )
 
-    if apply_scaling == "standard":
+    if apply_scaling == 'standard':
         clf = make_pipeline(StandardScaler(), model)
-    elif apply_scaling == "minmax":
+    elif apply_scaling == 'minmax':
         clf = make_pipeline(MinMaxScaler(), model)
     else:
         clf = make_pipeline(model)
@@ -216,8 +210,8 @@ def solve_with_logistic_regression(
     # Solve the full problem
     # Ignore warnings about convergence for this demo
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=UserWarning)
-        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        warnings.filterwarnings('ignore', category=UserWarning)
+        warnings.filterwarnings('ignore', category=ConvergenceWarning)
         clf.fit(X, y)
 
     # Predictions and evaluation
@@ -227,38 +221,30 @@ def solve_with_logistic_regression(
 
     # identify nonzero coefficients
     coefficients = (
-        pd.Series(clf.named_steps["logisticregressioncv"].coef_[0], index=X.columns)
-        .rename("Coefficient")
+        pd.Series(clf.named_steps['logisticregressioncv'].coef_[0], index=X.columns)
+        .rename('Coefficient')
         .sort_values(ascending=False)
     )
     coefficients = coefficients[coefficients != 0].sort_values(ascending=False)
 
     stats = {
-        "n_samples": len(y),
-        "class_distribution": {
-            "class_0": np.round(np.sum(y == 0) / len(y), 3),
-            "class_1": np.round(np.sum(y == 1) / len(y), 3),
+        'n_samples': len(y),
+        'class_distribution': {
+            'class_0': np.round(np.sum(y == 0) / len(y), 3),
+            'class_1': np.round(np.sum(y == 1) / len(y), 3),
         },
-        "accuracy": np.round(accuracy_score(y, y_pred), 3),
-        "balanced_accuracy": np.round(balanced_accuracy_score(y, y_pred), 3),
-        "roc_auc": np.round(roc_auc_score(y, y_pred_prob), 3),
-        "f1_score": np.round(f1_score(y, y_pred, average="weighted"), 3),
-        "precision_class_0": np.round(
-            precision_score(y, y_pred, pos_label=0, zero_division=0), 3
-        ),
-        "precision_class_1": np.round(
-            precision_score(y, y_pred, pos_label=1, zero_division=0), 3
-        ),
-        "recall_class_0": np.round(
-            np.sum((y_pred == 0) & (y == 0)) / np.sum(y == 0), 3
-        ),
-        "recall_class_1": np.round(
-            np.sum((y_pred == 1) & (y == 1)) / np.sum(y == 1), 3
-        ),
-        "confusion_matrix [TN, FP, FN, TP]": cm.ravel(),
-        "n_nonzero_coefficients": len(coefficients),
-        "nonzero_coefficients": coefficients,
-        "nonzero_feature_names": coefficients.index.tolist(),
+        'accuracy': np.round(accuracy_score(y, y_pred), 3),
+        'balanced_accuracy': np.round(balanced_accuracy_score(y, y_pred), 3),
+        'roc_auc': np.round(roc_auc_score(y, y_pred_prob), 3),
+        'f1_score': np.round(f1_score(y, y_pred, average='weighted'), 3),
+        'precision_class_0': np.round(precision_score(y, y_pred, pos_label=0, zero_division=0), 3),
+        'precision_class_1': np.round(precision_score(y, y_pred, pos_label=1, zero_division=0), 3),
+        'recall_class_0': np.round(np.sum((y_pred == 0) & (y == 0)) / np.sum(y == 0), 3),
+        'recall_class_1': np.round(np.sum((y_pred == 1) & (y == 1)) / np.sum(y == 1), 3),
+        'confusion_matrix [TN, FP, FN, TP]': cm.ravel(),
+        'n_nonzero_coefficients': len(coefficients),
+        'nonzero_coefficients': coefficients,
+        'nonzero_feature_names': coefficients.index.tolist(),
     }
 
     # Print results
@@ -310,27 +296,21 @@ def print_verbose_linear_regression_results(
     None
     """
     display(
-        Markdown(
-            f"### Linear regression with {model_name} penalty - performance on training set"
-        )
+        Markdown(f'### Linear regression with {model_name} penalty - performance on training set')
     )
-    display(Markdown(f"**Number of samples:** {stats['n_samples']}"))
-    display(Markdown(f"**R² Score:** {stats['r2_score']}"))
-    display(Markdown(f"**Adjusted R² Score:** {stats['adjusted_r2']}"))
-    display(Markdown(f"**MSE:** {stats['MSE']}"))
-    display(Markdown(f"**RMSE:** {stats['RMSE']}"))
-    display(Markdown(f"**MAE:** {stats['MAE']}"))
-    if not np.isnan(stats["MAPE"]):
-        display(Markdown(f"**MAPE:** {stats['MAPE']}%"))
-    display(
-        Markdown(
-            f"**{stats['n_nonzero_coefficients']} non-zero features with coefficients:**"
-        )
-    )
+    display(Markdown(f'**Number of samples:** {stats["n_samples"]}'))
+    display(Markdown(f'**R² Score:** {stats["r2_score"]}'))
+    display(Markdown(f'**Adjusted R² Score:** {stats["adjusted_r2"]}'))
+    display(Markdown(f'**MSE:** {stats["MSE"]}'))
+    display(Markdown(f'**RMSE:** {stats["RMSE"]}'))
+    display(Markdown(f'**MAE:** {stats["MAE"]}'))
+    if not np.isnan(stats['MAPE']):
+        display(Markdown(f'**MAPE:** {stats["MAPE"]}%'))
+    display(Markdown(f'**{stats["n_nonzero_coefficients"]} non-zero features with coefficients:**'))
     display(
         [
-            f"{stats['nonzero_feature_names'][i]}: {stats['nonzero_coefficients'][i]}"
-            for i in range(len(stats["nonzero_coefficients"]))
+            f'{stats["nonzero_feature_names"][i]}: {stats["nonzero_coefficients"][i]}'
+            for i in range(len(stats['nonzero_coefficients']))
         ]
     )
 
@@ -338,15 +318,15 @@ def print_verbose_linear_regression_results(
         if y_actual is not None and y_pred is not None:
             show_predicted_vs_actual_response(y_actual, y_pred)
         else:
-            display(Markdown("*Cannot display predicted vs actual plot: missing data*"))
+            display(Markdown('*Cannot display predicted vs actual plot: missing data*'))
     return
 
 
 def solve_with_linear_regression(
     X: pd.DataFrame,
     y: pd.Series | np.ndarray,
-    apply_scaling: Literal["standard", "minmax", None] = None,
-    penalty: Literal["l1", "l2", "elasticnet"] = "l2",
+    apply_scaling: Literal['standard', 'minmax', None] = None,
+    penalty: Literal['l1', 'l2', 'elasticnet'] = 'l2',
     verbose: Optional[bool] = True,
     illustrate_predicted_vs_actual: Optional[bool] = False,
 ) -> Dict[str, Any]:
@@ -379,41 +359,41 @@ def solve_with_linear_regression(
         Dictionary containing performance metrics and model coefficients.
     """
     # Choose model based on penalty
-    if penalty == "l1":
+    if penalty == 'l1':
         model = LassoCV(cv=5, random_state=42, max_iter=2000)
-        model_name = "Lasso (L1)"
-    elif penalty == "l2":
+        model_name = 'Lasso (L1)'
+    elif penalty == 'l2':
         model = RidgeCV(cv=5)
-        model_name = "Ridge (L2)"
-    elif penalty == "elasticnet":
+        model_name = 'Ridge (L2)'
+    elif penalty == 'elasticnet':
         model = ElasticNetCV(cv=5, random_state=42, max_iter=2000)
-        model_name = "ElasticNet"
+        model_name = 'ElasticNet'
     else:
         raise ValueError("Penalty must be 'l1', 'l2', or 'elasticnet'.")
 
-    if apply_scaling == "standard":
+    if apply_scaling == 'standard':
         pipeline = make_pipeline(StandardScaler(), model)
-    elif apply_scaling == "minmax":
+    elif apply_scaling == 'minmax':
         pipeline = make_pipeline(MinMaxScaler(), model)
     else:
         pipeline = make_pipeline(model)
 
     # Fit the model
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=UserWarning)
-        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        warnings.filterwarnings('ignore', category=UserWarning)
+        warnings.filterwarnings('ignore', category=ConvergenceWarning)
         pipeline.fit(X, y)
 
     # Predictions and evaluation
     y_pred = pipeline.predict(X)
 
     # Get coefficients, handle difference for RidgeCV (coef_ shape)
-    if penalty == "l2":
-        coefs = pipeline.named_steps["ridgecv"].coef_
-    elif penalty == "l1":
-        coefs = pipeline.named_steps["lassocv"].coef_
-    elif penalty == "elasticnet":
-        coefs = pipeline.named_steps["elasticnetcv"].coef_
+    if penalty == 'l2':
+        coefs = pipeline.named_steps['ridgecv'].coef_
+    elif penalty == 'l1':
+        coefs = pipeline.named_steps['lassocv'].coef_
+    elif penalty == 'elasticnet':
+        coefs = pipeline.named_steps['elasticnetcv'].coef_
 
     coefficients = pd.Series(coefs, index=X.columns)
     coefficients = coefficients[coefficients != 0].sort_values(ascending=False)
@@ -423,26 +403,23 @@ def solve_with_linear_regression(
 
     # Calculate additional regression statistics
     stats = {
-        "n_samples": len(y),
-        "r2_score": np.round(r2_score(y, y_pred), 3),
-        "adjusted_r2": np.round(
-            1
-            - (1 - r2_score(y, y_pred))
-            * (len(y) - 1)
-            / (len(y) - len(coefficients) - 1),
+        'n_samples': len(y),
+        'r2_score': np.round(r2_score(y, y_pred), 3),
+        'adjusted_r2': np.round(
+            1 - (1 - r2_score(y, y_pred)) * (len(y) - 1) / (len(y) - len(coefficients) - 1),
             3,
         ),
-        "MSE": np.round(mean_squared_error(y, y_pred), 3),
-        "RMSE": np.round(np.sqrt(mean_squared_error(y, y_pred)), 3),
-        "MAE": np.round(np.mean(np.abs(residuals)), 3),
-        "MAPE": (
+        'MSE': np.round(mean_squared_error(y, y_pred), 3),
+        'RMSE': np.round(np.sqrt(mean_squared_error(y, y_pred)), 3),
+        'MAE': np.round(np.mean(np.abs(residuals)), 3),
+        'MAPE': (
             np.round(np.mean(np.abs(residuals / np.where(y != 0, y, 1e-8))) * 100, 3)
             if not np.any(y == 0)
             else np.nan
         ),
-        "n_nonzero_coefficients": len(coefficients),
-        "nonzero_coefficients": coefficients,
-        "nonzero_feature_names": coefficients.index.tolist(),
+        'n_nonzero_coefficients': len(coefficients),
+        'nonzero_coefficients': coefficients,
+        'nonzero_feature_names': coefficients.index.tolist(),
     }
 
     # Print results
@@ -461,8 +438,8 @@ def solve_any_regression(
     solutions: Dict[str, List[str]],
     df: pd.DataFrame,
     response: Union[pd.Series, np.ndarray],
-    apply_scaling: Literal["standard", "minmax", None] = None,
-    penalty: Literal["l1", "l2", "elasticnet"] = "l1",
+    apply_scaling: Literal['standard', 'minmax', None] = None,
+    penalty: Literal['l1', 'l2', 'elasticnet'] = 'l1',
     verbose: Optional[bool] = False,
     use_markdown: Optional[bool] = True,
 ) -> pd.DataFrame:
@@ -507,30 +484,28 @@ def solve_any_regression(
     else:
         is_binary = False
 
-    task = "Classification" if is_binary else "Regression"
+    task = 'Classification' if is_binary else 'Regression'
     stats = {}
     # for each candidate solution
     for component, features in solutions.items():
         if verbose:
             myprint(
-                msg=f"Features of **{component}**",
+                msg=f'Features of **{component}**',
                 use_markdown=use_markdown,
                 header=2,
             )
             myprint(
-                f"- {len(features)} features: {features}",
+                f'- {len(features)} features: {features}',
                 use_markdown=use_markdown,
             )
 
         df_filtered = df[features].copy()
-        df_filtered["response"] = response
+        df_filtered['response'] = response
         df_filtered = df_filtered.dropna()
-        y_filtered = df_filtered.pop("response")
+        y_filtered = df_filtered.pop('response')
 
         # check missing value ratio and sample size
-        nan_ratio = df[features].isna().sum().sum() / (
-            len(df[features]) * len(features)
-        )
+        nan_ratio = df[features].isna().sum().sum() / (len(df[features]) * len(features))
 
         # FIXME: nan_ratio is in range 0 to 100 for some components
         # if nan_ratio > MAX_ALLOWED_NAN_RATIO:
@@ -542,7 +517,7 @@ def solve_any_regression(
 
         if df_filtered.shape[0] < MIN_ALLOWED_SAMPLES:
             myprint(
-                msg=f"**Cannot run classical regression for {component}.** After removing NaNs, only {df_filtered.shape[0]} samples are left (at least {MIN_ALLOWED_SAMPLES} are required).",
+                msg=f'**Cannot run classical regression for {component}.** After removing NaNs, only {df_filtered.shape[0]} samples are left (at least {MIN_ALLOWED_SAMPLES} are required).',
                 use_markdown=use_markdown,
             )
             continue
@@ -564,16 +539,16 @@ def solve_any_regression(
                 verbose=verbose,
             )
         if verbose:
-            myprint(msg="------------------", use_markdown=use_markdown)
+            myprint(msg='------------------', use_markdown=use_markdown)
 
     # get the stats as data frame
     # each entry is a column in the data frame
-    metrics_df = pd.DataFrame.from_dict(stats, orient="index")
+    metrics_df = pd.DataFrame.from_dict(stats, orient='index')
 
     if verbose:
         show_regression_metrics(
             metrics_df=metrics_df,
-            title=f"{task} results on training data ({penalty} penalty)",
+            title=f'{task} results on training data ({penalty} penalty)',
             use_markdown=use_markdown,
         )
 
@@ -582,7 +557,7 @@ def solve_any_regression(
 
 def show_regression_metrics(
     metrics_df: pd.DataFrame,
-    title: str = "Results on training data",
+    title: str = 'Results on training data',
     use_markdown: Optional[bool] = True,
 ) -> None:
     """
@@ -601,7 +576,7 @@ def show_regression_metrics(
     """
     if metrics_df.empty:
         myprint(
-            msg="No regression results to display.",
+            msg='No regression results to display.',
             use_markdown=use_markdown,
         )
     else:

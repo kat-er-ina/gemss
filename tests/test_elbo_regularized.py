@@ -32,7 +32,7 @@ def _make_selector() -> BayesianFeatureSelector:
         y=y,
         batch_size=4,
         n_iter=1,
-        device="cpu",
+        device='cpu',
     )
 
 

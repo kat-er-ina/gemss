@@ -71,7 +71,7 @@ class BayesianFeatureSelector:
         n_components: int,
         X,
         y,
-        prior: Literal["ss", "sss", "student"] = "sss",
+        prior: Literal['ss', 'sss', 'student'] = 'sss',
         sss_sparsity: int = 3,
         sample_more_priors_coeff: float = 1.0,
         var_slab: float = 100.0,
@@ -83,7 +83,7 @@ class BayesianFeatureSelector:
         lr: float = 2e-3,
         batch_size: int = 16,
         n_iter: int = 5000,
-        device: Literal["cpu", "cuda"] = "cpu",
+        device: Literal['cpu', 'cuda'] = 'cpu',
     ):
         """
         Initialize the BayesianFeatureSelector.
@@ -141,7 +141,7 @@ class BayesianFeatureSelector:
         # Validate that response values don't contain NaN
         if torch.isnan(self.y).any():
             raise ValueError(
-                "Response variable (y) contains NaN values. Please remove samples with missing responses before feature selection."
+                'Response variable (y) contains NaN values. Please remove samples with missing responses before feature selection.'
             )
 
         # Precompute NaN-related information for X to avoid repeated computation
@@ -159,11 +159,9 @@ class BayesianFeatureSelector:
         self.batch_size = batch_size
         self.n_iter = n_iter
 
-        if prior == "ss":
-            self.prior = SpikeAndSlabPrior(
-                var_slab, var_spike, weight_slab, weight_spike
-            )
-        elif prior == "sss":
+        if prior == 'ss':
+            self.prior = SpikeAndSlabPrior(var_slab, var_spike, weight_slab, weight_spike)
+        elif prior == 'sss':
             self.prior = StructuredSpikeAndSlabPrior(
                 n_features,
                 sparsity=sss_sparsity,
@@ -171,7 +169,7 @@ class BayesianFeatureSelector:
                 var_slab=var_slab,
                 var_spike=var_spike,
             )
-        elif prior == "student":
+        elif prior == 'student':
             self.prior = StudentTPrior(df=student_df, scale=student_scale)
 
         self.mixture = GaussianMixture(n_components, n_features).to(device)
@@ -307,9 +305,7 @@ class BayesianFeatureSelector:
         batch_size = z.shape[0]
 
         # Compute soft supports using sigmoid for differentiability
-        support_mask = torch.sigmoid(
-            sigmoid_coeff * torch.abs(z)
-        )  # [batch_size, n_features]
+        support_mask = torch.sigmoid(sigmoid_coeff * torch.abs(z))  # [batch_size, n_features]
 
         # Compute pairwise Jaccard similarities (vectorized)
         if batch_size < 2:
@@ -319,12 +315,8 @@ class BayesianFeatureSelector:
             # Use |A ∪ B| = |A| + |B| - |A ∩ B| to avoid creating 3D tensor
             support_sizes = support_mask.sum(dim=1)  # [batch_size]
             union = support_sizes[:, None] + support_sizes[None, :] - intersection
-            jaccard = torch.where(
-                union > 0, intersection / union, torch.zeros_like(intersection)
-            )
-            pair_idx = torch.triu_indices(
-                batch_size, batch_size, offset=1, device=z.device
-            )
+            jaccard = torch.where(union > 0, intersection / union, torch.zeros_like(intersection))
+            pair_idx = torch.triu_indices(batch_size, batch_size, offset=1, device=z.device)
             avg_jaccard = jaccard[pair_idx[0], pair_idx[1]].mean()
 
         # Regularized ELBO
@@ -370,7 +362,7 @@ class BayesianFeatureSelector:
             - 'var': list of mixture variances per iteration
             - 'alpha': list of mixture weights per iteration
         """
-        history = {"elbo": [], "mu": [], "var": [], "alpha": []}
+        history = {'elbo': [], 'mu': [], 'var': [], 'alpha': []}
         start_time = time()
         for it in range(self.n_iter):
             # Sample z ~ q(z) - this should always produce complete samples (no NaNs)
@@ -390,15 +382,13 @@ class BayesianFeatureSelector:
             self.opt.step()
 
             # Record statistics
-            history["elbo"].append(elbo.item())
-            history["mu"].append(self.mixture.mu.detach().cpu().clone().numpy())
-            history["var"].append(
-                self.mixture.get_variance().detach().cpu().clone().numpy()
-            )
+            history['elbo'].append(elbo.item())
+            history['mu'].append(self.mixture.mu.detach().cpu().clone().numpy())
+            history['var'].append(self.mixture.get_variance().detach().cpu().clone().numpy())
 
             # Store alphas safely
             alpha_val = self.mixture.get_alpha()
-            history["alpha"].append(alpha_val.detach().cpu().clone().numpy())
+            history['alpha'].append(alpha_val.detach().cpu().clone().numpy())
 
             nth_iteration = it % 100 == 0
             if log_callback and nth_iteration:
@@ -406,8 +396,8 @@ class BayesianFeatureSelector:
             if verbose and nth_iteration and it > 0:
                 elapsed_time = time() - start_time
                 myprint(
-                    msg=f"**Iteration {it}:** elapsed time: {elapsed_time:.0f}s, remaining time: {elapsed_time / it * (self.n_iter - it):.0f}s, ELBO = {elbo.item()}"
+                    msg=f'**Iteration {it}:** elapsed time: {elapsed_time:.0f}s, remaining time: {elapsed_time / it * (self.n_iter - it):.0f}s, ELBO = {elbo.item()}'
                 )
         if verbose:
-            myprint("Optimization complete.", use_markdown=True)
+            myprint('Optimization complete.', use_markdown=True)
         return history

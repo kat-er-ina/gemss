@@ -27,10 +27,8 @@ def get_elbo_plot(
         Plotly Figure object representing the ELBO progress.
     """
     fig = go.Figure()
-    fig.add_trace(go.Scatter(y=history["elbo"], mode="lines", name="ELBO"))
-    fig.update_layout(
-        title="ELBO Progress", xaxis_title="Iteration", yaxis_title="ELBO"
-    )
+    fig.add_trace(go.Scatter(y=history['elbo'], mode='lines', name='ELBO'))
+    fig.update_layout(title='ELBO Progress', xaxis_title='Iteration', yaxis_title='ELBO')
     return fig
 
 
@@ -50,7 +48,7 @@ def plot_elbo(
     None
     """
     fig = get_elbo_plot(history)
-    fig.show(config={"displayModeBar": False})
+    fig.show(config={'displayModeBar': False})
     return
 
 
@@ -77,23 +75,23 @@ def get_mu_plot(
     go.Figure
         Plotly Figure object representing the mu trajectory.
     """
-    arr = np.array(history["mu"])  # shape [n_iter, n_components, n_features]
+    arr = np.array(history['mu'])  # shape [n_iter, n_components, n_features]
     mu_traj = arr[:, component, :]
     fig = go.Figure()
     longest_name_len = 0
     for f in range(mu_traj.shape[1]):
         name = (
-            original_feature_names_mapping.get(f"feature_{f}", f"feature_{f}")
+            original_feature_names_mapping.get(f'feature_{f}', f'feature_{f}')
             if original_feature_names_mapping is not None
-            else f"feature_{f}"
+            else f'feature_{f}'
         )
         longest_name_len = max(longest_name_len, len(name))
         fig.add_trace(
             go.Scatter(
                 y=mu_traj[:, f],
-                mode="lines",
+                mode='lines',
                 name=name,
-                hovertemplate=f"<b>{name}</b><br>Iteration=%{{x}}<br>μ=%{{y}}<extra></extra>",
+                hovertemplate=f'<b>{name}</b><br>Iteration=%{{x}}<br>μ=%{{y}}<extra></extra>',
             )
         )
     # Dynamic width scales with longest label and number of features
@@ -101,9 +99,9 @@ def get_mu_plot(
     width = base_width + longest_name_len * 8 + mu_traj.shape[1] * 6
     width = int(min(width, 1800))
     fig.update_layout(
-        title=f"Mu trajectory, Component {component}",
-        xaxis_title="Iteration",
-        yaxis_title="Mu value",
+        title=f'Mu trajectory, Component {component}',
+        xaxis_title='Iteration',
+        yaxis_title='Mu value',
         width=width,
         height=600,
         margin=dict(l=60, r=20, t=60, b=60),
@@ -138,7 +136,7 @@ def plot_mu(
         component=component,
         original_feature_names_mapping=original_feature_names_mapping,
     )
-    fig.show(config={"displayModeBar": False})
+    fig.show(config={'displayModeBar': False})
     return
 
 
@@ -158,20 +156,20 @@ def get_alpha_plot(
     go.Figure
         Plotly Figure object representing the alpha progress.
     """
-    arr = np.array(history["alpha"])  # shape [n_iter, n_components]
+    arr = np.array(history['alpha'])  # shape [n_iter, n_components]
     fig = go.Figure()
     for k in range(arr.shape[1]):
         fig.add_trace(
             go.Scatter(
                 y=arr[:, k],
-                mode="lines",
-                name=f"alpha_{k}",
+                mode='lines',
+                name=f'alpha_{k}',
             ),
         )
     fig.update_layout(
-        title="Alpha progress",
-        xaxis_title="Iteration",
-        yaxis_title="Component weight",
+        title='Alpha progress',
+        xaxis_title='Iteration',
+        yaxis_title='Component weight',
     )
     return fig
 
@@ -192,7 +190,7 @@ def plot_alpha(
     None
     """
     fig = get_alpha_plot(history)
-    fig.show(config={"displayModeBar": False})
+    fig.show(config={'displayModeBar': False})
     return
 
 
@@ -218,22 +216,17 @@ def get_correlation_with_response_plot(
     go.Figure
         Plotly Figure object representing the correlation with response.
     """
-    correlation_with_response = df.corrwith(y, method="kendall").sort_values(
-        ascending=False
-    )
+    correlation_with_response = df.corrwith(y, method='kendall').sort_values(ascending=False)
 
     fig = px.bar(
         correlation_with_response,
         x=correlation_with_response.index,
         y=correlation_with_response.values,
-        color=[
-            "blue" if f in support_features else "red"
-            for f in correlation_with_response.index
-        ],
+        color=['blue' if f in support_features else 'red' for f in correlation_with_response.index],
         title="Features' Correlation with Binary Response",
         labels={
-            "index": "Feature",
-            "y": "Correlation",
+            'index': 'Feature',
+            'y': 'Correlation',
         },
     )
     fig.update_layout(
@@ -266,7 +259,7 @@ def show_correlations_with_response(
     None
     """
     fig = get_correlation_with_response_plot(df, y, support_features)
-    fig.show(config={"displayModeBar": False})
+    fig.show(config={'displayModeBar': False})
     return
 
 
@@ -290,10 +283,10 @@ def get_correlation_matrix_plot(
     """
     fig = px.imshow(
         df.corr(),
-        text_auto=".2f",
-        aspect="auto",
-        title="Feature Correlation Matrix",
-        color_continuous_scale="RdBu",
+        text_auto='.2f',
+        aspect='auto',
+        title='Feature Correlation Matrix',
+        color_continuous_scale='RdBu',
         zmin=-1,
         zmax=1,
     )
@@ -326,7 +319,7 @@ def show_correlation_matrix(
     None
     """
     fig = get_correlation_matrix_plot(df, width, height)
-    fig.show(config={"displayModeBar": False})
+    fig.show(config={'displayModeBar': False})
     return
 
 
@@ -364,14 +357,14 @@ def get_label_histogram_plot(
                 x=y_unique,
                 y=hist_data[0],
                 width=np.diff(hist_data[1]),
-                marker_color="blue",
+                marker_color='blue',
             )
         ],
     )
     fig.update_layout(
-        title="Distribution of labels",
-        xaxis_title="Value",
-        yaxis_title="Count",
+        title='Distribution of labels',
+        xaxis_title='Value',
+        yaxis_title='Count',
         width=450,
         height=300,
     )
@@ -398,7 +391,7 @@ def show_label_histogram(
     None
     """
     fig = get_label_histogram_plot(y, nbins)
-    fig.show(config={"displayModeBar": False})
+    fig.show(config={'displayModeBar': False})
     return
 
 
@@ -422,7 +415,7 @@ def get_label_piechart(
     fig = px.pie(
         names=unique,
         values=counts,
-        title="Label distribution",
+        title='Label distribution',
         width=450,
         height=300,
     )
@@ -450,7 +443,7 @@ def get_features_in_components_plot(
     go.Figure
         Plotly Figure object representing the heatmap of features in components.
     """
-    df_solutions = pd.DataFrame.from_dict(solutions, orient="index").T
+    df_solutions = pd.DataFrame.from_dict(solutions, orient='index').T
 
     if features_to_show is None:
         features_to_show = df_solutions.columns.tolist()
@@ -465,11 +458,11 @@ def get_features_in_components_plot(
             heatmap_data.at[col, feature] = 1
     fig = px.imshow(
         heatmap_data,
-        color_continuous_scale=["white", "blue"],
-        labels={"color": "Feature presence"},
-        title="Features found in each component",
+        color_continuous_scale=['white', 'blue'],
+        labels={'color': 'Feature presence'},
+        title='Features found in each component',
     )
-    fig.update_xaxes(side="top")
+    fig.update_xaxes(side='top')
     fig.update_layout(
         width=200 + 40 * len(heatmap_data.columns),
         showlegend=False,
@@ -498,7 +491,7 @@ def show_features_in_components(
     None
     """
     fig = get_features_in_components_plot(solutions, features_to_show)
-    fig.show(config={"displayModeBar": False})
+    fig.show(config={'displayModeBar': False})
     return
 
 
@@ -536,37 +529,37 @@ def get_compare_parameters_plot(
             go.Scatter(
                 x=np.arange(n_features),
                 y=final_mu[k],
-                mode="markers",
-                name=f"Learned μ {k}",
-                marker=dict(size=8, symbol="circle", color=color),
+                mode='markers',
+                name=f'Learned μ {k}',
+                marker=dict(size=8, symbol='circle', color=color),
                 showlegend=True,
             )
         )
 
     # Add traces for true (generating) solutions
-    n_solutions = len(parameters["full_weights"])
+    n_solutions = len(parameters['full_weights'])
     for k in range(n_solutions):
         # True means
         color = colors[k % len(colors)]
         fig.add_trace(
             go.Scatter(
                 x=np.arange(n_features),
-                y=parameters["full_weights"][k],
-                mode="markers",
-                name=f"True μ {k}",
-                marker=dict(size=8, symbol="x", color=color),
+                y=parameters['full_weights'][k],
+                mode='markers',
+                name=f'True μ {k}',
+                marker=dict(size=8, symbol='x', color=color),
                 showlegend=True,
             )
         )
 
     # Update layout
     fig.update_layout(
-        title="Comparison: Learned vs True Mixture Means",
-        xaxis_title="Feature Index",
-        yaxis_title="Mean Value",
+        title='Comparison: Learned vs True Mixture Means',
+        xaxis_title='Feature Index',
+        yaxis_title='Mean Value',
         width=800,
         height=500,
-        template="plotly_white",
+        template='plotly_white',
     )
 
     # Update x-axis to show integer ticks
@@ -594,7 +587,7 @@ def compare_parameters(
     None
     """
     fig = get_compare_parameters_plot(parameters, final_mu)
-    fig.show(config={"displayModeBar": False})
+    fig.show(config={'displayModeBar': False})
     return
 
 
@@ -617,14 +610,14 @@ def get_confusion_matrix_plot(
     fig = go.Figure(
         data=go.Heatmap(
             z=confusion_matrix,
-            x=["Predicted 0", "Predicted 1"],
-            y=["Actual 0", "Actual 1"],
-            colorscale="Blues",
+            x=['Predicted 0', 'Predicted 1'],
+            y=['Actual 0', 'Actual 1'],
+            colorscale='Blues',
             text=confusion_matrix,
-            texttemplate="%{text}",
+            texttemplate='%{text}',
         )
     )
-    fig.update_layout(title="Confusion Matrix", width=350, height=350, showlegend=False)
+    fig.update_layout(title='Confusion Matrix', width=350, height=350, showlegend=False)
     return fig
 
 
@@ -644,7 +637,7 @@ def show_confusion_matrix(
     None
     """
     fig = get_confusion_matrix_plot(confusion_matrix)
-    fig.show(config={"displayModeBar": False})
+    fig.show(config={'displayModeBar': False})
     return
 
 
@@ -668,18 +661,18 @@ def get_predicted_vs_actual_response_plot(
         Plotly Figure object representing the predicted vs actual response.
     """
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=y, y=y_pred, mode="markers", marker_color="blue"))
+    fig.add_trace(go.Scatter(x=y, y=y_pred, mode='markers', marker_color='blue'))
     fig.add_trace(
         go.Scatter.line(
             x=[y.min(), y.max()],
             y=[y.min(), y.max()],
-            line=dict(color="red", dash="dash"),
+            line=dict(color='red', dash='dash'),
         )
     )
     fig.update_layout(
-        title="Predicted vs Actual",
-        xaxis_title="Actual",
-        yaxis_title="Predicted",
+        title='Predicted vs Actual',
+        xaxis_title='Actual',
+        yaxis_title='Predicted',
         width=400,
         height=300,
         showlegend=False,
@@ -706,7 +699,7 @@ def show_predicted_vs_actual_response(
     None
     """
     fig = get_predicted_vs_actual_response_plot(y, y_pred)
-    fig.show(config={"displayModeBar": False})
+    fig.show(config={'displayModeBar': False})
     return
 
 
@@ -732,16 +725,16 @@ def get_final_alphas_plot(
     List[go.Figure]
         List of Plotly Figure objects representing the final mixture weights.
     """
-    alphas = history["alpha"]
+    alphas = history['alpha']
     final_alphas = alphas[:][-1]
     figures = []
 
     if show_bar_plot:
         bar_fig = px.bar(
-            x=[f"Component {i}" for i in range(len(final_alphas))],
+            x=[f'Component {i}' for i in range(len(final_alphas))],
             y=final_alphas,
-            labels={"x": "Component", "y": "Weight"},
-            title="Absolute weights of components <br>in the final mixture",
+            labels={'x': 'Component', 'y': 'Weight'},
+            title='Absolute weights of components <br>in the final mixture',
             width=500,
             height=400,
         )
@@ -749,9 +742,9 @@ def get_final_alphas_plot(
 
     if show_pie_chart:
         pie_fig = px.pie(
-            names=[f"Component {i}" for i in range(len(final_alphas))],
+            names=[f'Component {i}' for i in range(len(final_alphas))],
             values=final_alphas,
-            title="Relative weights of candidate solutions <br>in the final mixture",
+            title='Relative weights of candidate solutions <br>in the final mixture',
             width=500,
             height=400,
         )
@@ -782,7 +775,7 @@ def show_final_alphas(
     """
     figures = get_final_alphas_plot(history, show_bar_plot, show_pie_chart)
     for fig in figures:
-        fig.show(config={"displayModeBar": False})
+        fig.show(config={'displayModeBar': False})
     return
 
 
@@ -803,9 +796,9 @@ def get_subsampled_history(
         Subsampled history dictionary.
     """
     every_nth_iteration = 20
-    if (len(history) >= 2000) and (len(history) * len(history["mu"][0])) > 1e6:
+    if (len(history) >= 2000) and (len(history) * len(history['mu'][0])) > 1e6:
         every_nth_iteration = 50
-    if (len(history) >= 4000) and (len(history) * len(history["mu"][0])) > 1e6:
+    if (len(history) >= 4000) and (len(history) * len(history['mu'][0])) > 1e6:
         every_nth_iteration = 100
     if len(history) >= 8000:
         every_nth_iteration = 200
@@ -869,20 +862,20 @@ def get_algorithm_progress_plots(
     figures = {}
 
     if alpha:
-        figures["alpha"] = get_alpha_plot(history_to_plot)
+        figures['alpha'] = get_alpha_plot(history_to_plot)
 
     if elbo:
-        figures["elbo"] = get_elbo_plot(history_to_plot)
+        figures['elbo'] = get_elbo_plot(history_to_plot)
 
     if mu:
-        n_components = len(history["mu"][0])
+        n_components = len(history['mu'][0])
         for k in range(n_components):
             fig_mu = get_mu_plot(
                 history_to_plot,
                 component=k,
                 original_feature_names_mapping=original_feature_names_mapping,
             )
-            figures[f"mu_{k}"] = fig_mu
+            figures[f'mu_{k}'] = fig_mu
     return figures
 
 
@@ -932,16 +925,16 @@ def show_algorithm_progress(
     )
 
     # Display plots in specific order: elbo first, then mu_1, mu_2, ..., mu_k, then alpha
-    if "elbo" in figures:
-        figures["elbo"].show(config={"displayModeBar": False})
+    if 'elbo' in figures:
+        figures['elbo'].show(config={'displayModeBar': False})
 
     mu_keys = sorted(
-        [k for k in figures.keys() if k.startswith("mu_")],
-        key=lambda x: int(x.split("_")[1]),
+        [k for k in figures.keys() if k.startswith('mu_')],
+        key=lambda x: int(x.split('_')[1]),
     )
     for mu_key in mu_keys:
-        figures[mu_key].show(config={"displayModeBar": False})
+        figures[mu_key].show(config={'displayModeBar': False})
 
-    if "alpha" in figures:
-        figures["alpha"].show(config={"displayModeBar": False})
+    if 'alpha' in figures:
+        figures['alpha'].show(config={'displayModeBar': False})
     return

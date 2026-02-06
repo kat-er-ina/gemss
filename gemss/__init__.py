@@ -9,4 +9,4 @@ GEMSS is a Bayesian variational method that approximates multimodal
 posteriors by Gaussian mixtures to recover diversified sparse feature sets.
 """
 
-__version__ = "0.1.0"
+__version__ = '0.1.0'
