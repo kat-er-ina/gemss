@@ -63,7 +63,10 @@ lint.select = [
 lint.ignore = [
     "ANN002",  # Missing type annotation for *args
     "ANN003",  # Missing type annotation for **kwargs
-    "ANN204"   # Allow missing return type annotation for __init__
+    "ANN204",   # Allow missing return type annotation for __init__
+    "N802",
+    "N803",
+    "N806",
 ]
 src = ["src"]
 

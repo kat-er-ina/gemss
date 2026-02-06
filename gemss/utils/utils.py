@@ -3,7 +3,8 @@ Utility functions for feature selection project.
 """
 
 import json
-from typing import Any
+from collections.abc import Callable
+from typing import TextIO, TypedDict
 
 import numpy as np
 import pandas as pd
@@ -17,11 +18,11 @@ from IPython.display import Markdown, display
 
 def myprint(
     msg: str,
-    use_markdown: bool | None = True,
-    bold: bool | None = False,
-    header: int | None = 0,
-    code: bool | None = False,
-    file: Any | None = None,
+    use_markdown: bool = True,
+    bold: bool = False,
+    header: int = 0,
+    code: bool = False,
+    file: TextIO | None = None,
 ) -> None:
     """
     Print a message using Markdown formatting if specified, otherwise in plain text.
@@ -60,7 +61,7 @@ def myprint(
     return
 
 
-def format_summary_row_feature_with_mu(row):
+def format_summary_row_feature_with_mu(row: pd.Series) -> str:
     """Formatting function for outlier information."""
     return f'{row["Feature"]} (mu = {row["Mu value"]:.4f})'
 
@@ -68,7 +69,7 @@ def format_summary_row_feature_with_mu(row):
 def get_solution_summary_df(
     data_dict: dict[str, pd.DataFrame],
     value_column: str = 'Feature',
-    format_function: callable | None = format_summary_row_feature_with_mu,
+    format_function: Callable[[pd.Series], str] | None = format_summary_row_feature_with_mu,
 ) -> pd.DataFrame:
     """
     Convert a dictionary of DataFrames into a summary DataFrame where each column
@@ -147,8 +148,8 @@ def show_solution_summary(
     solution_data: dict[str, pd.DataFrame],
     title: str = 'Solution summary',
     value_column: str = 'Feature',
-    format_function: callable | None = format_summary_row_feature_with_mu,
-    use_markdown: bool | None = True,
+    format_function: Callable[[pd.Series], str] | None = format_summary_row_feature_with_mu,
+    use_markdown: bool = True,
 ) -> None:
     """
     Display solutions or data in a DataFrame format where each column corresponds to a component
@@ -458,7 +459,7 @@ def save_feature_lists_txt(
 
 
 def save_feature_lists_json(
-    all_features_lists: dict[str, list[str]],
+    all_features_lists: dict[str, dict[str, list[str]]],
     filename: str,
 ) -> str:
     """Save multiple dictionaries of candidate feature lists to a structured JSON file.
@@ -492,7 +493,7 @@ def save_feature_lists_json(
     if not isinstance(filename, str) or not filename.strip():
         raise ValueError('Filename must be a non-empty string.')
 
-    sections: list[dict[str, Any]] = []
+    sections: list[dict[str, object]] = []
     for title, feature_dict in all_features_lists.items():
         components_out: dict[str, list[str]] = {}
         for component, features in feature_dict.items():
@@ -595,7 +596,14 @@ def load_feature_lists_json(
     return all_features_lists, message
 
 
-def save_selector_history_json(history, filename) -> str:
+class SelectorHistory(TypedDict):
+    elbo: list[float]
+    mu: list[np.ndarray]
+    var: list[np.ndarray]
+    alpha: list[np.ndarray]
+
+
+def save_selector_history_json(history: SelectorHistory, filename: str) -> str:
     """Persist optimization history to a JSON file with basic validation.
 
     Parameters
@@ -628,12 +636,15 @@ def save_selector_history_json(history, filename) -> str:
         return 'History is empty; nothing saved.'
 
     # Ensure length consistency among iterable keys
-    lengths = {}
-    for k in required_keys:
-        try:
-            lengths[k] = len(history[k])
-        except Exception:
-            return f"History key '{k}' is not iterable; nothing saved."
+    try:
+        lengths = {
+            'elbo': len(history['elbo']),
+            'mu': len(history['mu']),
+            'var': len(history['var']),
+            'alpha': len(history['alpha']),
+        }
+    except Exception:
+        return 'History contains non-iterable values; nothing saved.'
     if len(set(lengths.values())) != 1:
         return f'Inconsistent lengths in history: {lengths}; nothing saved.'
 
@@ -668,7 +679,7 @@ def save_selector_history_json(history, filename) -> str:
 
 def load_selector_history_json(
     filename: str,
-) -> tuple[dict[str, Any], str]:
+) -> tuple[SelectorHistory, str]:
     """Load optimization history saved by ``save_selector_history_json``.
 
     Opens the JSON file, validates required keys (``elbo``, ``mu``, ``var``, ``alpha``),
@@ -734,7 +745,7 @@ def load_selector_history_json(
     return data, message
 
 
-def save_constants_json(constants, filename) -> str:
+def save_constants_json(constants: dict[str, object], filename: str) -> str:
     """Persist constants dict to JSON after validation.
 
     Parameters
@@ -776,7 +787,7 @@ def save_constants_json(constants, filename) -> str:
         return f"Failed writing constants to '{filename}': {e}"
 
 
-def load_constants_json(filename: str) -> tuple[dict[str, Any], str]:
+def load_constants_json(filename: str) -> tuple[dict[str, object], str]:
     """Load configuration constants saved by ``save_constants_json``.
 
     Opens the JSON file, validates it exists and that the top-level object is a

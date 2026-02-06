@@ -20,9 +20,11 @@ elbo_regularized(z)    : Computes the ELBO with a penalty for support similarity
 optimize(...)          : Runs the main optimization loop.
 """
 
+from collections.abc import Callable
 from time import time
 from typing import Literal
 
+import numpy as np
 import torch
 from torch.optim import Adam
 
@@ -68,8 +70,8 @@ class BayesianFeatureSelector:
         self,
         n_features: int,
         n_components: int,
-        X,
-        y,
+        X: np.ndarray | torch.Tensor,
+        y: np.ndarray | torch.Tensor,
         prior: Literal['ss', 'sss', 'student'] = 'sss',
         sss_sparsity: int = 3,
         sample_more_priors_coeff: float = 1.0,
@@ -175,7 +177,7 @@ class BayesianFeatureSelector:
         self.opt = Adam(self.mixture.parameters(), lr=lr)
         self.device = device
 
-    def log_likelihood(self, z) -> torch.Tensor:
+    def log_likelihood(self, z: torch.Tensor) -> torch.Tensor:
         """
         Compute log-likelihood for regression: log p(y | z, X).
 
@@ -201,7 +203,7 @@ class BayesianFeatureSelector:
             mse = ((pred - self.y.unsqueeze(0)) ** 2).sum(dim=-1)  # sum over samples
             return -0.5 * mse
 
-    def _log_likelihood_with_missing(self, z) -> torch.Tensor:
+    def _log_likelihood_with_missing(self, z: torch.Tensor) -> torch.Tensor:
         """
         Compute log-likelihood when X contains missing values.
 
@@ -324,7 +326,7 @@ class BayesianFeatureSelector:
 
     def optimize(
         self,
-        log_callback: callable = None,
+        log_callback: Callable[[int, float, GaussianMixture], None] | None = None,
         regularize: bool = False,
         lambda_jaccard: float = 10.0,
         verbose: bool = True,

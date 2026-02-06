@@ -18,6 +18,7 @@ import numpy as np
 import pytest
 import torch
 from gemss.feature_selection.inference import BayesianFeatureSelector
+from gemss.feature_selection.models import GaussianMixture
 
 
 def _make_dataset(
@@ -88,7 +89,7 @@ def test_optimize_regularized_callback() -> None:
 
     calls = []
 
-    def _callback(it: int, elbo: float, mixture) -> None:
+    def _callback(it: int, elbo: float, mixture: GaussianMixture) -> None:
         calls.append(it)
 
     history = selector.optimize(

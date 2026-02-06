@@ -12,15 +12,15 @@ from gemss.utils.visualizations import (
 
 
 def generate_multi_solution_data(
-    n_samples=100,
-    n_features=10,
-    n_solutions=3,
-    sparsity=2,
-    noise_data_std=0.01,
-    binarize=True,
-    binary_response_ratio=0.5,
-    random_seed=42,
-) -> tuple[pd.DataFrame, pd.Series, np.ndarray, pd.DataFrame]:
+    n_samples: int = 100,
+    n_features: int = 10,
+    n_solutions: int = 3,
+    sparsity: int = 2,
+    noise_data_std: float = 0.01,
+    binarize: bool = True,
+    binary_response_ratio: float = 0.5,
+    random_seed: int = 42,
+) -> tuple[pd.DataFrame, pd.Series, dict[str, list[str]], pd.DataFrame]:
     """
     Generate a synthetic dataset with multiple valid sparse solutions. If the parameter
     'binarize' is True, the response variable is binary (0 or 1) and the corresponding problem
@@ -141,7 +141,8 @@ def generate_multi_solution_data(
         )
     parameters_df = pd.DataFrame(parameters)
 
-    df = pd.DataFrame(X, columns=[f'feature_{j}' for j in range(n_features)])
+    columns: list[str] = [f'feature_{j}' for j in range(int(n_features))]
+    df = pd.DataFrame(X, columns=columns)
     response = pd.Series(y, name='binary_response')
     generating_solutions = {
         f'solution_{k}': [f'feature_{i}' for i in supports[k]] for k in range(n_solutions)
@@ -202,7 +203,7 @@ def show_overview_of_generated_data(
         display(pd.Series(y).value_counts(normalize=True))
     else:
         display(Markdown('- **Distribution of continuous labels:**'))
-        show_label_histogram(y, nbins=10)
+        show_label_histogram(y.to_numpy(), nbins=10)
 
     # Compute features' correlation with the binary response
     show_correlations_with_response(df, y, support_features)
@@ -215,18 +216,18 @@ def show_overview_of_generated_data(
 
 
 def generate_artificial_dataset(
-    n_samples=100,
-    n_features=5,
-    n_solutions=3,
-    sparsity=1,
-    noise_data_std=0.01,
-    nan_ratio=0.0,
-    binarize=True,
-    binary_response_ratio=0.5,
-    random_seed=42,
-    save_to_csv=False,
-    print_data_overview=True,
-    show_feature_correlations=False,
+    n_samples: int = 100,
+    n_features: int = 5,
+    n_solutions: int = 3,
+    sparsity: int = 1,
+    noise_data_std: float = 0.01,
+    nan_ratio: float = 0.0,
+    binarize: bool = True,
+    binary_response_ratio: float = 0.5,
+    random_seed: int = 42,
+    save_to_csv: bool = False,
+    print_data_overview: bool = True,
+    show_feature_correlations: bool = False,
 ) -> tuple[pd.DataFrame, pd.Series, dict[str, list[str]], pd.DataFrame]:
     """
     Generate an artificial binary classification dataset with multiple sparse solutions.

@@ -6,11 +6,14 @@ and generating specific parameter adjustment recommendations based on the
 diagnostic outcomes.
 """
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from IPython.display import Markdown, display
 
 from gemss.config import display_current_config
+
+if TYPE_CHECKING:
+    from .performance_tests import PerformanceTests
 
 from .recommendation_messages import get_recommendation_message
 
@@ -54,7 +57,7 @@ class RecommendationEngine:
 
     def __init__(
         self,
-        diagnostics,
+        diagnostics: 'PerformanceTests',
         constants: dict[str, Any] | None = None,
     ) -> None:
         """
@@ -315,7 +318,7 @@ class RecommendationEngine:
 
 
 # Convenience functions for backward compatibility
-def get_recommendation_keys(diagnostics) -> list[str]:
+def get_recommendation_keys(diagnostics: 'PerformanceTests') -> list[str]:
     """
     Get recommendation keys for diagnostics (backward compatibility).
 
@@ -401,7 +404,7 @@ def display_parameter_adjustment_summary() -> None:
 
 
 def display_recommendations(
-    diagnostics,
+    diagnostics: 'PerformanceTests',
     constants: dict[str, Any] | None = None,
 ) -> None:
     """

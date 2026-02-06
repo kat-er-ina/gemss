@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -21,7 +21,11 @@ from tabpfn import TabPFNClassifier, TabPFNRegressor
 from gemss.postprocessing.simple_regressions import detect_task
 
 
-def regression_metrics(y_true, y_pred, n_features):
+def regression_metrics(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    n_features: int,
+) -> dict[str, object]:
     """
     Compute regression metrics for predictions.
 
@@ -67,7 +71,7 @@ def regression_metrics(y_true, y_pred, n_features):
     }
 
 
-def classification_metrics(y_true, y_pred):
+def classification_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, object]:
     """
     Compute classification metrics for predictions.
 
@@ -121,7 +125,11 @@ def classification_metrics(y_true, y_pred):
     return metrics
 
 
-def _compute_shap_explanation(model, X, feature_names=None):
+def _compute_shap_explanation(
+    model: Any,
+    X: np.ndarray,
+    feature_names: list[str] | None = None,
+) -> tuple[dict[str, float], np.ndarray]:
     """
     Compute SHAP values for a fitted model and feature matrix X.
 
@@ -151,16 +159,16 @@ def _compute_shap_explanation(model, X, feature_names=None):
 
 
 def tabpfn_evaluate(
-    X,
-    y,
+    X: pd.DataFrame | np.ndarray,
+    y: pd.Series | np.ndarray,
     apply_scaling: Literal['standard', 'minmax', None] = None,
-    outer_cv_folds=5,
-    tabpfn_kwargs=None,
-    random_state=None,
+    outer_cv_folds: int = 5,
+    tabpfn_kwargs: dict[str, Any] | None = None,
+    random_state: int | None = None,
     verbose: bool = False,
     explain: bool = False,
-    shap_sample_size: int = None,  # optional max number of samples to use for SHAP explanations
-):
+    shap_sample_size: int | None = None,  # optional max number of samples to use for SHAP explanations
+) -> dict[str, Any]:
     """
     Evaluate TabPFN Classifier or Regressor using cross-validation. Optionally standardizes
     features and computes SHAP (Shapley) explanations. Metrics are inspired by

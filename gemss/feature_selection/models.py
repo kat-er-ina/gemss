@@ -19,7 +19,7 @@ class StudentTPrior:
     Student-t prior for Bayesian sparse modeling.
     """
 
-    def __init__(self, df=3.0, scale=1.0):
+    def __init__(self, df: float = 3.0, scale: float = 1.0):
         """
         Parameters
         ----------
@@ -31,7 +31,7 @@ class StudentTPrior:
         self.df = df
         self.scale = scale
 
-    def log_prob(self, z):
+    def log_prob(self, z: torch.Tensor) -> torch.Tensor:
         """
         Compute log-probability of the Student-t prior for input z.
 
@@ -56,7 +56,13 @@ class SpikeAndSlabPrior:
     p(z) = prod_i [w_slab * N(z_i | 0, var_slab) + w_spike * N(z_i | 0, var_spike)]
     """
 
-    def __init__(self, var_slab=100.0, var_spike=0.1, w_slab=0.9, w_spike=0.1):
+    def __init__(
+        self,
+        var_slab: float = 100.0,
+        var_spike: float = 0.1,
+        w_slab: float = 0.9,
+        w_spike: float = 0.1,
+    ):
         """
         Parameters
         ----------
@@ -74,7 +80,7 @@ class SpikeAndSlabPrior:
         self.w_slab = w_slab
         self.w_spike = w_spike
 
-    def log_prob(self, z):
+    def log_prob(self, z: torch.Tensor) -> torch.Tensor:
         """
         Compute log-probability of the spike-and-slab prior for input z.
 
@@ -102,11 +108,11 @@ class StructuredSpikeAndSlabPrior:
 
     def __init__(
         self,
-        n_features,
-        sparsity,
-        sample_more_priors_coeff=1.0,
-        var_slab=100.0,
-        var_spike=0.1,
+        n_features: int,
+        sparsity: int,
+        sample_more_priors_coeff: float = 1.0,
+        var_slab: float = 100.0,
+        var_spike: float = 0.1,
     ):
         """
         Parameters
@@ -134,7 +140,7 @@ class StructuredSpikeAndSlabPrior:
         if n_features <= 10 and sparsity <= 3:
             self._all_supports = list(itertools.combinations(range(n_features), sparsity))
 
-    def log_prob(self, z, n_support_samples=100):
+    def log_prob(self, z: torch.Tensor, n_support_samples: int = 100) -> torch.Tensor:
         """
         Compute log-probability of z under the structured prior.
         For each support S of size k, compute p(z | S), then average.

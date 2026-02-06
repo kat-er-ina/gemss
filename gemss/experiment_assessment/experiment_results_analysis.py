@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Literal
 
 import pandas as pd
@@ -108,7 +109,7 @@ THRESHOLDED_METRICS = [m for m in CORE_METRICS if THRESHOLDS_FOR_METRIC.get(m) i
 
 def load_experiment_results(
     tier_id_list: list[int] = [1, 2, 3, 4, 5, 6, 7],
-    results_dir: str = None,
+    results_dir: str | Path | None = None,
     verbose: bool = True,
 ) -> tuple[pd.DataFrame, list[str]]:
     """
@@ -134,11 +135,9 @@ def load_experiment_results(
         - A list of metric column names (containing both metric names and solution types).
     """
     df = pd.DataFrame()
+    results_root = Path(results_dir) if results_dir is not None else EXPERIMENT_RESULTS_DIR
     for tier_id in tier_id_list:
-        if results_dir is None:
-            results_dir = EXPERIMENT_RESULTS_DIR
-
-        results_path = results_dir / f'tier{tier_id}' / 'tier_summary_metrics.csv'
+        results_path = results_root / f'tier{tier_id}' / 'tier_summary_metrics.csv'
 
         if os.path.exists(results_path):
             df_tier = pd.read_csv(results_path)
@@ -563,8 +562,8 @@ def filter_df_best_solutions(
 
 def analyze_metric_results(
     df: pd.DataFrame,
-    group_identifier: Literal['TIER_ID', 'CASE_ID', None],
-    identifiers_list: list[str] | None = None,
+    group_identifier: Literal['TIER_ID', 'CASE_ID'] | None,
+    identifiers_list: list[int] | list[str] | None = None,
     solution_type: str | None = 'all types',
     metric_name: Literal[
         'Recall',
@@ -578,7 +577,7 @@ def analyze_metric_results(
         'Global_Miss_Rate',
         'Global_FDR',
     ] = DEFAULT_METRIC,
-    thresholds: dict[str, float] = None,
+    thresholds: dict[str, float] | None = None,
     verbose: bool | None = True,
 ) -> pd.DataFrame:
     """
@@ -635,7 +634,7 @@ def analyze_metric_results(
         solution_type = 'all'  # for display purposes
 
     # Categorize performance
-    def categorize_metric_higher_is_better(val):
+    def categorize_metric_higher_is_better(val: float | int | None) -> str:
         if pd.isna(val):
             return 'Unknown'
         if val >= thresholds['Excellent']:
@@ -646,7 +645,7 @@ def analyze_metric_results(
             return 'Moderate'
         return 'Poor'
 
-    def categorize_metric_lower_is_better(val):
+    def categorize_metric_lower_is_better(val: float | int | None) -> str:
         if pd.isna(val):
             return 'Unknown'
         if val <= thresholds['Excellent']:
@@ -753,7 +752,7 @@ def compute_performance_overview(
 def show_performance_overview(
     df_performance_overview: pd.DataFrame,
     select_metrics: list[str],
-):
+) -> None:
     # Show each metric block separately for better readability
     for select_metric in select_metrics:
         metric_cols = [

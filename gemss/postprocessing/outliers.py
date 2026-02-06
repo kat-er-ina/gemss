@@ -63,7 +63,7 @@ def _create_outlier_info_for_component(
 
 def detect_outlier_features(
     values: pd.Series,
-    threshold_coeff=3,
+    threshold_coeff: float = 3,
     use_median: bool | None = False,
     replace_middle_by_zero: bool | None = False,
 ) -> dict[str, list[float]]:
