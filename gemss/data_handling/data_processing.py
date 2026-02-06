@@ -177,14 +177,14 @@ def preprocess_features(
                 )
             else:
                 myprint(
-                    f'Dropped rows with NA values. Shape changed from {initial_shape} to {df_copy.shape}.',
+                    f'Dropped rows with NA. Shape: {initial_shape} -> {df_copy.shape}.',
                     use_markdown=True,
                 )
 
     # drop features with too many missing values
     if allowed_missing_percentage is not None:
         if allowed_missing_percentage < 0 or allowed_missing_percentage > 100:
-            raise ValueError('allowed_missing_percentage must be either None or between 0 and 100.')
+            raise ValueError('allowed_missing_percentage must be None or between 0 and 100.')
         # Treat values between 0 and 1 as fractions
         if allowed_missing_percentage <= 1:
             allowed_missing_percentage *= 100
@@ -198,12 +198,14 @@ def preprocess_features(
         if verbose:
             if len(features_to_drop) > 0:
                 myprint(
-                    f'Dropped {len(features_to_drop)} features with more than {allowed_missing_percentage}% missing values. Shape changed from {initial_shape} to {df_copy.shape}.',
+                    f'Dropped {len(features_to_drop)} features with >{allowed_missing_percentage}% '
+                    f'missing. Shape: {initial_shape} -> {df_copy.shape}.',
                     use_markdown=True,
                 )
             else:
                 myprint(
-                    f'No features exceeded the allowed missing value percentage {allowed_missing_percentage}%. No columns were dropped.',
+                    f'No features exceeded {allowed_missing_percentage}% missing. '
+                    'No columns dropped.',
                     use_markdown=True,
                 )
 

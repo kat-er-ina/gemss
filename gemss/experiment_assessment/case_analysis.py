@@ -78,7 +78,7 @@ SUMMARY_CASES = [
     or 'vs.' in CASE_DESCRIPTION[c].lower()
 ]
 CASE_SET_RANGES = {
-    # all classification cases = baseline + scalability + samplerich + adversity + jaccard + unbalanced
+    # classification: baseline + scalability + samplerich + adversity + jaccard + unbalanced
     'baseline': [1, 2, 3, 14, 15, 16],
     'scalability': range(4, 11),
     'samplerich': range(11, 14),

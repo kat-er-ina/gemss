@@ -13,7 +13,7 @@ from IPython.display import Markdown, display
 
 # TODO: move to a more general utils module along with other printing functions
 # TODO: add use_markdown parameter and use myprint function in print_nice_optimization_settings
-# TODO: set up a global parameter defining whether to use markdown or not (logging in plain text files during batch runs etc.)
+# TODO: set up a global parameter defining whether to use markdown or not (logging in plain text files during batch runs etc.) # noqa: E501
 # TODO: edit README accordingly
 
 
@@ -263,7 +263,8 @@ def generate_feature_names(
     n_features: int
         The number of features to generate names for.
     original_feature_names_mapping: Optional[Dict[str, str]], optional
-        A mapping from feature indices to original feature names. If provided, will use original names.
+        A mapping from feature indices to original feature names.
+        If provided, will use original names.
 
     Returns:
     --------
@@ -521,7 +522,7 @@ def load_feature_lists_json(
     """Load the dictionary of all candidate solutions saved by ``save_feature_lists_json``.
 
     Reads the JSON file produced by ``save_feature_lists_json`` and reconstructs
-    the dictionary mapping solution type titles to the dictionary of their components and feature lists.
+    the dictionary mapping solution type titles to their components and feature lists.
 
     Parameters
     ----------
@@ -737,7 +738,10 @@ def load_selector_history_json(
     except Exception as e:
         raise ValueError(f'Failed converting lists to arrays: {e}')
 
-    message = f"**History loaded from** '{filename}' | **iterations:** {n_iters} | **data:** {sorted(data.keys())}"
+    message = (
+        f"**History loaded from** '{filename}' | **iterations:** {n_iters} | "
+        f'**data:** {sorted(data.keys())}'
+    )
     return data, message
 
 

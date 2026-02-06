@@ -10,7 +10,14 @@ Modules:
 - utils: Utility functions for optimization settings display
 """
 
-from ..utils.utils import (
+from gemss.feature_selection.inference import BayesianFeatureSelector
+from gemss.feature_selection.models import (
+    GaussianMixture,
+    SpikeAndSlabPrior,
+    StructuredSpikeAndSlabPrior,
+    StudentTPrior,
+)
+from gemss.utils.utils import (
     SelectorHistory,
     dataframe_to_ascii_table,
     display_feature_lists,
@@ -26,11 +33,4 @@ from ..utils.utils import (
     save_feature_lists_txt,
     save_selector_history_json,
     show_solution_summary,
-)
-from .inference import BayesianFeatureSelector
-from .models import (
-    GaussianMixture,
-    SpikeAndSlabPrior,
-    StructuredSpikeAndSlabPrior,
-    StudentTPrior,
 )

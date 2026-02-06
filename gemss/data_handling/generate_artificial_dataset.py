@@ -296,7 +296,10 @@ def generate_artificial_dataset(
         )
 
     if save_to_csv:
-        suffix = f'{n_samples}x{n_features}_{n_solutions}sols_{sparsity}sparse_{noise_data_std}noise_{nan_ratio}nan_{random_seed}seed'
+        suffix = (
+            f'{n_samples}x{n_features}_{n_solutions}sols_{sparsity}sparse_'
+            f'{noise_data_std}noise_{nan_ratio}nan_{random_seed}seed'
+        )
         data.to_csv(DATA_DIR / f'artificial_dataset_{suffix}.csv')
         pd.DataFrame(solutions).to_csv(DATA_DIR / f'artificial_support_{suffix}.csv')
         parameters.to_csv(DATA_DIR / f'artificial_generating_solutions_{suffix}.csv')

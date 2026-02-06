@@ -332,7 +332,8 @@ class GaussianMixture(nn.Module):
         masking missing values (NaNs) locally.
 
         Note: This method is for data analysis only, not for variational inference.
-        Returns only the per-component likelihoods (not marginalized), averaged over observed features.
+        Returns only the per-component likelihoods (not marginalized), averaged over observed
+        features.
 
         Parameters
         ----------

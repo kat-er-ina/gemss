@@ -590,7 +590,10 @@ def plot_metric_analysis_overview(
     if custom_title is not None:
         title = custom_title
     else:
-        title = f'{metric_name} performance for {solution_type} solutions,<br>{group_identifier} = {identifiers_list}'
+        title = (
+            f'{metric_name} for {solution_type} solutions,<br>'
+            f'{group_identifier} = {identifiers_list}'
+        )
 
     plot_category_counts(
         df_category_counts=df_category_counts,

@@ -219,16 +219,21 @@ class PerformanceTests:
 
         if status == 'FAILED':
             message = (
-                f'Significant number of components have identical top {top_n_features} features between first and last iteration:'
+                f'Significant number of components have identical top {top_n_features} features '
+                'between first and last iteration:'
                 + self._format_component_summary(n_failed_components, n_warning_components)
             )
         elif status == 'WARNING':
             message = (
-                f'Some components have identical top {top_n_features} features between first and last iteration:'
+                f'Some components have identical top {top_n_features} features '
+                'between first and last iteration:'
                 + self._format_component_summary(n_failed_components, n_warning_components)
             )
         else:
-            message = f'The components have sufficiently different top {top_n_features} features between first and last iteration'
+            message = (
+                f'The components have sufficiently different top {top_n_features} '
+                'features between first and last iteration'
+            )
 
         test_result = {
             'test_name': test_name,
@@ -285,7 +290,7 @@ class PerformanceTests:
 
         # Ensure desired_sparsity doesn't exceed total features
         desired_sparsity = min(desired_sparsity, self.n_features - 1)
-        test_name = f'Sparsity gap (desired number of solutions = {desired_sparsity}) - WARNING: WORK IN PROGRESS!'
+        test_name = f'Sparsity gap (desired solutions = {desired_sparsity}) - WIP'
 
         if difference_coefficient_boundary is None:
             difference_coefficient_boundary = 1.0 / desired_sparsity
@@ -364,12 +369,14 @@ class PerformanceTests:
 
         if status == 'FAILED':
             message = (
-                'Significant number of components have poor separation between selected and not selected features:\n'
+                'Many components have poor separation between selected and '
+                'not selected features:\n'
                 + self._format_component_summary(n_failed_components, n_warning_components)
             )
         elif status == 'WARNING':
             message = (
-                'Some components have poor separation between selected and not selected features:\n'
+                'Some components have poor separation between selected and '
+                'not selected features:\n'
                 + self._format_component_summary(n_failed_components, n_warning_components)
             )
         else:
@@ -516,7 +523,8 @@ class PerformanceTests:
             display(Markdown(f'**Component {component}** {status_icon}'))
             display(
                 Markdown(
-                    f' - {comp_detail["intersection_count"]}/{details["n_features_tested"]} common features'
+                    f' - {comp_detail["intersection_count"]}/'
+                    f'{details["n_features_tested"]} common features'
                 )
             )
             if comp_detail['intersection_count'] == 0:
@@ -557,7 +565,7 @@ class PerformanceTests:
                 current_diff = comp_detail['extreme_diff']
                 display(
                     Markdown(
-                        f'  - Small difference between best and worst feature: {current_diff:.4f} ≤ {threshold:.4f}'
+                        f'  - Small diff best/worst feature: {current_diff:.4f} ≤ {threshold:.4f}'
                     )
                 )
             elif component_status == 'WARNING':
@@ -565,7 +573,7 @@ class PerformanceTests:
                 current_diff = comp_detail['boundary_diff']
                 display(
                     Markdown(
-                        f'  - Small gap at feature selection boundary: {current_diff:.4f} ≤ {threshold:.4f}'
+                        f'  - Small gap at selection boundary: {current_diff:.4f} ≤ {threshold:.4f}'
                     )
                 )
             else:
@@ -577,8 +585,9 @@ class PerformanceTests:
                 other_values = [np.round(v, 4) for v in comp_detail['other_features_values']]
                 display(
                     Markdown(
-                        f' - Top {details["desired_sparsity"]} feature |μ| values: {selected_values}\n'
-                        f' - {len(other_values)} other compared values: {other_values}'
+                        f' - Top {details["desired_sparsity"]} |μ|: '
+                        f'{selected_values}\n'
+                        f' - {len(other_values)} other: {other_values}'
                     )
                 )
 
@@ -591,7 +600,7 @@ class PerformanceTests:
         None
             Displays test results as markdown output.
         """
-        display(Markdown('# Testing algorithm performance (work in progress)'))
+        display(Markdown('# Testing algorithm performance (WIP)'))
         display(Markdown(f'**Total tests run:** {len(self.test_results)}'))
 
         failed_tests = [r for r in self.test_results if r['status'] == 'FAILED']
@@ -600,7 +609,8 @@ class PerformanceTests:
 
         display(
             Markdown(
-                f'**Failed:** {len(failed_tests)} | **Warnings:** {len(warning_tests)} | **Passed:** {len(passed_tests)}'
+                f'**Failed:** {len(failed_tests)} | **Warnings:** '
+                f'{len(warning_tests)} | **Passed:** {len(passed_tests)}'
             )
         )
 

@@ -143,7 +143,7 @@ def load_experiment_results(
             if verbose:
                 display(
                     Markdown(
-                        f'Successfully loaded {len(df_tier)} experiment records from **Tier {tier_id}**.'
+                        f'Successfully loaded {len(df_tier)} experiment records from **Tier {tier_id}**.'  # noqa: E501
                     )
                 )
             # Ensure numeric columns are actually numeric
@@ -319,7 +319,7 @@ def get_average_metrics_per_group(
         if verbose:
             display(
                 Markdown(
-                    f'### {aggregation_func.capitalize()} performance metrics for {group_identifier} = {group}'
+                    f'### {aggregation_func.capitalize()} performance metrics for {group_identifier} = {group}'  # noqa: E501
                 )
             )
             display(df_group_avg)
@@ -429,7 +429,8 @@ def get_best_solution_type_per_group(
         aggregation_func_display = aggregation_func if aggregation_func else ''
         display(
             Markdown(
-                f'## Best solution types per {group_identifier} based on {aggregation_func_display} {metric}'
+                f'## Best solution types per {group_identifier} '
+                f'based on {aggregation_func_display} {metric})'
             )
         )
         for group, sol_type in sol_type_per_group.items():

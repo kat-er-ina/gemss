@@ -10,10 +10,10 @@ Modules:
 - recommendation_messages: Message templates for recommendations
 """
 
-from .performance_tests import PerformanceTests
-from .recommendation_messages import (
+from gemss.diagnostics.performance_tests import PerformanceTests
+from gemss.diagnostics.recommendation_messages import (
     RECOMMENDATION_MESSAGES,
     get_available_recommendation_keys,
     get_recommendation_message,
 )
-from .recommendations import RecommendationEngine
+from gemss.diagnostics.recommendations import RecommendationEngine

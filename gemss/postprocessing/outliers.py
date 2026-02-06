@@ -68,7 +68,8 @@ def detect_outlier_features(
     replace_middle_by_zero: bool | None = False,
 ) -> dict[str, list[float]]:
     """
-    Detects outlier features based on their deviation from the mean (i.e. z-score) or median. Return the names of the outliers.
+    Detects outlier features based on their deviation from the mean (i.e. z-score) or median.
+    Return the names of the outliers.
 
     Parameters:
     -----------
@@ -77,8 +78,9 @@ def detect_outlier_features(
     threshold_coeff: float
         Threshold multiplier for the absolute deviation to identify outliers.
     use_median: bool, optional
-        Whether to use median for outlier detection instead of mean. Using median is less sensitive to large
-        values but it leads to larger deviation values, i.e. more outliers detected. Default is False.
+        Whether to use median for outlier detection instead of mean. Using median is less sensitive
+        to large values but it leads to larger deviation values, i.e. more outliers detected.
+        Default is False.
     replace_middle_by_zero: bool, optional
         If True, uses zero instead of median or mean for outlier detection. Default is False.
 
@@ -418,7 +420,10 @@ def show_outlier_features_by_component(
 
     # Display the results
     n_components = len(history['mu'][0])
-    title = f'Summary of outlier features across all {n_components} components (threshold = {outlier_threshold_coeff} absolute deviations)'
+    title = (
+        f'Summary of outlier features across all {n_components} components '
+        f'(threshold = {outlier_threshold_coeff} absolute deviations)'
+    )
 
     show_outlier_summary(
         outlier_summary_df=outlier_summary_df,

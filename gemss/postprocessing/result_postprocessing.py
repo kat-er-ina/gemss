@@ -28,7 +28,8 @@ def get_full_solutions(
     dict[str, np.ndarray | int],
 ]:
     """
-    Recover full non-zero solutions and the corresponding final parameters from the optimization history.
+    Recover full non-zero solutions and the corresponding final parameters from the optimization
+    history.
 
     Parameters
     ----------
@@ -53,8 +54,9 @@ def get_full_solutions(
         A tuple containing:
         - full_solutions: Dictionary mapping each component to a DataFrame of all features
           that exceeded the min_mu_threshold, with columns ['Feature', 'Mu value'].
-        - final_parameters: Dictionary with keys 'final iteration', 'final mu', 'final var', 'final alpha'
-          containing the final parameters for each component at the iteration where features were selected.
+        - final_parameters: Dictionary with keys 'final iteration', 'final mu', 'final var',
+          'final alpha' containing the final parameters for each component at the iteration
+          where features were selected.
     """
     n_components = len(search_history['mu'][0])
     n_features = len(search_history['mu'][0][0])
@@ -105,7 +107,7 @@ def get_full_solutions(
         )
         full_solutions[f'component_{k}'] = df_features
 
-        # Store the final parameters for this component at the iteration where features were selected
+        # Store final parameters at the iteration where features were selected
         final_iteration[k] = -(i - 1)
         final_mu[k] = np.array(search_history['mu'])[final_iteration[k], k, :]
         final_var[k] = np.array(search_history['var'])[final_iteration[k], k, :]
@@ -113,7 +115,7 @@ def get_full_solutions(
 
     # Get the final parameters
     final_parameters = {
-        'final iteration': final_iteration,  # the iteration from which the final parameters are taken
+        'final iteration': final_iteration,  # the parameters are taken at this iteration
         'final mu': final_mu,
         'final var': final_var,
         'final alpha': final_alpha,
@@ -231,13 +233,15 @@ def recover_solutions(
         A tuple containing:
         - full_solutions: Dictionary mapping each component to a DataFrame of all features
           that exceeded the min_mu_threshold, with columns ['Feature', 'Mu value'].
-        - top_solutions: Dictionary mapping each component (solution) to a DataFrame of the top few features
-          based on their |mu| values. The DataFrames contain columns ['Feature', 'Mu value'].
+        - top_solutions: Dictionary mapping each component (solution) to a DataFrame of the top few
+          features based on their |mu| values. The DataFrames contain columns
+          ['Feature', 'Mu value'].
         - outlier_solutions: A dictionary where the keys are MAD/STD values for outlier detection
           and the corresponding values are dictionaries mapping each component to a DataFrame
           of outlier features.
-        - final_parameters: Dictionary with keys 'final iteration', 'final mu', 'final var', 'final alpha'
-          containing the final parameters for each component at the iteration where features were selected.
+        - final_parameters: Dictionary with keys 'final iteration', 'final mu', 'final var',
+          'final alpha' containing the final parameters for each component at the iteration
+          where features were selected.
 
     Raises
     ------
@@ -253,7 +257,7 @@ def recover_solutions(
     required_keys = {'mu', 'var', 'alpha'}
     if not required_keys.issubset(search_history.keys()):
         missing_keys = required_keys - set(search_history.keys())
-        raise KeyError(f'Search_history missing required keys: {missing_keys}')
+        raise KeyError(f'search_history missing keys: {missing_keys}')
 
     # Get the full solutions
     full_solutions, final_parameters = get_full_solutions(
@@ -319,14 +323,16 @@ def compare_true_and_found_features(
     extra_features = features_found - set(true_support_features)
 
     myprint(f'All features: {n_total_features}', use_markdown=use_markdown, header=3)
+    pct = len(true_support_features) / n_total_features
     myprint(
-        f'True support features: {len(true_support_features)} ({len(true_support_features) / n_total_features:.1%})',
+        f'True support features: {len(true_support_features)} ({pct:.1%})',
         use_markdown=use_markdown,
         header=3,
     )
     myprint(f'{sorted(true_support_features)}', use_markdown=use_markdown)
+    pct_found = len(features_found) / n_total_features
     myprint(
-        f'All features found: {len(features_found)} ({len(features_found) / n_total_features:.1%})',
+        f'All features found: {len(features_found)} ({pct_found:.1%})',
         use_markdown=use_markdown,
         header=3,
     )
@@ -337,8 +343,9 @@ def compare_true_and_found_features(
         header=3,
     )
     myprint(f'{sorted(missing_features)}', use_markdown=use_markdown)
+    pct_extra = len(extra_features) / n_total_features
     myprint(
-        f'Extra features found: {len(extra_features)} ({len(extra_features) / n_total_features:.1%})',
+        f'Extra features found: {len(extra_features)} ({pct_extra:.1%})',
         use_markdown=use_markdown,
         header=3,
     )
@@ -371,7 +378,8 @@ def get_features_from_long_solutions(
 
 def get_unique_features(solutions: dict[str, dict[str, list[Any]]]) -> list[str]:
     """
-    Returns the list of features contained in all of the solutions. Each feature is listed only once.
+    Returns the list of features contained in all of the solutions.
+    Each feature is listed only once.
 
     Parameters:
     -----------

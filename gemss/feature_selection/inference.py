@@ -57,7 +57,7 @@ class BayesianFeatureSelector:
     n_iter : int
         Number of optimization iterations.
     prior : object
-        Prior distribution object (SpikeAndSlabPrior, StructuredSpikeAndSlabPrior, or StudentTPrior).
+        Prior (SpikeAndSlabPrior, StructuredSpikeAndSlabPrior, or StudentTPrior).
     mixture : GaussianMixture
         Learnable mixture of diagonal Gaussians (variational posterior).
     opt : torch.optim.Optimizer
@@ -131,7 +131,7 @@ class BayesianFeatureSelector:
             Number of optimization iterations (default: 5000).
         device : Literal["cpu", "cuda"], optional
             Device to run computation on ('cpu' or 'cuda', default: 'cpu').
-        """
+        """  # noqa: E501
         self.n_features = n_features
         self.n_components = n_components
 
@@ -141,9 +141,7 @@ class BayesianFeatureSelector:
 
         # Validate that response values don't contain NaN
         if torch.isnan(self.y).any():
-            raise ValueError(
-                'Response variable (y) contains NaN values. Please remove samples with missing responses before feature selection.'
-            )
+            raise ValueError('Response (y) contains NaN. Remove samples with missing responses.')
 
         # Precompute NaN-related information for X to avoid repeated computation
         self._has_missing_X = torch.isnan(self.X).any().item()
@@ -223,7 +221,8 @@ class BayesianFeatureSelector:
         batch_size = z.shape[0]
 
         # These are guaranteed non-None since this method is only called when _has_missing_X is True
-        assert self._valid_sample_mask is not None and self._X_filled is not None
+        assert self._valid_sample_mask is not None
+        assert self._X_filled is not None
 
         # Combine precomputed X mask with dynamic y NaN check (y could be modified after init)
         valid_mask = self._valid_sample_mask & ~torch.isnan(self.y)
@@ -349,8 +348,8 @@ class BayesianFeatureSelector:
             If True, use elbo_regularized during optimization (default: False) by penalizing overlap
             between solutions.
         lambda_jaccard : float, optional
-            Regularization strength for penalty in the ELBO computation (default: 10.0). Higher values
-            encourage more diverse solutions (lesser overlap). Used only if regularize=True.
+            Regularization strength for penalty in the ELBO computation (default: 10.0). Higher
+            values encourage more diverse solutions (lesser overlap). Used only if regularize=True.
         verbose : bool, optional
             If True, print optimization progress (default: True).
 
@@ -397,7 +396,11 @@ class BayesianFeatureSelector:
             if verbose and nth_iteration and it > 0:
                 elapsed_time = time() - start_time
                 myprint(
-                    msg=f'**Iteration {it}:** elapsed time: {elapsed_time:.0f}s, remaining time: {elapsed_time / it * (self.n_iter - it):.0f}s, ELBO = {elbo.item()}'
+                    msg=(
+                        f'**Iteration {it}:** elapsed {elapsed_time:.0f}s, '
+                        f'remaining {elapsed_time / it * (self.n_iter - it):.0f}s, '
+                        f'ELBO = {elbo.item()}'
+                    )
                 )
         if verbose:
             myprint('Optimization complete.', use_markdown=True)

@@ -390,15 +390,15 @@ def display_parameter_adjustment_summary() -> None:
         Markdown(
             '| Parameter | Increase when | Decrease when | Typical range |\n'
             '|-----------|---------------|---------------|---------------|\n'
-            '| `DESIRED_SPARSITY` | Too restrictive. | The progress of mu values indicates that fewer features remain non-negligible. | Dataset-dependent. |'
-            '|`N_CANDIDATE_SOLUTIONS`| Current set of solutions does not contain enough combinations despite proper Jaccard regularization and desired sparsity settings. | Solutions overlap siginificantly and uselessly. Some component weights (alphas) might be negligible too. | Dataset-dependent. Advisable to be at least double the expected `true` number of solutions. |\n'
-            f'| `VAR_SPIKE` | All features converge (uniformly) to 0, i.e. over-regularization leads to no optimization and feature selection. | Too many features are selected in each component (false positives). | {var_spike_range} |\n'
-            f'| `VAR_SLAB` | Poor feature separation. | Over-regularization. | {var_slab_range} |\n'
-            f'| `IS_REGULARIZED` | True = penalize similarity among solutions. | False = do not influence diversity of features among solutions. | False (0) or True (1) |\n'
-            f'| `LAMBDA_JACCARD` | Greater diversity wanted: the individual solutions contain too many similar features. | Interested in solutions with overlapping feature sets. | {lambda_jaccard_range} |\n'
-            f'| `N_ITER` | The ELBO has not converged, the mu values are still changing significantly. | The ELBO convergence plateaus early, time constraints. | {n_iter_range} |\n'
-            f'| `LEARNING_RATE` | Too slow progress. | Unstable training. | {lr_range} |\n'
-            f'|`BATCH_SIZE`| Dataset contains noise, missing data, or imbalanced classes. When the sample size is large. | Iterations are too slow. Sample size is too small. | Dataset-dependent, typically {batch_range}. |'
+            '| `DESIRED_SPARSITY` | Too restrictive. | The progress of mu values indicates that fewer features remain non-negligible. | Dataset-dependent. |'  # noqa: E501
+            '|`N_CANDIDATE_SOLUTIONS`| Current set of solutions does not contain enough combinations despite proper Jaccard regularization and desired sparsity settings. | Solutions overlap siginificantly and uselessly. Some component weights (alphas) might be negligible too. | Dataset-dependent. Advisable to be at least double the expected `true` number of solutions. |\n'  # noqa: E501
+            f'| `VAR_SPIKE` | All features converge (uniformly) to 0, i.e. over-regularization leads to no optimization and feature selection. | Too many features are selected in each component (false positives). | {var_spike_range} |\n'  # noqa: E501
+            f'| `VAR_SLAB` | Poor feature separation. | Over-regularization. | {var_slab_range} |\n'  # noqa: E501
+            f'| `IS_REGULARIZED` | True = penalize similarity among solutions. | False = do not influence diversity of features among solutions. | False (0) or True (1) |\n'  # noqa: E501
+            f'| `LAMBDA_JACCARD` | Greater diversity wanted: the individual solutions contain too many similar features. | Interested in solutions with overlapping feature sets. | {lambda_jaccard_range} |\n'  # noqa: E501
+            f'| `N_ITER` | The ELBO has not converged, the mu values are still changing significantly. | The ELBO convergence plateaus early, time constraints. | {n_iter_range} |\n'  # noqa: E501
+            f'| `LEARNING_RATE` | Too slow progress. | Unstable training. | {lr_range} |\n'  # noqa: E501
+            f'|`BATCH_SIZE`| Dataset contains noise, missing data, or imbalanced classes. When the sample size is large. | Iterations are too slow. Sample size is too small. | Dataset-dependent, typically {batch_range}. |'  # noqa: E501
         )
     )
 

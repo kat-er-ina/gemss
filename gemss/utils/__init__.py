@@ -6,7 +6,7 @@ Utility functions for the GEMSS package:
 - Visualization tools for results interpretation.
 """
 
-from .utils import (
+from gemss.utils.utils import (
     SelectorHistory,
     dataframe_to_ascii_table,
     display_feature_lists,
@@ -23,7 +23,7 @@ from .utils import (
     save_selector_history_json,
     show_solution_summary,
 )
-from .visualizations import (
+from gemss.utils.visualizations import (
     compare_parameters,
     get_algorithm_progress_plots,
     get_alpha_plot,

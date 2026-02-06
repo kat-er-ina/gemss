@@ -5,7 +5,7 @@ This module aggregates all postprocessing and downstream modeling functionalitie
 - Simple regression analyses
 """
 
-from .outliers import (
+from gemss.postprocessing.outliers import (
     detect_outlier_features,
     get_outlier_info_df,
     get_outlier_solutions,
@@ -14,7 +14,7 @@ from .outliers import (
     show_outlier_info,
     show_outlier_summary,
 )
-from .result_postprocessing import (
+from gemss.postprocessing.result_postprocessing import (
     compare_true_and_found_features,
     get_features_from_long_solutions,
     get_features_from_solutions,
@@ -28,7 +28,7 @@ from .result_postprocessing import (
     show_unique_features,
     show_unique_features_from_full_solutions,
 )
-from .simple_regressions import (
+from gemss.postprocessing.simple_regressions import (
     detect_task,
     print_verbose_linear_regression_results,
     print_verbose_logistic_regression_results,
@@ -37,7 +37,7 @@ from .simple_regressions import (
     solve_with_linear_regression,
     solve_with_logistic_regression,
 )
-from .tabpfn_evaluation import (
+from gemss.postprocessing.tabpfn_evaluation import (
     Predictable,
     classification_metrics,
     regression_metrics,

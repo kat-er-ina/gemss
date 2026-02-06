@@ -32,6 +32,13 @@ from typing import Any, Literal
 
 from .constants import CONFIG_FILES
 
+try:
+    from IPython.display import Markdown
+    from IPython.display import display as ipython_display
+except ImportError:
+    Markdown = None  # noqa: N816
+    ipython_display = None
+
 
 class ConfigurationManager:
     """
@@ -89,26 +96,48 @@ class ConfigurationManager:
         'BINARY_RESPONSE_RATIO': 'Proportion of synthetic samples assigned label 1.',
         'DATASET_SEED': 'Random seed for synthetic data reproducibility.',
         # Algorithm settings
-        'N_CANDIDATE_SOLUTIONS': 'Desired number of candidate solutions (components of the Gaussian mixture approximating the variational posterior). Set to 2-3x the value of expected true solutions.',
+        'N_CANDIDATE_SOLUTIONS': (
+            'Desired number of candidate solutions (components of the Gaussian mixture '
+            'approximating the variational posterior). Set to 2-3x expected true solutions.'
+        ),
         'N_ITER': 'Number of optimization iterations.',
         'PRIOR_TYPE': "Prior type ('ss', 'sss', or 'student')",
-        'PRIOR_SPARSITY': "Expected number of nonzero features per component. Used only in 'sss' prior",
-        'SAMPLE_MORE_PRIORS_COEFF': 'Coefficient for increased support sampling. Experimental use only.',
-        'STUDENT_DF': "Degrees of freedom for the Student-t prior. Used only if PRIOR_TYPE is 'student'.",
-        'STUDENT_SCALE': "Scale parameter for the Student-t prior. Used only if PRIOR_TYPE is 'student'.",
-        'VAR_SLAB': "Variance of the 'slab' component in the 'ss' or 'sss' prior. Ignored for 'student' prior.",
-        'VAR_SPIKE': "Variance of the 'spike' component in the 'ss' or 'sss' prior. Ignored for 'student' prior.",
-        'WEIGHT_SLAB': "Weight of the 'slab' component in the 'ss' prior. Ignored for other priors.",
-        'WEIGHT_SPIKE': "Weight of the 'spike' component in the 'ss' prior. Ignored for other priors.",
+        'PRIOR_SPARSITY': (
+            "Expected number of nonzero features per component. Used only in 'sss' prior"
+        ),
+        'SAMPLE_MORE_PRIORS_COEFF': (
+            'Coefficient for increased support sampling. Experimental use only.'
+        ),
+        'STUDENT_DF': (
+            "Degrees of freedom for the Student-t prior. Used only if PRIOR_TYPE is 'student'."
+        ),
+        'STUDENT_SCALE': (
+            "Scale parameter for the Student-t prior. Used only if PRIOR_TYPE is 'student'."
+        ),
+        'VAR_SLAB': ("Variance of the 'slab' in 'ss' or 'sss' prior. Ignored for 'student' prior."),
+        'VAR_SPIKE': (
+            "Variance of the 'spike' in 'ss' or 'sss' prior. Ignored for 'student' prior."
+        ),
+        'WEIGHT_SLAB': ("Weight of the 'slab' in the 'ss' prior. Ignored for other priors."),
+        'WEIGHT_SPIKE': ("Weight of the 'spike' in the 'ss' prior. Ignored for other priors."),
         'IS_REGULARIZED': 'Whether to use Jaccard similarity penalty.',
-        'LAMBDA_JACCARD': 'Regularization strength for Jaccard penalty. Applies only if IS_REGULARIZED is True.',
+        'LAMBDA_JACCARD': (
+            'Regularization strength for Jaccard penalty. Applies only if IS_REGULARIZED is True.'
+        ),
         'BATCH_SIZE': 'Minibatch size for stochastic updates in the SGD optimization.',
         'LEARNING_RATE': 'Learning rate for the Adam optimizer.',
         # Postprocessing
         'DESIRED_SPARSITY': 'Desired number of features in final solution.',
-        'MIN_MU_THRESHOLD': 'Minimum mu threshold for feature selection. Specific for each dataset.',
-        'USE_MEDIAN_FOR_OUTLIER_DETECTION': 'Whether to use median and MAD or mean and STD when selecting features by outlier detection.',
-        'OUTLIER_DEVIATION_THRESHOLDS': 'A list of thresholding values of either MAD or STD to be used to define outliers.',
+        'MIN_MU_THRESHOLD': (
+            'Minimum mu threshold for feature selection. Specific for each dataset.'
+        ),
+        'USE_MEDIAN_FOR_OUTLIER_DETECTION': (
+            'Whether to use median and MAD or mean and STD when selecting features '
+            'by outlier detection.'
+        ),
+        'OUTLIER_DEVIATION_THRESHOLDS': (
+            'List of thresholding values of MAD or STD to define outliers.'
+        ),
     }
 
     def __init__(self):
@@ -199,7 +228,8 @@ class ConfigurationManager:
             return self.get_all_params()
         else:
             raise ValueError(
-                f"Unknown category: {category}. Valid categories: 'artificial_dataset', 'algorithm', 'postprocessing', 'all'"
+                f'Unknown category: {category}. '
+                "Valid: 'artificial_dataset', 'algorithm', 'postprocessing', 'all'"
             )
 
 
@@ -404,9 +434,7 @@ def display_current_config(
         Parameter category to display:
         'algorithm', 'postprocessing', 'algorithm_and_postprocessing', 'dataset', 'all'
     """
-    try:
-        from IPython.display import Markdown, display
-    except ImportError:
+    if ipython_display is None:
         print('IPython not available. Cannot display formatted configuration.')
         return
 
@@ -423,6 +451,6 @@ def display_current_config(
     else:
         section_title = f'{constant_type} parameters'
 
-    display(Markdown(f'## Configuration: {section_title}'))
-    display(Markdown(table_lines))
+    ipython_display(Markdown(f'## Configuration: {section_title}'))
+    ipython_display(Markdown(table_lines))
     return

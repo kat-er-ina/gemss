@@ -4,7 +4,7 @@ Configuration package for GEMSS (Gaussian Ensemble for Multiple Sparse Solutions
 This package contains configuration loading functionality and JSON parameter files.
 """
 
-from .config import (
+from gemss.config.config import (
     BATCH_SIZE,
     BINARIZE,
     BINARY_RESPONSE_RATIO,
@@ -41,7 +41,7 @@ from .config import (
     get_current_config,
     get_params_by_category,
 )
-from .constants import (
+from gemss.config.constants import (
     CONFIG_FILES,
     CONFIG_PACKAGE_NAME,
     DATA_DIR,

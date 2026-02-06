@@ -45,7 +45,8 @@ def detect_task(y: pd.Series | np.ndarray, n_class_threshold: int = 10) -> str:
     Detect if the task should be treated as classification or regression.
     Rules:
     - If the target has 2 or fewer unique values, it's classification.
-    - If the target is of integer or boolean type and has fewer unique values than the threshold, it's classification.
+    - If target is integer/boolean and has fewer unique values than threshold,
+      it's classification.
     - Otherwise, it's regression.
 
     Parameters
@@ -116,23 +117,23 @@ def print_verbose_logistic_regression_results(
     display(Markdown(f'**Number of samples:** {stats["n_samples"]}'))
     display(
         Markdown(
-            f'**Class distribution (0/1):** {stats["class_distribution"]["class_0"]:.1%} / {stats["class_distribution"]["class_1"]:.1%}'
+            f'**Class distribution (0/1):** '
+            f'{stats["class_distribution"]["class_0"]:.1%} / '
+            f'{stats["class_distribution"]["class_1"]:.1%}'
         )
     )
     display(Markdown(f'**Accuracy:** {stats["accuracy"]}'))
     display(Markdown(f'**Balanced Accuracy:** {stats["balanced_accuracy"]}'))
     display(Markdown(f'**ROC-AUC:** {stats["roc_auc"]}'))
     display(Markdown(f'**Balanced F1 Score:** {stats["f1_score"]}'))
-    display(
-        Markdown(
-            f'**Precision (class 0/1):** {stats["precision_class_0"]} / {stats["precision_class_1"]}'
-        )
-    )
+    prec0, prec1 = stats['precision_class_0'], stats['precision_class_1']
+    display(Markdown(f'**Precision (class 0/1):** {prec0} / {prec1}'))
     display(
         Markdown(f'**Recall (class 0/1):** {stats["recall_class_0"]} / {stats["recall_class_1"]}')
     )
 
-    display(Markdown(f'**{stats["n_nonzero_coefficients"]} non-zero features with coefficients:**'))
+    n_nz = stats['n_nonzero_coefficients']
+    display(Markdown(f'**{n_nz} non-zero features with coefficients:**'))
     display(
         [
             f'{stats["nonzero_feature_names"][i]}: {stats["nonzero_coefficients"][i]}'
@@ -305,7 +306,8 @@ def print_verbose_linear_regression_results(
     display(Markdown(f'**MAE:** {stats["MAE"]}'))
     if not np.isnan(stats['MAPE']):
         display(Markdown(f'**MAPE:** {stats["MAPE"]}%'))
-    display(Markdown(f'**{stats["n_nonzero_coefficients"]} non-zero features with coefficients:**'))
+    n_nz = stats['n_nonzero_coefficients']
+    display(Markdown(f'**{n_nz} non-zero features with coefficients:**'))
     display(
         [
             f'{stats["nonzero_feature_names"][i]}: {stats["nonzero_coefficients"][i]}'
@@ -504,19 +506,25 @@ def solve_any_regression(
         y_filtered = df_filtered.pop('response')
 
         # check missing value ratio and sample size
-        nan_ratio = df[features].isna().sum().sum() / (len(df[features]) * len(features))
+        n_vals = len(df[features]) * len(features)
+        nan_ratio = df[features].isna().sum().sum() / n_vals  # noqa: F841
 
         # FIXME: nan_ratio is in range 0 to 100 for some components
         # if nan_ratio > MAX_ALLOWED_NAN_RATIO:
         #     myprint(
-        #         msg=f"**Cannot run classical regression for {component}.** NAN_RATIO is {nan_ratio}, which is greater than the allowed ratio {MAX_ALLOWED_NAN_RATIO}.",
+        #         msg=f"**Cannot run classical regression for {component}.** NAN_RATIO is {nan_ratio}, which is greater than the allowed ratio {MAX_ALLOWED_NAN_RATIO}.", # noqa: E501
         #         use_markdown=use_markdown,
         #     )
         #     continue
 
         if df_filtered.shape[0] < MIN_ALLOWED_SAMPLES:
+            n_left = df_filtered.shape[0]
             myprint(
-                msg=f'**Cannot run classical regression for {component}.** After removing NaNs, only {df_filtered.shape[0]} samples are left (at least {MIN_ALLOWED_SAMPLES} are required).',
+                msg=(
+                    f'**Cannot run regression for {component}.** '
+                    f'After dropping NaNs: {n_left} samples '
+                    f'(need ≥ {MIN_ALLOWED_SAMPLES}).'
+                ),
                 use_markdown=use_markdown,
             )
             continue
