@@ -1,6 +1,6 @@
 [project]
 name = "gemss"
-version = "0.1.0"
+version = "1.0.0"
 description = "GEMSS: Gaussian Ensemble for Multiple Sparse Solutions."
 readme = "README.md"
 requires-python = ">=3.13,<4.0"
