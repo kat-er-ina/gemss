@@ -10,10 +10,14 @@ authors = [
 license = { text = "MIT" }
 keywords = [
   "feature-selection",
+  "alternative-feature-selection",
   "sparse-regression",
   "bayesian",
   "variational-inference",
   "machine-learning",
+  "rashomon-effect",
+  "predictive-multiplicity",
+  "interpretability",
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
