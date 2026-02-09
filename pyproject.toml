@@ -3,9 +3,30 @@ name = "gemss"
 version = "0.1.0"
 description = "GEMSS: Gaussian Ensemble for Multiple Sparse Solutions."
 readme = "README.md"
-requires-python = "==3.13.*"
+requires-python = ">=3.13,<4.0"
 authors = [
-  { name = "Katerina Henclova", email = "katerina.henclova@datamole.ai" }
+  { name = "Katerina Henclova", email = "katerina.henclova@datamole.ai" },
+  { name = "Marek Nevole", email = "nevole.marek@gmail.com" }
+]
+license = { text = "MIT" }
+keywords = [
+  "feature-selection",
+  "alternative-feature-selection",
+  "sparse-regression",
+  "bayesian",
+  "variational-inference",
+  "machine-learning",
+  "rashomon-effect",
+  "predictive-multiplicity",
+  "interpretability",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
     "ipywidgets>=8.0.0",
@@ -27,6 +48,7 @@ dependencies = [
 dev = [
     "pytest>=9.0.2",
     "pytest-xdist>=3.8.0",
+    "python-semantic-release>=10.5.3",
     "ruff>=0.14.14",
 ]
 
@@ -34,11 +56,28 @@ dev = [
 Repository = "https://github.com/kat-er-ina/gemss"
 
 [tool.marimo.runtime]
-output_max_bytes = 200_000_000
+output_max_bytes = 1_000_000_000
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+build_command = "uv lock --upgrade-package $PACKAGE_NAME && git add uv.lock && uv build"
+tag_format = "v{version}"
+commit_message = "release: version {version}"
+commit_parser = "conventional"
+
+[tool.semantic_release.commit_parser_options]
+minor_tags = ["feat"]
+patch_tags = ["fix"]
+
+[tool.semantic_release.changelog]
+exclude_commit_patterns = [
+  "^release: version .*",
+]
+template_dir = ".github/semantic-release-templates"
 
 [tool.hatch.build.targets.wheel]
 packages = ["gemss"]
@@ -69,7 +108,7 @@ lint.ignore = [
     "N806",
     "N812",
 ]
-src = ["src"]
+src = ["gemss"]
 
 [tool.ruff.format]
 quote-style = "single"

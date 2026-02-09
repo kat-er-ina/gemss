@@ -2,7 +2,7 @@
 
 This repository implements Bayesian sparse feature selection using variational inference with Gaussian mixture models. The main objective is to recover all sparse feature subsets (supports) that explain the response in high-dimensional regression or classification tasks.
 
-**To make this tool accessible by non-coders (typically domain experts), we provide a user-friendly application for the entire exploratory GEMSS workflow.**
+**To make this tool accessible by non-coders (typically domain experts), we provide a [user-friendly application](./app/README.md) for the entire exploratory GEMSS workflow.**
 
 ## Motivation
 

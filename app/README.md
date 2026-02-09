@@ -2,6 +2,34 @@
 
 Interactive [marimo](https://marimo.io/) applications are available for exploring multiple sparse solutions in your data using the GEMSS feature selection algorithm.
 
+
+## Running the apps
+
+### 1. Install uv
+If you do not have `uv` installed, run one of the following commands:
+
+**macOS/Linux:**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Windows:**
+```powershell
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+### 2. Launch an app
+
+```bash
+# Unlimited version (commercial use allowed)
+uv run marimo run app/gemss_explorer_unlimited.py
+
+# Non-commercial version (with TabPFN modeling)
+uv run marimo run app/gemss_explorer_noncommercial.py
+```
+
+The app will open in your default web browser at `http://localhost:2718`.
+
 ## Available apps
 
 ### 1. GEMSS Explorer Unlimited
@@ -19,25 +47,6 @@ The full-featured GEMSS workflow for unlimited use, including commercial applica
 Includes all features from the unlimited version plus advanced modeling with [TabPFN](https://huggingface.co/Prior-Labs/tabpfn_2_5) for comprehensive solution evaluation.
 
 ⚠️ **Important:** Use of TabPFN requires agreement with its [license terms](https://huggingface.co/Prior-Labs/tabpfn_2_5#licensing).
-
-## Running the apps
-
-Activate the environment (optional but recommended):
-```bash
-.venv\Scripts\activate.ps1  # Windows
-source .venv/bin/activate   # macOS/Linux
-```
-
-Launch an app:
-```bash
-# Unlimited version (commercial use allowed)
-uv run marimo run app/gemss_explorer_unlimited.py
-
-# Non-commercial version (with TabPFN modeling)
-uv run marimo run app/gemss_explorer_noncommercial.py
-```
-
-The app will open in your default web browser at `http://localhost:2718`.
 
 ## Using the apps
 
