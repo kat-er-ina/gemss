@@ -44,6 +44,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: dist-preflight
+          path: dist
 
       - name: Install uv and Python
         uses: astral-sh/setup-uv@v7
@@ -127,6 +128,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: dist
+          path: dist
 
       - name: Install uv and Python
         uses: astral-sh/setup-uv@v7
