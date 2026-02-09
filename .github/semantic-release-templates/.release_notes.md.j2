@@ -1,0 +1,38 @@
+{# Release notes for the current version only. #}
+{%- set type_groups = {
+  "✨ Changes": ["feat", "fix"],
+  "⚡ Performance": ["perf"],
+  "🧹 Refactors": ["refactor"],
+  "📚 Docs": ["docs"],
+  "🧪 Tests": ["test"],
+  "🛠️ Chore": ["chore", "build", "ci"]
+} -%}
+
+## {{ version }}
+{%- set authors = [] -%}
+{%- for group_title, types in type_groups.items() %}
+{%- set group_commits = [] -%}
+{%- for commit_type in types -%}
+{%- for commit in release.elements.get(commit_type, []) -%}
+{%- set _ = group_commits.append(commit) -%}
+{%- endfor -%}
+{%- endfor -%}
+{%- if group_commits %}
+### {{ group_title }}
+{%- for commit in group_commits %}
+{%- set pr_url = commit.linked_merge_request | pull_request_url -%}
+- {{ commit.descriptions | join(" ") }}{% if commit.linked_merge_request %} ({% if pr_url %}[{{ commit.linked_merge_request }}]({{ pr_url }}){% else %}{{ commit.linked_merge_request }}{% endif %}){% endif %}
+{%- set author_name = commit.commit.author.name -%}
+{%- if author_name and author_name not in authors -%}
+{%- set _ = authors.append(author_name) -%}
+{%- endif -%}
+{%- endfor %}
+{%- endif %}
+{%- endfor %}
+
+{%- if authors %}
+### 👥❤️ Authors
+{%- for author in authors %}
+- {{ author }}
+{%- endfor %}
+{%- endif %}

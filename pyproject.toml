@@ -47,6 +47,7 @@ dependencies = [
 dev = [
     "pytest>=9.0.2",
     "pytest-xdist>=3.8.0",
+    "python-semantic-release>=10.5.3",
     "ruff>=0.14.14",
 ]
 
@@ -59,6 +60,23 @@ output_max_bytes = 1_000_000_000
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+build_command = "uv lock --upgrade-package $PACKAGE_NAME && git add uv.lock && uv build"
+tag_format = "v{version}"
+commit_message = "release: version {version}"
+commit_parser = "conventional"
+
+[tool.semantic_release.commit_parser_options]
+minor_tags = ["feat"]
+patch_tags = ["fix"]
+
+[tool.semantic_release.changelog]
+exclude_commit_patterns = [
+  "^release: version .*",
+]
+template_dir = ".github/semantic-release-templates"
 
 [tool.hatch.build.targets.wheel]
 packages = ["gemss"]
