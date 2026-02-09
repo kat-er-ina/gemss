@@ -8,8 +8,62 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  build-dist:
+    runs-on: ubuntu-slim
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+          enable-cache: true
+          cache-python: true
+
+      - name: Build package
+        run: uv build
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-preflight
+          path: dist/
+
+  test-built-package:
+    runs-on: ubuntu-slim
+    needs: build-dist
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.13", "3.14"]
+    steps:
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-preflight
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+          cache-python: true
+
+      - name: Create virtualenv
+        run: uv venv
+
+      - name: Install built wheel
+        run: uv pip install dist/*.whl
+
+      - name: Smoke test
+        run: uv run python -c "import gemss; print(gemss.__version__)"
+
   release:
     runs-on: ubuntu-slim
+    needs: test-built-package
     permissions:
       contents: write
     outputs:
@@ -50,12 +104,6 @@ jobs:
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "tag=v$version" >> $GITHUB_OUTPUT
 
-      - name: Publish GitHub release notes
-        if: steps.outputs.outputs.released == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: uv run semantic-release publish
-
       - name: Upload dist artifact
         if: steps.outputs.outputs.released == 'true'
         uses: actions/upload-artifact@v4
@@ -63,43 +111,18 @@ jobs:
           name: dist
           path: dist/
 
-  test-built-package:
+  publish:
     runs-on: ubuntu-slim
     needs: release
     if: needs.release.outputs.released == 'true'
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.13", "3.14"]
-    steps:
-      - name: Download dist artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-
-      - name: Install uv and Python
-        uses: astral-sh/setup-uv@v7
-        with:
-          python-version: ${{ matrix.python-version }}
-          enable-cache: true
-          cache-python: true
-
-      - name: Create virtualenv
-        run: uv venv
-
-      - name: Install built wheel
-        run: uv pip install dist/*.whl
-
-      - name: Smoke test
-        run: uv run python -c "import gemss; print(gemss.__version__)"
-
-  publish:
-    runs-on: ubuntu-slim
-    needs: [release, test-built-package]
-    if: needs.release.outputs.released == 'true'
     permissions:
-      contents: read
+      contents: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
       - name: Download dist artifact
         uses: actions/download-artifact@v4
         with:
@@ -111,6 +134,11 @@ jobs:
           python-version: "3.13"
           enable-cache: true
           cache-python: true
+
+      - name: Publish GitHub release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: uv run semantic-release publish
 
       - name: Publish to PyPI
         env:
