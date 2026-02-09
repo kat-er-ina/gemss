@@ -414,6 +414,7 @@ dependencies = [
 dev = [
     { name = "pytest" },
     { name = "pytest-xdist" },
+    { name = "ruff" },
 ]
 
 [package.metadata]
@@ -437,6 +438,7 @@ requires-dist = [
 dev = [
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },
+    { name = "ruff", specifier = ">=0.14.14" },
 ]
 
 [[package]]

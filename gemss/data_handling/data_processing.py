@@ -4,14 +4,15 @@ Data preprocessing utilities for user-provided datasets.
 
 """
 
-from IPython.display import display, Markdown
-from typing import Dict, Literal, Optional, Tuple
-import pandas as pd
-import numpy as np
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from typing import Literal
 
-from gemss.utils.utils import myprint
+import numpy as np
+import pandas as pd
+from IPython.display import Markdown, display
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+
 from gemss.config.constants import DATA_DIR
+from gemss.utils.utils import myprint
 
 
 def load_data(
@@ -55,16 +56,14 @@ def get_feature_name_mapping(df: pd.DataFrame) -> dict:
     dict
         A dictionary mapping generic feature names (e.g., 'feature_0') to actual column names.
     """
-    feature_to_name = {
-        f"feature_{i}": col_name for i, col_name in enumerate(df.columns)
-    }
+    feature_to_name = {f'feature_{i}': col_name for i, col_name in enumerate(df.columns)}
     return feature_to_name
 
 
 def preprocess_non_numeric_features(
     df: pd.DataFrame,
-    how: Literal["drop", "onehot"] = "drop",
-    verbose: Optional[bool] = True,
+    how: Literal['drop', 'onehot'] = 'drop',
+    verbose: bool | None = True,
 ) -> pd.DataFrame:
     """
     Process non-numeric features in the DataFrame.
@@ -87,25 +86,23 @@ def preprocess_non_numeric_features(
     """
     df_copy = df.copy()
 
-    if how == "drop":
+    if how == 'drop':
         non_numeric_cols = df_copy.select_dtypes(exclude=[np.number]).columns.tolist()
         df_copy = df_copy.drop(columns=non_numeric_cols)
         if verbose:
             if len(non_numeric_cols) > 0:
                 display(
                     Markdown(
-                        f"Dropped {len(non_numeric_cols)} non-numeric features: {non_numeric_cols}."
+                        f'Dropped {len(non_numeric_cols)} non-numeric features: {non_numeric_cols}.'
                     )
                 )
             else:
-                display(
-                    Markdown("No non-numeric features found. No columns were dropped.")
-                )
+                display(Markdown('No non-numeric features found. No columns were dropped.'))
 
-    elif how == "onehot":
+    elif how == 'onehot':
         df_copy = pd.get_dummies(df_copy, drop_first=True)
         if verbose:
-            display(Markdown("Applied one-hot encoding to non-numeric features."))
+            display(Markdown('Applied one-hot encoding to non-numeric features.'))
 
     return df_copy
 
@@ -113,12 +110,12 @@ def preprocess_non_numeric_features(
 def preprocess_features(
     df: pd.DataFrame,
     response: pd.Series,
-    dropna: Literal["response", "all", "none"] = "response",
-    allowed_missing_percentage: Optional[float] = None,
+    dropna: Literal['response', 'all', 'none'] = 'response',
+    allowed_missing_percentage: float | None = None,
     drop_non_numeric_features: bool = True,
-    apply_scaling: Literal["standard", "minmax", None] = None,
-    verbose: Optional[bool] = True,
-) -> Tuple[np.ndarray, np.ndarray, Dict[str, str]]:
+    apply_scaling: Literal['standard', 'minmax', None] = None,
+    verbose: bool | None = True,
+) -> tuple[np.ndarray, np.ndarray, dict[str, str]]:
     """
     Preprocess the features by cleaning na values and applying scaling, if specified.
 
@@ -149,7 +146,7 @@ def preprocess_features(
 
     Returns:
     --------
-    Tuple[np.ndarray, np.ndarray, Dict[str, str]]
+    tuple[np.ndarray, np.ndarray, dict[str, str]]
         A tuple containing:
         - the preprocessed features as a NumPy array
         - the response values as a NumPy array
@@ -158,40 +155,36 @@ def preprocess_features(
     df_copy = df.copy()
 
     if drop_non_numeric_features:
-        df_copy = preprocess_non_numeric_features(df_copy, how="drop", verbose=verbose)
+        df_copy = preprocess_non_numeric_features(df_copy, how='drop', verbose=verbose)
 
     # handle NA values
-    if dropna != "none":
+    if dropna != 'none':
         initial_shape = df_copy.shape
         df_copy[response.name] = response
-        if dropna == "response":
+        if dropna == 'response':
             cols_to_check = [response.name]
-        elif dropna == "all":
+        elif dropna == 'all':
             cols_to_check = df_copy.columns.tolist()
         else:
-            raise ValueError(
-                "Invalid value for dropna. Choose from 'response', 'all', or 'none'."
-            )
+            raise ValueError("Invalid value for dropna. Choose from 'response', 'all', or 'none'.")
         df_copy = df_copy.dropna(subset=cols_to_check)
         response = df_copy.pop(response.name)
         if verbose:
             if df_copy.shape[0] == initial_shape[0]:
                 myprint(
-                    "No NA values found. No rows were dropped.",
+                    'No NA values found. No rows were dropped.',
                     use_markdown=True,
                 )
             else:
                 myprint(
-                    f"Dropped rows with NA values. Shape changed from {initial_shape} to {df_copy.shape}.",
+                    f'Dropped rows with NA. Shape: {initial_shape} -> {df_copy.shape}.',
                     use_markdown=True,
                 )
 
     # drop features with too many missing values
     if allowed_missing_percentage is not None:
         if allowed_missing_percentage < 0 or allowed_missing_percentage > 100:
-            raise ValueError(
-                "allowed_missing_percentage must be either None or between 0 and 100."
-            )
+            raise ValueError('allowed_missing_percentage must be None or between 0 and 100.')
         # Treat values between 0 and 1 as fractions
         if allowed_missing_percentage <= 1:
             allowed_missing_percentage *= 100
@@ -205,37 +198,39 @@ def preprocess_features(
         if verbose:
             if len(features_to_drop) > 0:
                 myprint(
-                    f"Dropped {len(features_to_drop)} features with more than {allowed_missing_percentage}% missing values. Shape changed from {initial_shape} to {df_copy.shape}.",
+                    f'Dropped {len(features_to_drop)} features with >{allowed_missing_percentage}% '
+                    f'missing. Shape: {initial_shape} -> {df_copy.shape}.',
                     use_markdown=True,
                 )
             else:
                 myprint(
-                    f"No features exceeded the allowed missing value percentage {allowed_missing_percentage}%. No columns were dropped.",
+                    f'No features exceeded {allowed_missing_percentage}% missing. '
+                    'No columns dropped.',
                     use_markdown=True,
                 )
 
     # scaling
-    if apply_scaling == "standard":
+    if apply_scaling == 'standard':
         scaler = StandardScaler()
         X = scaler.fit_transform(df_copy.values)
         if verbose:
             myprint(
-                "Features have been standardized using StandardScaler.",
+                'Features have been standardized using StandardScaler.',
                 use_markdown=True,
             )
-    elif apply_scaling == "minmax":
+    elif apply_scaling == 'minmax':
         scaler = MinMaxScaler(feature_range=(0, 1))
         X = scaler.fit_transform(df_copy.values)
         if verbose:
             myprint(
-                "Features have been scaled using MinMaxScaler.",
+                'Features have been scaled using MinMaxScaler.',
                 use_markdown=True,
             )
     else:
         X = df_copy.values
         if verbose:
             myprint(
-                "No scaling applied to features.",
+                'No scaling applied to features.',
                 use_markdown=True,
             )
 
@@ -244,7 +239,7 @@ def preprocess_features(
     n_total = X.size
     missing_pct = (n_missing / n_total) * 100
     myprint(
-        f"Dataset contains {n_missing}/{n_total} ({missing_pct:.1f}%) missing feature values.",
+        f'Dataset contains {n_missing}/{n_total} ({missing_pct:.1f}%) missing feature values.',
         use_markdown=True,
     )
 
@@ -270,7 +265,5 @@ def get_df_from_X(
     pd.DataFrame
         A DataFrame with the original feature names as columns.
     """
-    df = pd.DataFrame(
-        X, columns=[feature_to_name[f"feature_{i}"] for i in range(X.shape[1])]
-    )
+    df = pd.DataFrame(X, columns=[feature_to_name[f'feature_{i}'] for i in range(X.shape[1])])
     return df.astype(float)

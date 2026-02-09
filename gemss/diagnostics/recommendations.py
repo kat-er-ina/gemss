@@ -6,10 +6,16 @@ and generating specific parameter adjustment recommendations based on the
 diagnostic outcomes.
 """
 
-from typing import Dict, List, Any, Optional
-from IPython.display import display, Markdown
-from .recommendation_messages import get_recommendation_message
+from typing import TYPE_CHECKING, Any
+
+from IPython.display import Markdown, display
+
 from gemss.config import display_current_config
+
+if TYPE_CHECKING:
+    from .performance_tests import PerformanceTests
+
+from .recommendation_messages import get_recommendation_message
 
 
 class RecommendationEngine:
@@ -25,34 +31,34 @@ class RecommendationEngine:
     ----------
     diagnostics : PerformanceTests
         The performance tests instance with completed test results.
-    constants : Optional[Dict[str, Any]]
+    constants : dict[str, Any] | None
         Configuration constants dictionary for displaying current settings.
-    recommendation_keys : List[str]
+    recommendation_keys : list[str]
         List of applicable recommendation keys based on test results.
     severity_level : str
         Overall severity assessment: "CRITICAL", "WARNING", or "OPTIMIZATION".
-    test_status : Dict[str, str]
+    test_status : dict[str, str]
         Categorized test results by type and status.
     """
 
     # Success combination constant
-    SUCCESS_COMBINATION = "feature_ordering_passed_sparsity_gap_passed"
+    SUCCESS_COMBINATION = 'feature_ordering_passed_sparsity_gap_passed'
 
     # Parameter ranges for reference
     # May need to be adjusted
     PARAMETER_REFERENCE_RANGES = {
-        "N_ITER": (1000, 10000),
-        "LEARNING_RATE": (0.0005, 0.005),
-        "VAR_SLAB": (10, 500),
-        "VAR_SPIKE": (0.0001, 1.0),
-        "LAMBDA_JACCARD": (0, 2000),
-        "BATCH_SIZE": (16, 64),
+        'N_ITER': (1000, 10000),
+        'LEARNING_RATE': (0.0005, 0.005),
+        'VAR_SLAB': (10, 500),
+        'VAR_SPIKE': (0.0001, 1.0),
+        'LAMBDA_JACCARD': (0, 2000),
+        'BATCH_SIZE': (16, 64),
     }
 
     def __init__(
         self,
-        diagnostics,
-        constants: Optional[Dict[str, Any]] = None,
+        diagnostics: 'PerformanceTests',
+        constants: dict[str, Any] | None = None,
     ) -> None:
         """
         Initialize the recommendation engine with diagnostic results.
@@ -61,15 +67,15 @@ class RecommendationEngine:
         ----------
         diagnostics : PerformanceTests
             The performance tests instance with completed test results.
-        constants : Optional[Dict[str, Any]], optional
+        constants : dict[str, Any] | None, optional
             Configuration constants dictionary for displaying current settings.
             Default is None.
         """
         self.diagnostics = diagnostics
         self.constants = constants
-        self.recommendation_keys: List[str] = []
-        self.severity_level: str = ""
-        self.test_status: Dict[str, str] = {}
+        self.recommendation_keys: list[str] = []
+        self.severity_level: str = ''
+        self.test_status: dict[str, str] = {}
 
         # Analyze test results upon initialization
         self.analyze_test_results()
@@ -90,7 +96,7 @@ class RecommendationEngine:
         Display all recommendations based on the analyzed test results.
         """
         if not self.diagnostics.test_results:
-            display(Markdown("## No test results available for recommendations"))
+            display(Markdown('## No test results available for recommendations'))
             return
 
         # Display current configuration if constants are provided
@@ -108,13 +114,13 @@ class RecommendationEngine:
         if not self._has_only_success():
             display_parameter_adjustment_summary()
 
-    def get_recommendation_summary(self) -> Dict[str, Any]:
+    def get_recommendation_summary(self) -> dict[str, Any]:
         """
         Get a structured summary of recommendations.
 
         Returns
         -------
-        Dict[str, Any]
+        dict[str, Any]
             Dictionary containing recommendation summary with keys:
             - severity_level: Overall severity assessment
             - recommendation_keys: List of recommendation keys
@@ -122,19 +128,19 @@ class RecommendationEngine:
             - has_issues: Boolean indicating if there are issues to address
         """
         return {
-            "severity_level": self.severity_level,
-            "recommendation_keys": self.recommendation_keys,
-            "test_status": self.test_status,
-            "has_issues": not self._has_only_success(),
+            'severity_level': self.severity_level,
+            'recommendation_keys': self.recommendation_keys,
+            'test_status': self.test_status,
+            'has_issues': not self._has_only_success(),
         }
 
-    def export_recommendations_to_dict(self) -> Dict[str, Any]:
+    def export_recommendations_to_dict(self) -> dict[str, Any]:
         """
         Export recommendations to a dictionary for logging or saving.
 
         Returns
         -------
-        Dict[str, Any]
+        dict[str, Any]
             Dictionary containing full recommendation data including
             messages and structured analysis results.
         """
@@ -143,79 +149,79 @@ class RecommendationEngine:
             recommendation = get_recommendation_message(key)
             recommendations_data.append(
                 {
-                    "key": key,
-                    "section_header": recommendation["section_header"],
-                    "title": recommendation["title"],
-                    "description": recommendation["description"],
-                    "recommendations": recommendation.get("recommendations", ""),
+                    'key': key,
+                    'section_header': recommendation['section_header'],
+                    'title': recommendation['title'],
+                    'description': recommendation['description'],
+                    'recommendations': recommendation.get('recommendations', ''),
                 }
             )
 
         return {
-            "summary": self.get_recommendation_summary(),
-            "recommendations": recommendations_data,
-            "constants": self.constants,
+            'summary': self.get_recommendation_summary(),
+            'recommendations': recommendations_data,
+            'constants': self.constants,
         }
 
-    def _categorize_test_results(self) -> Dict[str, str]:
+    def _categorize_test_results(self) -> dict[str, str]:
         """
         Categorize test results by type and status.
 
         Returns
         -------
-        Dict[str, str]
+        dict[str, str]
             Dictionary mapping test types to their status.
         """
         test_status = {}
         for result in self.diagnostics.test_results:
-            test_name = result["test_name"]
-            status = result["status"]
+            test_name = result['test_name']
+            status = result['status']
 
-            if "Ordering of top" in test_name:
-                test_status["feature_ordering"] = status
-            elif "Sparsity gap" in test_name:
-                test_status["sparsity_gap"] = status
+            if 'Ordering of top' in test_name:
+                test_status['feature_ordering'] = status
+            elif 'Sparsity gap' in test_name:
+                test_status['sparsity_gap'] = status
             # Add more test types here as they are implemented
 
         return test_status
 
-    def _determine_recommendation_keys(self) -> List[str]:
+    def _determine_recommendation_keys(self) -> list[str]:
         """
         Determine recommendation keys based on test result combinations.
 
         Returns
         -------
-        List[str]
+        list[str]
             List of recommendation keys to display.
         """
         recommendation_keys = []
 
         # Get status values with defaults
-        fo_status = self.test_status.get("feature_ordering", "PASSED")
-        sg_status = self.test_status.get("sparsity_gap", "PASSED")
+        fo_status = self.test_status.get('feature_ordering', 'PASSED')
+        sg_status = self.test_status.get('sparsity_gap', 'PASSED')
 
         # Logic for determining recommendation keys
-        if fo_status == "FAILED" and sg_status == "FAILED":
-            recommendation_keys.append("feature_ordering_failed_sparsity_gap_failed")
-        elif fo_status == "FAILED" and sg_status == "WARNING":
-            recommendation_keys.append("feature_ordering_failed_sparsity_gap_warning")
-        elif fo_status == "FAILED" and sg_status == "PASSED":
-            recommendation_keys.append("feature_ordering_failed_sparsity_gap_passed")
-        elif fo_status == "WARNING" and sg_status == "FAILED":
-            recommendation_keys.append("feature_ordering_warning_sparsity_gap_failed")
-        elif fo_status == "PASSED" and sg_status == "FAILED":
-            recommendation_keys.append("feature_ordering_passed_sparsity_gap_failed")
-        elif fo_status == "WARNING" and sg_status == "WARNING":
-            recommendation_keys.append("feature_ordering_warning_sparsity_gap_warning")
-        elif fo_status == "WARNING" and sg_status == "PASSED":
-            recommendation_keys.append("feature_ordering_warning_sparsity_gap_passed")
-        elif fo_status == "PASSED" and sg_status == "WARNING":
-            recommendation_keys.append("feature_ordering_passed_sparsity_gap_warning")
-        elif fo_status == "PASSED" and sg_status == "PASSED":
-            recommendation_keys.append("feature_ordering_passed_sparsity_gap_passed")
+        if fo_status == 'FAILED' and sg_status == 'FAILED':
+            recommendation_keys.append('feature_ordering_failed_sparsity_gap_failed')
+        elif fo_status == 'FAILED' and sg_status == 'WARNING':
+            recommendation_keys.append('feature_ordering_failed_sparsity_gap_warning')
+        elif fo_status == 'FAILED' and sg_status == 'PASSED':
+            recommendation_keys.append('feature_ordering_failed_sparsity_gap_passed')
+        elif fo_status == 'WARNING' and sg_status == 'FAILED':
+            recommendation_keys.append('feature_ordering_warning_sparsity_gap_failed')
+        elif fo_status == 'PASSED' and sg_status == 'FAILED':
+            recommendation_keys.append('feature_ordering_passed_sparsity_gap_failed')
+        elif fo_status == 'WARNING' and sg_status == 'WARNING':
+            recommendation_keys.append('feature_ordering_warning_sparsity_gap_warning')
+        elif fo_status == 'WARNING' and sg_status == 'PASSED':
+            recommendation_keys.append('feature_ordering_warning_sparsity_gap_passed')
+        elif fo_status == 'PASSED' and sg_status == 'WARNING':
+            recommendation_keys.append('feature_ordering_passed_sparsity_gap_warning')
+        elif fo_status == 'PASSED' and sg_status == 'PASSED':
+            recommendation_keys.append('feature_ordering_passed_sparsity_gap_passed')
         else:
             # Fallback for unexpected combinations
-            recommendation_keys.append("unknown_combination")
+            recommendation_keys.append('unknown_combination')
 
         # Future extension point: Add logic for additional tests here
         # Example:
@@ -234,29 +240,29 @@ class RecommendationEngine:
             Severity level: "CRITICAL", "WARNING", or "OPTIMIZATION".
         """
         # Check for any FAILED tests
-        if any(status == "FAILED" for status in self.test_status.values()):
-            return "CRITICAL"
+        if any(status == 'FAILED' for status in self.test_status.values()):
+            return 'CRITICAL'
 
         # Check for any WARNING tests
-        if any(status == "WARNING" for status in self.test_status.values()):
-            return "WARNING"
+        if any(status == 'WARNING' for status in self.test_status.values()):
+            return 'WARNING'
 
         # All tests passed
-        return "OPTIMIZATION"
+        return 'OPTIMIZATION'
 
     def _display_configuration_summary(self) -> None:
         """Display current configuration summary if constants are provided."""
         display_current_config(
             self.constants,
-            constant_type="algorithm_and_postprocessing",
+            constant_type='algorithm_and_postprocessing',
         )
 
     def _display_recommendations_header(self) -> None:
         """Display the main recommendations header with severity indication."""
-        severity_emoji = {"CRITICAL": "🚨", "WARNING": "⚠️", "OPTIMIZATION": "💡"}
+        severity_emoji = {'CRITICAL': '🚨', 'WARNING': '⚠️', 'OPTIMIZATION': '💡'}
 
-        emoji = severity_emoji.get(self.severity_level, "📊")
-        display(Markdown(f"# {emoji} Parameter recommendations"))
+        emoji = severity_emoji.get(self.severity_level, '📊')
+        display(Markdown(f'# {emoji} Parameter recommendations'))
 
     def _display_single_recommendation(self, key: str) -> None:
         """
@@ -270,15 +276,15 @@ class RecommendationEngine:
         recommendation = get_recommendation_message(key)
 
         # Display section header
-        display(Markdown(f"## {recommendation['section_header']}"))
+        display(Markdown(f'## {recommendation["section_header"]}'))
 
         # Display specific recommendation
-        display(Markdown(f"### {recommendation['title']}"))
-        display(Markdown(recommendation["description"]))
+        display(Markdown(f'### {recommendation["title"]}'))
+        display(Markdown(recommendation['description']))
 
         # Display recommendations if present
-        if recommendation.get("recommendations"):
-            display(Markdown(recommendation["recommendations"]))
+        if recommendation.get('recommendations'):
+            display(Markdown(recommendation['recommendations']))
 
     def _format_parameter_range(self, param_name: str) -> str:
         """Format parameter range as string.
@@ -294,7 +300,7 @@ class RecommendationEngine:
             Formatted range string like "min-max".
         """
         range_tuple = self.PARAMETER_REFERENCE_RANGES[param_name]
-        return f"{range_tuple[0]}-{range_tuple[1]}"
+        return f'{range_tuple[0]}-{range_tuple[1]}'
 
     def _has_only_success(self) -> bool:
         """
@@ -312,7 +318,7 @@ class RecommendationEngine:
 
 
 # Convenience functions for backward compatibility
-def get_recommendation_keys(diagnostics) -> List[str]:
+def get_recommendation_keys(diagnostics: 'PerformanceTests') -> list[str]:
     """
     Get recommendation keys for diagnostics (backward compatibility).
 
@@ -323,7 +329,7 @@ def get_recommendation_keys(diagnostics) -> List[str]:
 
     Returns
     -------
-    List[str]
+    list[str]
         List of recommendation keys to display.
     """
     engine = RecommendationEngine(diagnostics)
@@ -347,15 +353,15 @@ def display_recommendation(key: str) -> None:
     recommendation = get_recommendation_message(key)
 
     # Display section header
-    display(Markdown(f"## {recommendation['section_header']}"))
+    display(Markdown(f'## {recommendation["section_header"]}'))
 
     # Display specific recommendation
-    display(Markdown(f"### {recommendation['title']}"))
-    display(Markdown(recommendation["description"]))
+    display(Markdown(f'### {recommendation["title"]}'))
+    display(Markdown(recommendation['description']))
 
     # Display recommendations if present
-    if recommendation.get("recommendations"):
-        display(Markdown(recommendation["recommendations"]))
+    if recommendation.get('recommendations'):
+        display(Markdown(recommendation['recommendations']))
 
 
 def display_parameter_adjustment_summary() -> None:
@@ -366,40 +372,40 @@ def display_parameter_adjustment_summary() -> None:
     None
         Displays parameter adjustment table as markdown output.
     """
-    display(Markdown("### Parameter adjustment quick reference"))
+    display(Markdown('### Parameter adjustment quick reference'))
 
     # Use the same ranges as the class
     def format_range(param_name: str) -> str:
         range_tuple = RecommendationEngine.PARAMETER_REFERENCE_RANGES[param_name]
-        return f"{range_tuple[0]}-{range_tuple[1]}"
+        return f'{range_tuple[0]}-{range_tuple[1]}'
 
-    n_iter_range = format_range("N_ITER")
-    lr_range = format_range("LEARNING_RATE")
-    var_slab_range = format_range("VAR_SLAB")
-    var_spike_range = format_range("VAR_SPIKE")
-    lambda_jaccard_range = format_range("LAMBDA_JACCARD")
-    batch_range = format_range("BATCH_SIZE")
+    n_iter_range = format_range('N_ITER')
+    lr_range = format_range('LEARNING_RATE')
+    var_slab_range = format_range('VAR_SLAB')
+    var_spike_range = format_range('VAR_SPIKE')
+    lambda_jaccard_range = format_range('LAMBDA_JACCARD')
+    batch_range = format_range('BATCH_SIZE')
 
     display(
         Markdown(
-            "| Parameter | Increase when | Decrease when | Typical range |\n"
-            "|-----------|---------------|---------------|---------------|\n"
-            "| `DESIRED_SPARSITY` | Too restrictive. | The progress of mu values indicates that fewer features remain non-negligible. | Dataset-dependent. |"
-            "|`N_CANDIDATE_SOLUTIONS`| Current set of solutions does not contain enough combinations despite proper Jaccard regularization and desired sparsity settings. | Solutions overlap siginificantly and uselessly. Some component weights (alphas) might be negligible too. | Dataset-dependent. Advisable to be at least double the expected `true` number of solutions. |\n"
-            f"| `VAR_SPIKE` | All features converge (uniformly) to 0, i.e. over-regularization leads to no optimization and feature selection. | Too many features are selected in each component (false positives). | {var_spike_range} |\n"
-            f"| `VAR_SLAB` | Poor feature separation. | Over-regularization. | {var_slab_range} |\n"
-            f"| `IS_REGULARIZED` | True = penalize similarity among solutions. | False = do not influence diversity of features among solutions. | False (0) or True (1) |\n"
-            f"| `LAMBDA_JACCARD` | Greater diversity wanted: the individual solutions contain too many similar features. | Interested in solutions with overlapping feature sets. | {lambda_jaccard_range} |\n"
-            f"| `N_ITER` | The ELBO has not converged, the mu values are still changing significantly. | The ELBO convergence plateaus early, time constraints. | {n_iter_range} |\n"
-            f"| `LEARNING_RATE` | Too slow progress. | Unstable training. | {lr_range} |\n"
-            f"|`BATCH_SIZE`| Dataset contains noise, missing data, or imbalanced classes. When the sample size is large. | Iterations are too slow. Sample size is too small. | Dataset-dependent, typically {batch_range}. |"
+            '| Parameter | Increase when | Decrease when | Typical range |\n'
+            '|-----------|---------------|---------------|---------------|\n'
+            '| `DESIRED_SPARSITY` | Too restrictive. | The progress of mu values indicates that fewer features remain non-negligible. | Dataset-dependent. |'  # noqa: E501
+            '|`N_CANDIDATE_SOLUTIONS`| Current set of solutions does not contain enough combinations despite proper Jaccard regularization and desired sparsity settings. | Solutions overlap siginificantly and uselessly. Some component weights (alphas) might be negligible too. | Dataset-dependent. Advisable to be at least double the expected `true` number of solutions. |\n'  # noqa: E501
+            f'| `VAR_SPIKE` | All features converge (uniformly) to 0, i.e. over-regularization leads to no optimization and feature selection. | Too many features are selected in each component (false positives). | {var_spike_range} |\n'  # noqa: E501
+            f'| `VAR_SLAB` | Poor feature separation. | Over-regularization. | {var_slab_range} |\n'  # noqa: E501
+            f'| `IS_REGULARIZED` | True = penalize similarity among solutions. | False = do not influence diversity of features among solutions. | False (0) or True (1) |\n'  # noqa: E501
+            f'| `LAMBDA_JACCARD` | Greater diversity wanted: the individual solutions contain too many similar features. | Interested in solutions with overlapping feature sets. | {lambda_jaccard_range} |\n'  # noqa: E501
+            f'| `N_ITER` | The ELBO has not converged, the mu values are still changing significantly. | The ELBO convergence plateaus early, time constraints. | {n_iter_range} |\n'  # noqa: E501
+            f'| `LEARNING_RATE` | Too slow progress. | Unstable training. | {lr_range} |\n'  # noqa: E501
+            f'|`BATCH_SIZE`| Dataset contains noise, missing data, or imbalanced classes. When the sample size is large. | Iterations are too slow. Sample size is too small. | Dataset-dependent, typically {batch_range}. |'  # noqa: E501
         )
     )
 
 
 def display_recommendations(
-    diagnostics,
-    constants: Optional[Dict[str, Any]] = None,
+    diagnostics: 'PerformanceTests',
+    constants: dict[str, Any] | None = None,
 ) -> None:
     """
     Display parameter recommendations based on performance test results.
@@ -409,7 +415,7 @@ def display_recommendations(
     ----------
     diagnostics : PerformanceTests
         The performance tests instance with completed test results.
-    constants : Optional[Dict[str, Any]]
+    constants : dict[str, Any] | None
         A dictionary of algorithm-related constants
 
     Returns

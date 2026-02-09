@@ -19,7 +19,7 @@ class StudentTPrior:
     Student-t prior for Bayesian sparse modeling.
     """
 
-    def __init__(self, df=3.0, scale=1.0):
+    def __init__(self, df: float = 3.0, scale: float = 1.0):
         """
         Parameters
         ----------
@@ -31,7 +31,7 @@ class StudentTPrior:
         self.df = df
         self.scale = scale
 
-    def log_prob(self, z):
+    def log_prob(self, z: torch.Tensor) -> torch.Tensor:
         """
         Compute log-probability of the Student-t prior for input z.
 
@@ -56,7 +56,13 @@ class SpikeAndSlabPrior:
     p(z) = prod_i [w_slab * N(z_i | 0, var_slab) + w_spike * N(z_i | 0, var_spike)]
     """
 
-    def __init__(self, var_slab=100.0, var_spike=0.1, w_slab=0.9, w_spike=0.1):
+    def __init__(
+        self,
+        var_slab: float = 100.0,
+        var_spike: float = 0.1,
+        w_slab: float = 0.9,
+        w_spike: float = 0.1,
+    ):
         """
         Parameters
         ----------
@@ -74,7 +80,7 @@ class SpikeAndSlabPrior:
         self.w_slab = w_slab
         self.w_spike = w_spike
 
-    def log_prob(self, z):
+    def log_prob(self, z: torch.Tensor) -> torch.Tensor:
         """
         Compute log-probability of the spike-and-slab prior for input z.
 
@@ -89,9 +95,7 @@ class SpikeAndSlabPrior:
             Log-probability summed over features, shape (...,).
         """
         slab = self.w_slab * torch.exp(-0.5 * (z / self.var_slab) ** 2) / self.var_slab
-        spike = (
-            self.w_spike * torch.exp(-0.5 * (z / self.var_spike) ** 2) / self.var_spike
-        )
+        spike = self.w_spike * torch.exp(-0.5 * (z / self.var_spike) ** 2) / self.var_spike
         logp = torch.log(slab + spike)
         return logp.sum(dim=-1)  # sum over features
 
@@ -104,11 +108,11 @@ class StructuredSpikeAndSlabPrior:
 
     def __init__(
         self,
-        n_features,
-        sparsity,
-        sample_more_priors_coeff=1.0,
-        var_slab=100.0,
-        var_spike=0.1,
+        n_features: int,
+        sparsity: int,
+        sample_more_priors_coeff: float = 1.0,
+        var_slab: float = 100.0,
+        var_spike: float = 0.1,
     ):
         """
         Parameters
@@ -134,11 +138,9 @@ class StructuredSpikeAndSlabPrior:
         # For small n_features, enumerate all supports. For large, sample.
         self._all_supports = None
         if n_features <= 10 and sparsity <= 3:
-            self._all_supports = list(
-                itertools.combinations(range(n_features), sparsity)
-            )
+            self._all_supports = list(itertools.combinations(range(n_features), sparsity))
 
-    def log_prob(self, z, n_support_samples=100):
+    def log_prob(self, z: torch.Tensor, n_support_samples: int = 100) -> torch.Tensor:
         """
         Compute log-probability of z under the structured prior.
         For each support S of size k, compute p(z | S), then average.
@@ -160,9 +162,7 @@ class StructuredSpikeAndSlabPrior:
         batch_shape = z.shape[:-1]
         z_flat = z.view(-1, self.n_features)
         if self._all_supports is not None:
-            supports_tensor = torch.tensor(
-                self._all_supports, dtype=torch.long, device=z.device
-            )
+            supports_tensor = torch.tensor(self._all_supports, dtype=torch.long, device=z.device)
         else:
             if self.sample_more_priors_coeff:
                 n_support_samples = np.round(
@@ -180,9 +180,7 @@ class StructuredSpikeAndSlabPrior:
 
         n_supports = supports_tensor.shape[0]
         if n_supports == 0:
-            raise ValueError(
-                "StructuredSpikeAndSlabPrior requires at least one support."
-            )
+            raise ValueError('StructuredSpikeAndSlabPrior requires at least one support.')
 
         if self.sparsity == 0:
             supports_tensor = supports_tensor[:, :0]
@@ -253,9 +251,7 @@ class GaussianMixture(nn.Module):
             Tensor of shape (n_components,) with mixing weights summing to 1.
             Handles NaN robustness by replacing any NaN with 0 and re-normalizing.
         """
-        log_alpha = torch.cat(
-            [self._log_alpha, torch.zeros(1, device=self._log_alpha.device)]
-        )
+        log_alpha = torch.cat([self._log_alpha, torch.zeros(1, device=self._log_alpha.device)])
         alpha = torch.exp(log_alpha)
         # NaN-safe: Replace NaNs with zeros, renormalize. If degenerate, fallback to uniform.
         alpha = torch.where(torch.isnan(alpha), torch.zeros_like(alpha), alpha)
@@ -313,7 +309,7 @@ class GaussianMixture(nn.Module):
         # Ensure z has no NaNs for variational inference
         if torch.isnan(z).any():
             raise ValueError(
-                "z contains NaN values - variational inference requires complete latent samples"
+                'z contains NaN values - variational inference requires complete latent samples'
             )
 
         mu = self.mu.unsqueeze(0)  # [1, K, D]
@@ -336,7 +332,8 @@ class GaussianMixture(nn.Module):
         masking missing values (NaNs) locally.
 
         Note: This method is for data analysis only, not for variational inference.
-        Returns only the per-component likelihoods (not marginalized), averaged over observed features.
+        Returns only the per-component likelihoods (not marginalized), averaged over observed
+        features.
 
         Parameters
         ----------

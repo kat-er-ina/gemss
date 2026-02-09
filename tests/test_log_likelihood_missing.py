@@ -14,7 +14,6 @@
 
 import numpy as np
 import torch
-
 from gemss.feature_selection.inference import BayesianFeatureSelector
 
 
@@ -35,7 +34,7 @@ def test_log_likelihood_with_missing_matches_manual() -> None:
         y=y,
         batch_size=2,
         n_iter=1,
-        device="cpu",
+        device='cpu',
     )
 
     z = torch.tensor([[0.5, -1.0, 2.0], [1.0, 0.0, -1.0]], dtype=torch.float32)
@@ -64,7 +63,7 @@ def test_log_likelihood_with_missing_all_missing_returns_zero() -> None:
         y=y,
         batch_size=4,
         n_iter=1,
-        device="cpu",
+        device='cpu',
     )
 
     z = torch.randn(4, X.shape[1])
@@ -85,11 +84,11 @@ def test_log_likelihood_with_missing_skips_nan_response() -> None:
         y=y,
         batch_size=2,
         n_iter=1,
-        device="cpu",
+        device='cpu',
     )
 
     selector.y = selector.y.clone()
-    selector.y[0] = float("nan")
+    selector.y[0] = float('nan')
 
     z = torch.tensor([[0.1, 0.2], [-0.3, 0.5]], dtype=torch.float32)
     actual = selector._log_likelihood_with_missing(z)
@@ -113,7 +112,7 @@ def test_log_likelihood_complete_data_matches_manual() -> None:
         y=y,
         batch_size=2,
         n_iter=1,
-        device="cpu",
+        device='cpu',
     )
     z = torch.tensor([[0.5, -1.0, 2.0], [1.0, 0.0, -1.0]], dtype=torch.float32)
     actual = selector.log_likelihood(z)
@@ -135,7 +134,7 @@ def test_log_likelihood_with_missing_single_observed_row() -> None:
         y=y,
         batch_size=2,
         n_iter=1,
-        device="cpu",
+        device='cpu',
     )
     z = torch.tensor([[0.1, 0.2], [-0.3, 0.5]], dtype=torch.float32)
     actual = selector._log_likelihood_with_missing(z)

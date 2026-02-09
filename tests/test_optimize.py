@@ -15,11 +15,10 @@
 """
 
 import numpy as np
-import torch
-
 import pytest
-
+import torch
 from gemss.feature_selection.inference import BayesianFeatureSelector
+from gemss.feature_selection.models import GaussianMixture
 
 
 def _make_dataset(
@@ -52,27 +51,27 @@ def test_optimize_history_shapes() -> None:
         y=y,
         n_iter=5,
         batch_size=4,
-        device="cpu",
+        device='cpu',
     )
 
     history = selector.optimize(verbose=False)
 
-    assert set(history.keys()) == {"elbo", "mu", "var", "alpha"}
-    assert len(history["elbo"]) == 5
-    assert len(history["mu"]) == 5
-    assert len(history["var"]) == 5
-    assert len(history["alpha"]) == 5
+    assert set(history.keys()) == {'elbo', 'mu', 'var', 'alpha'}
+    assert len(history['elbo']) == 5
+    assert len(history['mu']) == 5
+    assert len(history['var']) == 5
+    assert len(history['alpha']) == 5
 
-    mu0 = np.asarray(history["mu"][0])
-    var0 = np.asarray(history["var"][0])
-    alpha0 = np.asarray(history["alpha"][0])
+    mu0 = np.asarray(history['mu'][0])
+    var0 = np.asarray(history['var'][0])
+    alpha0 = np.asarray(history['alpha'][0])
 
     assert mu0.shape == (2, X.shape[1])
     assert var0.shape == (2, X.shape[1])
     assert alpha0.shape == (2,)
 
-    assert np.isfinite(history["elbo"]).all()
-    assert np.isclose(np.sum(history["alpha"][-1]), 1.0, atol=1e-5)
+    assert np.isfinite(history['elbo']).all()
+    assert np.isclose(np.sum(history['alpha'][-1]), 1.0, atol=1e-5)
 
 
 def test_optimize_regularized_callback() -> None:
@@ -85,12 +84,12 @@ def test_optimize_regularized_callback() -> None:
         y=y,
         n_iter=101,
         batch_size=4,
-        device="cpu",
+        device='cpu',
     )
 
     calls = []
 
-    def _callback(it: int, elbo: float, mixture) -> None:
+    def _callback(it: int, elbo: float, mixture: GaussianMixture) -> None:
         calls.append(it)
 
     history = selector.optimize(
@@ -101,8 +100,8 @@ def test_optimize_regularized_callback() -> None:
     )
 
     assert calls == [0, 100]
-    assert len(history["elbo"]) == 101
-    assert np.isfinite(history["elbo"]).all()
+    assert len(history['elbo']) == 101
+    assert np.isfinite(history['elbo']).all()
 
 
 def test_optimize_with_missing_values() -> None:
@@ -115,19 +114,19 @@ def test_optimize_with_missing_values() -> None:
         y=y,
         n_iter=3,
         batch_size=4,
-        device="cpu",
+        device='cpu',
     )
 
     history = selector.optimize(verbose=False)
 
-    assert len(history["elbo"]) == 3
-    assert np.isfinite(history["elbo"]).all()
+    assert len(history['elbo']) == 3
+    assert np.isfinite(history['elbo']).all()
 
 
 def test_optimize_raises_when_y_contains_nan() -> None:
     X = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float32)
-    y = np.array([1.0, float("nan")], dtype=np.float32)
-    with pytest.raises(ValueError, match="Response variable.*NaN"):
+    y = np.array([1.0, float('nan')], dtype=np.float32)
+    with pytest.raises(ValueError, match='Response.*contains NaN'):
         BayesianFeatureSelector(
             n_features=X.shape[1],
             n_components=1,
@@ -135,7 +134,7 @@ def test_optimize_raises_when_y_contains_nan() -> None:
             y=y,
             batch_size=2,
             n_iter=1,
-            device="cpu",
+            device='cpu',
         )
 
 
@@ -149,15 +148,15 @@ def test_optimize_regularize_lambda_zero_uses_elbo() -> None:
         y=y,
         n_iter=5,
         batch_size=4,
-        device="cpu",
+        device='cpu',
     )
     history = selector.optimize(
         regularize=True,
         lambda_jaccard=0.0,
         verbose=False,
     )
-    assert len(history["elbo"]) == 5
-    assert np.isfinite(history["elbo"]).all()
+    assert len(history['elbo']) == 5
+    assert np.isfinite(history['elbo']).all()
 
 
 def test_optimize_without_callback() -> None:
@@ -170,8 +169,8 @@ def test_optimize_without_callback() -> None:
         y=y,
         n_iter=3,
         batch_size=4,
-        device="cpu",
+        device='cpu',
     )
     history = selector.optimize(log_callback=None, verbose=False)
-    assert set(history.keys()) == {"elbo", "mu", "var", "alpha"}
-    assert len(history["elbo"]) == 3
+    assert set(history.keys()) == {'elbo', 'mu', 'var', 'alpha'}
+    assert len(history['elbo']) == 3

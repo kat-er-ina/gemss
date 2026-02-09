@@ -2,26 +2,28 @@
 Utility functions for feature selection project.
 """
 
-from IPython.display import display, Markdown
-from typing import Any, Dict, Optional, List
-import pandas as pd
 import json
-import numpy as np
+from collections.abc import Callable
+from pathlib import Path
+from typing import TextIO, TypedDict
 
+import numpy as np
+import pandas as pd
+from IPython.display import Markdown, display
 
 # TODO: move to a more general utils module along with other printing functions
 # TODO: add use_markdown parameter and use myprint function in print_nice_optimization_settings
-# TODO: set up a global parameter defining whether to use markdown or not (logging in plain text files during batch runs etc.)
+# TODO: set up a global parameter defining whether to use markdown or not (logging in plain text files during batch runs etc.) # noqa: E501
 # TODO: edit README accordingly
 
 
 def myprint(
     msg: str,
-    use_markdown: Optional[bool] = True,
-    bold: Optional[bool] = False,
-    header: Optional[int] = 0,
-    code: Optional[bool] = False,
-    file: Optional[Any] = None,
+    use_markdown: bool = True,
+    bold: bool = False,
+    header: int = 0,
+    code: bool = False,
+    file: TextIO | None = None,
 ) -> None:
     """
     Print a message using Markdown formatting if specified, otherwise in plain text.
@@ -45,30 +47,30 @@ def myprint(
     """
     if use_markdown:
         if header > 0:
-            msg = f"{'#' * header} {msg}"
+            msg = f'{"#" * header} {msg}'
         if bold:
-            msg = f"**{msg}**"
+            msg = f'**{msg}**'
         if code:
-            msg = f"```{msg}```"
+            msg = f'```{msg}```'
         display(Markdown(msg))
     else:
         if header > 0:
-            print("\n", file=file)
+            print('\n', file=file)
         print(msg, file=file)
         if header > 0:
-            print("-" * len(msg), file=file)
+            print('-' * len(msg), file=file)
     return
 
 
-def format_summary_row_feature_with_mu(row):
+def format_summary_row_feature_with_mu(row: pd.Series) -> str:
     """Formatting function for outlier information."""
-    return f"{row['Feature']} (mu = {row['Mu value']:.4f})"
+    return f'{row["Feature"]} (mu = {row["Mu value"]:.4f})'
 
 
 def get_solution_summary_df(
-    data_dict: Dict[str, pd.DataFrame],
-    value_column: str = "Feature",
-    format_function: Optional[callable] = format_summary_row_feature_with_mu,
+    data_dict: dict[str, pd.DataFrame],
+    value_column: str = 'Feature',
+    format_function: Callable[[pd.Series], str] | None = format_summary_row_feature_with_mu,
 ) -> pd.DataFrame:
     """
     Convert a dictionary of DataFrames into a summary DataFrame where each column
@@ -76,7 +78,7 @@ def get_solution_summary_df(
 
     Parameters
     ----------
-    data_dict : Dict[str, pd.DataFrame]
+    data_dict : dict[str, pd.DataFrame]
         Dictionary mapping component/solution names to DataFrames.
         Each DataFrame should contain the specified value_column.
     value_column : str, optional
@@ -144,11 +146,11 @@ def get_solution_summary_df(
 
 
 def show_solution_summary(
-    solution_data: Dict[str, pd.DataFrame],
-    title: str = "Solution summary",
-    value_column: str = "Feature",
-    format_function: Optional[callable] = format_summary_row_feature_with_mu,
-    use_markdown: Optional[bool] = True,
+    solution_data: dict[str, pd.DataFrame],
+    title: str = 'Solution summary',
+    value_column: str = 'Feature',
+    format_function: Callable[[pd.Series], str] | None = format_summary_row_feature_with_mu,
+    use_markdown: bool = True,
 ) -> None:
     """
     Display solutions or data in a DataFrame format where each column corresponds to a component
@@ -158,7 +160,7 @@ def show_solution_summary(
 
     Parameters
     ----------
-    solution_data : Dict[str, pd.DataFrame]
+    solution_data : dict[str, pd.DataFrame]
         Dictionary mapping each component/solution to a DataFrame containing
         the data to display (e.g., features, outliers).
     title : str, optional
@@ -197,7 +199,7 @@ def show_solution_summary(
     # Input validation
     if not solution_data:
         myprint(
-            msg="No data available to display.",
+            msg='No data available to display.',
             use_markdown=use_markdown,
             header=2,
         )
@@ -206,7 +208,7 @@ def show_solution_summary(
     # Validate that all values are DataFrames with required columns
     for component_name, df in solution_data.items():
         if not isinstance(df, pd.DataFrame):
-            raise ValueError(f"Expected DataFrame for {component_name}, got {type(df)}")
+            raise ValueError(f'Expected DataFrame for {component_name}, got {type(df)}')
         if not df.empty and value_column not in df.columns and format_function is None:
             raise ValueError(
                 f"DataFrame for {component_name} missing required '{value_column}' column"
@@ -222,7 +224,7 @@ def show_solution_summary(
         # Check if any data was found
         if summary_df.empty:
             myprint(
-                msg=f"{title}: No data found in any component.",
+                msg=f'{title}: No data found in any component.',
                 use_markdown=use_markdown,
                 header=2,
             )
@@ -241,7 +243,7 @@ def show_solution_summary(
 
     except Exception as e:
         myprint(
-            msg=f"Error displaying data: {str(e)}",
+            msg=f'Error displaying data: {str(e)}',
             use_markdown=use_markdown,
         )
         raise
@@ -251,8 +253,8 @@ def show_solution_summary(
 
 def generate_feature_names(
     n_features: int,
-    original_feature_names_mapping: Optional[Dict[str, str]] = None,
-) -> List[str]:
+    original_feature_names_mapping: dict[str, str] | None = None,
+) -> list[str]:
     """
     Helper function to generate feature names consistently.
 
@@ -260,28 +262,29 @@ def generate_feature_names(
     -----------
     n_features: int
         The number of features to generate names for.
-    original_feature_names_mapping: Optional[Dict[str, str]], optional
-        A mapping from feature indices to original feature names. If provided, will use original names.
+    original_feature_names_mapping: dict[str, str] | None, optional
+        A mapping from feature indices to original feature names.
+        If provided, will use original names.
 
     Returns:
     --------
-    List[str]
+    list[str]
         A list of feature names.
     """
     if original_feature_names_mapping is not None:
         return [
-            original_feature_names_mapping.get(f"feature_{i}", f"feature_{i}")
+            original_feature_names_mapping.get(f'feature_{i}', f'feature_{i}')
             for i in range(n_features)
         ]
-    return [f"feature_{i}" for i in range(n_features)]
+    return [f'feature_{i}' for i in range(n_features)]
 
 
 def dataframe_to_ascii_table(
     df: pd.DataFrame,
-    title: Optional[str] = None,
-    max_col_width: Optional[int] = None,
+    title: str | None = None,
+    max_col_width: int | None = None,
     precision: int = 3,
-) -> List[str]:
+) -> list[str]:
     """
     Convert a pandas DataFrame to a nicely formatted ASCII table using | and _.
 
@@ -299,31 +302,30 @@ def dataframe_to_ascii_table(
 
     Returns
     -------
-    List[str]
+    list[str]
         List of strings representing each line of the ASCII table.
     """
-    import numpy as np
 
     if df.empty:
         lines = []
         if title:
             lines.append(title)
-            lines.append("")
-        lines.append("No data to display.")
+            lines.append('')
+        lines.append('No data to display.')
         return lines
 
     # Format the data with proper precision for floats
     formatted_df = df.copy()
     for col in df.columns:
-        if df[col].dtype in ["float64", "float32"]:
+        if df[col].dtype in ['float64', 'float32']:
             formatted_df[col] = df[col].apply(
-                lambda x: f"{x:.{precision}f}" if pd.notnull(x) else ""
+                lambda x: f'{x:.{precision}f}' if pd.notnull(x) else ''
             )
         else:
             formatted_df[col] = df[col].astype(str)
 
     # Prepare column data
-    columns = ["Index"] + list(formatted_df.columns)
+    columns = ['Index'] + list(formatted_df.columns)
     rows_data = []
 
     # Add index and data rows
@@ -350,7 +352,7 @@ def dataframe_to_ascii_table(
     def truncate_content(content: str, width: int) -> str:
         if max_col_width is None or len(content) <= width:
             return content
-        return content[: width - 3] + "..."
+        return content[: width - 3] + '...'
 
     # Build the table
     lines = []
@@ -358,21 +360,21 @@ def dataframe_to_ascii_table(
     # Add title if provided
     if title:
         lines.append(title)
-        lines.append("=" * len(title))
-        lines.append("")
+        lines.append('=' * len(title))
+        lines.append('')
 
     # Create header row
     header_parts = []
     for i, col in enumerate(columns):
         truncated_col = truncate_content(col, col_widths[i])
         header_parts.append(truncated_col.ljust(col_widths[i]))
-    lines.append("| " + " | ".join(header_parts) + " |")
+    lines.append('| ' + ' | '.join(header_parts) + ' |')
 
     # Create separator row
     separator_parts = []
     for width in col_widths:
-        separator_parts.append("_" * width)
-    lines.append("| " + " | ".join(separator_parts) + " |")
+        separator_parts.append('_' * width)
+    lines.append('| ' + ' | '.join(separator_parts) + ' |')
 
     # Create data rows
     for row_data in rows_data:
@@ -383,25 +385,25 @@ def dataframe_to_ascii_table(
                 truncated_content = truncate_content(content, width)
                 row_parts.append(truncated_content.ljust(width))
             else:
-                row_parts.append(" " * width)
-        lines.append("| " + " | ".join(row_parts) + " |")
+                row_parts.append(' ' * width)
+        lines.append('| ' + ' | '.join(row_parts) + ' |')
 
     return lines
 
 
 def display_feature_lists(
-    features_dict: Dict[str, List[str]],
-    title: str = "Feature lists for candidate solutions",
+    features_dict: dict[str, list[str]],
+    title: str = 'Feature lists for candidate solutions',
     use_markdown: bool = True,
 ) -> None:
     myprint(msg=title, header=3, use_markdown=use_markdown)
     for component, selected_features in features_dict.items():
         myprint(msg=component, header=4, use_markdown=use_markdown)
-        myprint(msg=f"{selected_features}", code=True, use_markdown=use_markdown)
+        myprint(msg=f'{selected_features}', code=True, use_markdown=use_markdown)
 
 
 def save_feature_lists_txt(
-    all_features_lists: Dict[str, Dict[str, List[str]]],
+    all_features_lists: dict[str, dict[str, list[str]]],
     filename: str,
 ) -> str:
     """Save multiple dictionaries of candidate feature lists to a plain text file.
@@ -415,7 +417,7 @@ def save_feature_lists_txt(
 
     Parameters
     ----------
-    all_features_lists : Dict[str, Dict[str, List[str]]]
+    all_features_lists : dict[str, dict[str, list[str]]]
         A dictionary mapping feature list titles to their corresponding feature lists. Structure:
         { solution_type: {component1: [feat1, feat2], component2: [feat3]}, title2: {...}, ... }
     filename : str
@@ -446,22 +448,20 @@ def save_feature_lists_txt(
         raise ValueError("'all_features_lists' is empty; nothing to save.")
 
     try:
-        with open(filename, "w", encoding="utf-8") as f:
+        with Path(filename).open('w', encoding='utf-8') as f:
             for title, feature_dict in all_features_lists.items():
-                f.write(f"### {title}\n\n")
+                f.write(f'### {title}\n\n')
                 for component, features in feature_dict.items():
-                    f.write(f"{component.upper()}\n")
-                    f.write(f"{features}\n\n")
-            f.write(
-                "------------------------------------------------------------------------\n"
-            )
-        return f"Candidate solutions saved to TXT file for viewing: {filename}."
+                    f.write(f'{component.upper()}\n')
+                    f.write(f'{features}\n\n')
+            f.write('------------------------------------------------------------------------\n')
+        return f'Candidate solutions saved to TXT file for viewing: {filename}.'
     except Exception as e:
-        return f"Problem saving to file {filename}: {e}"
+        return f'Problem saving to file {filename}: {e}'
 
 
 def save_feature_lists_json(
-    all_features_lists: Dict[str, List[str]],
+    all_features_lists: dict[str, dict[str, list[str]]],
     filename: str,
 ) -> str:
     """Save multiple dictionaries of candidate feature lists to a structured JSON file.
@@ -473,7 +473,7 @@ def save_feature_lists_json(
 
     Parameters
     ----------
-    all_features_lists : Dict[str, Dict[str, List[str]]]
+    all_features_lists : dict[str, dict[str, list[str]]]
         A dictionary mapping feature list titles to their corresponding feature lists. Structure:
         { solution_type: {component1: [feat1, feat2], component2: [feat3]}, title2: {...}, ... }
     filename : str
@@ -493,11 +493,11 @@ def save_feature_lists_json(
         raise ValueError("'all_features_lists' is empty; nothing to save.")
 
     if not isinstance(filename, str) or not filename.strip():
-        raise ValueError("Filename must be a non-empty string.")
+        raise ValueError('Filename must be a non-empty string.')
 
-    sections: List[Dict[str, Any]] = []
+    sections: list[dict[str, object]] = []
     for title, feature_dict in all_features_lists.items():
-        components_out: Dict[str, List[str]] = {}
+        components_out: dict[str, list[str]] = {}
         for component, features in feature_dict.items():
             # Ensure list of strings
             if not isinstance(features, list):
@@ -505,24 +505,24 @@ def save_feature_lists_json(
                     f"Features for component '{component}' are not a list: {type(features)}"
                 )
             components_out[component] = [str(f) for f in features]
-        sections.append({"title": title, "components": components_out})
+        sections.append({'title': title, 'components': components_out})
 
-    data = {"sections": sections}
+    data = {'sections': sections}
     try:
-        with open(filename, "w", encoding="utf-8") as f:
+        with Path(filename).open('w', encoding='utf-8') as f:
             json.dump(data, f)
-        return f"Candidate solutions saved to JSON file for further processing: {filename}."
+        return f'Candidate solutions saved to JSON file for further processing: {filename}.'
     except Exception as e:
-        return f"Problem saving JSON file {filename}: {e}"
+        return f'Problem saving JSON file {filename}: {e}'
 
 
 def load_feature_lists_json(
     filename: str,
-) -> tuple[Dict[str, Dict[str, List[str]]], str]:
+) -> tuple[dict[str, dict[str, list[str]]], str]:
     """Load the dictionary of all candidate solutions saved by ``save_feature_lists_json``.
 
     Reads the JSON file produced by ``save_feature_lists_json`` and reconstructs
-    the dictionary mapping solution type titles to the dictionary of their components and feature lists.
+    the dictionary mapping solution type titles to their components and feature lists.
 
     Parameters
     ----------
@@ -531,7 +531,7 @@ def load_feature_lists_json(
 
     Returns
     -------
-    (all_features_lists, message) : tuple[Dict[str, Dict[str, List[str]]], str]
+    (all_features_lists, message) : tuple[dict[str, dict[str, list[str]]], str]
         ``all_features_lists`` with structure {
             solution_type_A: {
                 component1: [feat1, feat2],
@@ -559,36 +559,33 @@ def load_feature_lists_json(
     True
     """
     if not isinstance(filename, str) or not filename.strip():
-        raise ValueError("Filename must be a non-empty string.")
-    import os
+        raise ValueError('Filename must be a non-empty string.')
 
-    if not os.path.exists(filename):
+    if not Path(filename).exists():
         raise FileNotFoundError(f"File '{filename}' not found.")
-    with open(filename, "r", encoding="utf-8") as f:
+    with Path(filename).open(encoding='utf-8') as f:
         data = json.load(f)
     if not isinstance(data, dict):
-        raise ValueError("Top-level JSON must be an object.")
-    sections = data.get("sections")
+        raise ValueError('Top-level JSON must be an object.')
+    sections = data.get('sections')
     if not isinstance(sections, list):
         raise ValueError("JSON missing 'sections' list.")
 
-    all_features_lists: Dict[str, Dict[str, List[str]]] = {}
+    all_features_lists: dict[str, dict[str, list[str]]] = {}
     for i, section in enumerate(sections):
         if not isinstance(section, dict):
-            raise ValueError(f"Section index {i} is not an object.")
-        title = section.get("title")
-        components = section.get("components")
+            raise ValueError(f'Section index {i} is not an object.')
+        title = section.get('title')
+        components = section.get('components')
         if title is None or not isinstance(title, str) or not title.strip():
             raise ValueError(f"Section index {i} missing valid 'title'.")
         if not isinstance(components, dict):
             raise ValueError(f"Section '{title}' missing 'components' dict.")
 
-        component_dict: Dict[str, List[str]] = {}
+        component_dict: dict[str, list[str]] = {}
         for comp, feats in components.items():
             if not isinstance(comp, str):
-                raise ValueError(
-                    f"Component key '{comp}' in section '{title}' not a string."
-                )
+                raise ValueError(f"Component key '{comp}' in section '{title}' not a string.")
             if not isinstance(feats, list):
                 raise ValueError(
                     f"Features for component '{comp}' in section '{title}' not a list."
@@ -596,18 +593,23 @@ def load_feature_lists_json(
             component_dict[comp] = [str(f) for f in feats]
         all_features_lists[title] = component_dict
 
-    message = (
-        f"Feature lists loaded from '{filename}' | sections: {len(all_features_lists)}"
-    )
+    message = f"Feature lists loaded from '{filename}' | sections: {len(all_features_lists)}"
     return all_features_lists, message
 
 
-def save_selector_history_json(history, filename) -> str:
+class SelectorHistory(TypedDict):
+    elbo: list[float]
+    mu: list[np.ndarray]
+    var: list[np.ndarray]
+    alpha: list[np.ndarray]
+
+
+def save_selector_history_json(history: SelectorHistory, filename: str) -> str:
     """Persist optimization history to a JSON file with basic validation.
 
     Parameters
     ----------
-    history : Dict[str, Any]
+    history : dict[str, Any]
         Dictionary expected to contain lists/iterables under keys 'elbo', 'mu', 'var', 'alpha'.
     filename : str
         Path to JSON file to create/overwrite.
@@ -619,54 +621,54 @@ def save_selector_history_json(history, filename) -> str:
     """
     # Basic input validation
     if not isinstance(history, dict):
-        return "History must be a dict; nothing saved."
-    required_keys = {"elbo", "mu", "var", "alpha"}
+        return 'History must be a dict; nothing saved.'
+    required_keys = {'elbo', 'mu', 'var', 'alpha'}
     missing = required_keys - set(history.keys())
     if missing:
-        return f"History missing required keys: {sorted(missing)}; nothing saved."
+        return f'History missing required keys: {sorted(missing)}; nothing saved.'
     if not isinstance(filename, str) or not filename.strip():
-        return "Filename must be a non-empty string; nothing saved."
+        return 'Filename must be a non-empty string; nothing saved.'
 
     try:
-        n_iters = len(history.get("elbo", []))
+        n_iters = len(history.get('elbo', []))
     except Exception:
-        return "Could not determine number of iterations; nothing saved."
+        return 'Could not determine number of iterations; nothing saved.'
     if n_iters == 0:
-        return "History is empty; nothing saved."
+        return 'History is empty; nothing saved.'
 
     # Ensure length consistency among iterable keys
-    lengths = {}
-    for k in required_keys:
-        try:
-            lengths[k] = len(history[k])
-        except Exception:
-            return f"History key '{k}' is not iterable; nothing saved."
+    try:
+        lengths = {
+            'elbo': len(history['elbo']),
+            'mu': len(history['mu']),
+            'var': len(history['var']),
+            'alpha': len(history['alpha']),
+        }
+    except Exception:
+        return 'History contains non-iterable values; nothing saved.'
     if len(set(lengths.values())) != 1:
-        return f"Inconsistent lengths in history: {lengths}; nothing saved."
+        return f'Inconsistent lengths in history: {lengths}; nothing saved.'
 
     # Create parent directory if needed
-    import os
-
-    parent = os.path.dirname(os.path.abspath(filename))
-    if parent and not os.path.exists(parent):
-        try:
-            os.makedirs(parent, exist_ok=True)
-        except Exception as e:
-            return f"Could not create directory '{parent}': {e}"
+    parent = Path(filename).resolve().parent
+    try:
+        parent.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        return f"Could not create directory '{parent}': {e}"
 
     # Build serializable structure
     try:
         serializable_history = {
-            "elbo": [float(x) for x in history["elbo"]],
-            "mu": [np.asarray(a).tolist() for a in history["mu"]],
-            "var": [np.asarray(a).tolist() for a in history["var"]],
-            "alpha": [np.asarray(a).tolist() for a in history["alpha"]],
+            'elbo': [float(x) for x in history['elbo']],
+            'mu': [np.asarray(a).tolist() for a in history['mu']],
+            'var': [np.asarray(a).tolist() for a in history['var']],
+            'alpha': [np.asarray(a).tolist() for a in history['alpha']],
         }
     except Exception as e:
-        return f"Failed to serialize history arrays: {e}"
+        return f'Failed to serialize history arrays: {e}'
 
     try:
-        with open(filename, "w", encoding="utf-8") as jf:
+        with Path(filename).open('w', encoding='utf-8') as jf:
             json.dump(serializable_history, jf)
         return f"Saved history to '{filename}'"
     except Exception as e:
@@ -675,7 +677,7 @@ def save_selector_history_json(history, filename) -> str:
 
 def load_selector_history_json(
     filename: str,
-) -> tuple[Dict[str, Any], str]:
+) -> tuple[SelectorHistory, str]:
     """Load optimization history saved by ``save_selector_history_json``.
 
     Opens the JSON file, validates required keys (``elbo``, ``mu``, ``var``, ``alpha``),
@@ -689,7 +691,7 @@ def load_selector_history_json(
 
     Returns
     -------
-    (history, message) : tuple[Dict[str, Any], str]
+    (history, message) : tuple[dict[str, Any], str]
         ``history`` is the loaded dictionary with NumPy arrays for ``mu``, ``var`` and ``alpha``.
         ``message`` is a human-readable status summary.
 
@@ -703,50 +705,52 @@ def load_selector_history_json(
         If the file contents are not valid JSON.
     """
     if not isinstance(filename, str) or not filename.strip():
-        raise ValueError("Filename must be a non-empty string.")
-    import os
+        raise ValueError('Filename must be a non-empty string.')
 
-    if not os.path.exists(filename):
+    if not Path(filename).exists():
         raise FileNotFoundError(f"History file '{filename}' not found.")
-    with open(filename, "r", encoding="utf-8") as f:
+    with Path(filename).open(encoding='utf-8') as f:
         data = json.load(f)
     if not isinstance(data, dict):
-        raise ValueError("History JSON must be an object (dict) at top level.")
+        raise ValueError('History JSON must be an object (dict) at top level.')
 
-    required = {"elbo", "mu", "var", "alpha"}
+    required = {'elbo', 'mu', 'var', 'alpha'}
     missing = required - set(data.keys())
     if missing:
-        raise ValueError(f"History JSON missing keys: {sorted(missing)}")
+        raise ValueError(f'History JSON missing keys: {sorted(missing)}')
 
     # Length consistency check
     try:
         lengths = {k: len(data[k]) for k in required}
     except Exception as e:
-        raise ValueError(f"Unable to determine lengths of history entries: {e}")
+        raise ValueError(f'Unable to determine lengths of history entries: {e}')
     if len(set(lengths.values())) != 1:
-        raise ValueError(f"Inconsistent iteration lengths in history: {lengths}")
-    n_iters = lengths["elbo"]
+        raise ValueError(f'Inconsistent iteration lengths in history: {lengths}')
+    n_iters = lengths['elbo']
     if n_iters == 0:
-        return data, "History file loaded but contains zero iterations."
+        return data, 'History file loaded but contains zero iterations.'
 
     # Always convert list entries back to NumPy arrays
     try:
-        data["mu"] = [np.asarray(iter_mu) for iter_mu in data["mu"]]
-        data["var"] = [np.asarray(iter_var) for iter_var in data["var"]]
-        data["alpha"] = [np.asarray(iter_alpha) for iter_alpha in data["alpha"]]
+        data['mu'] = [np.asarray(iter_mu) for iter_mu in data['mu']]
+        data['var'] = [np.asarray(iter_var) for iter_var in data['var']]
+        data['alpha'] = [np.asarray(iter_alpha) for iter_alpha in data['alpha']]
     except Exception as e:
-        raise ValueError(f"Failed converting lists to arrays: {e}")
+        raise ValueError(f'Failed converting lists to arrays: {e}')
 
-    message = f"**History loaded from** '{filename}' | **iterations:** {n_iters} | **data:** {sorted(data.keys())}"
+    message = (
+        f"**History loaded from** '{filename}' | **iterations:** {n_iters} | "
+        f'**data:** {sorted(data.keys())}'
+    )
     return data, message
 
 
-def save_constants_json(constants, filename) -> str:
+def save_constants_json(constants: dict[str, object], filename: str) -> str:
     """Persist constants dict to JSON after validation.
 
     Parameters
     ----------
-    constants : Dict[str, Any]
+    constants : dict[str, Any]
         Dictionary of configuration constants.
     filename : str
         Path to JSON file to create/overwrite.
@@ -757,33 +761,30 @@ def save_constants_json(constants, filename) -> str:
         Status message.
     """
     if not isinstance(constants, dict):
-        return "Constants must be a dict; nothing saved."
+        return 'Constants must be a dict; nothing saved.'
     if not constants:
-        return "Constants dict is empty; nothing saved."
+        return 'Constants dict is empty; nothing saved.'
     if not isinstance(filename, str) or not filename.strip():
-        return "Filename must be a non-empty string; nothing saved."
+        return 'Filename must be a non-empty string; nothing saved.'
     # Test JSON serializability
     try:
         json.dumps(constants)
     except Exception as e:
-        return f"Constants not JSON serializable: {e}"
-    import os
-
-    parent = os.path.dirname(os.path.abspath(filename))
-    if parent and not os.path.exists(parent):
-        try:
-            os.makedirs(parent, exist_ok=True)
-        except Exception as e:
-            return f"Could not create directory '{parent}': {e}"
+        return f'Constants not JSON serializable: {e}'
+    parent = Path(filename).resolve().parent
     try:
-        with open(filename, "w", encoding="utf-8") as f:
+        parent.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        return f"Could not create directory '{parent}': {e}"
+    try:
+        with Path(filename).open('w', encoding='utf-8') as f:
             json.dump(constants, f)
         return f"Saved constants to '{filename}'"
     except Exception as e:
         return f"Failed writing constants to '{filename}': {e}"
 
 
-def load_constants_json(filename: str) -> tuple[Dict[str, Any], str]:
+def load_constants_json(filename: str) -> tuple[dict[str, object], str]:
     """Load configuration constants saved by ``save_constants_json``.
 
     Opens the JSON file, validates it exists and that the top-level object is a
@@ -796,7 +797,7 @@ def load_constants_json(filename: str) -> tuple[Dict[str, Any], str]:
 
     Returns
     -------
-    (constants, message) : tuple[Dict[str, Any], str]
+    (constants, message) : tuple[dict[str, Any], str]
         ``constants`` is the loaded dictionary of configuration values.
         ``message`` summarizes the load status (file, number of keys).
 
@@ -816,15 +817,14 @@ def load_constants_json(filename: str) -> tuple[Dict[str, Any], str]:
     True
     """
     if not isinstance(filename, str) or not filename.strip():
-        raise ValueError("Filename must be a non-empty string.")
-    import os
+        raise ValueError('Filename must be a non-empty string.')
 
-    if not os.path.exists(filename):
+    if not Path(filename).exists():
         raise FileNotFoundError(f"Constants file '{filename}' not found.")
-    with open(filename, "r", encoding="utf-8") as f:
+    with Path(filename).open(encoding='utf-8') as f:
         data = json.load(f)
     if not isinstance(data, dict):
-        raise ValueError("Constants JSON must have a dict as the top-level object.")
+        raise ValueError('Constants JSON must have a dict as the top-level object.')
     n_keys = len(data)
     message = f"Constants loaded from '{filename}' | keys: {n_keys}"
     return data, message

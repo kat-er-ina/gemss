@@ -27,6 +27,7 @@ dependencies = [
 dev = [
     "pytest>=9.0.2",
     "pytest-xdist>=3.8.0",
+    "ruff>=0.14.14",
 ]
 
 [project.urls]
@@ -41,3 +42,50 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["gemss"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+lint.select = [
+    "E",      # pycodestyle errors
+    "F",      # Pyflakes
+    "N",      # pep8-naming
+    "W",      # pycodestyle warnings
+    "PLE",    # pylint errors
+    "PLC",    # pylint conventions
+    "I001",   # isort - unsorted imports
+    "ANN",    # flake8-annotations
+    "UP",     # pyupgrade
+    "PTH",    # flake8-use-pathlib
+    "PT",     # flake8-pytest
+    "TID",    # flake8-tidy-imports
+]
+lint.ignore = [
+    "ANN002",  # Missing type annotation for *args
+    "ANN003",  # Missing type annotation for **kwargs
+    "ANN204",   # Allow missing return type annotation for __init__
+    "N802",
+    "N803",
+    "N806",
+    "N812",
+]
+src = ["src"]
+
+[tool.ruff.format]
+quote-style = "single"
+line-ending = "lf"
+indent-style = "space"
+exclude = [
+  "app/**",
+  "notebooks/**",
+  "scripts/**",
+  "app/**",
+]
+
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402", "F401"]
+"tests/**" = ["ANN201", "T201"]
+"notebooks/**" = ["ALL"]
+"scripts/**" = ["ALL"]
+"app/**" = ["ALL"]
