@@ -1,11 +1,12 @@
 {# Release notes for the current version only. #}
+{%- set release_elements = release["elements"] if release is defined and "elements" in release else {} -%}
 {%- set type_groups = {
-  "✨ Changes": ["feat", "fix"],
-  "⚡ Performance": ["perf"],
-  "🧹 Refactors": ["refactor"],
-  "📚 Docs": ["docs"],
-  "🧪 Tests": ["test"],
-  "🛠️ Chore": ["chore", "build", "ci"]
+  "✨ Changes": ["feat", "feature", "features", "fix", "bug fix", "bug fixes"],
+  "⚡ Performance": ["perf", "performance", "performance improvements"],
+  "🧹 Refactors": ["refactor", "refactoring"],
+  "📚 Docs": ["docs", "documentation"],
+  "🧪 Tests": ["test", "testing"],
+  "🛠️ Chore": ["chore", "chores", "build", "build system", "ci", "continuous integration", "style", "code style"]
 } -%}
 
 ## {{ version }}
@@ -13,7 +14,7 @@
 {%- for group_title, types in type_groups.items() %}
 {%- set group_commits = [] -%}
 {%- for commit_type in types -%}
-{%- for commit in release.elements.get(commit_type, []) -%}
+{%- for commit in release_elements.get(commit_type, []) -%}
 {%- set _ = group_commits.append(commit) -%}
 {%- endfor -%}
 {%- endfor -%}
