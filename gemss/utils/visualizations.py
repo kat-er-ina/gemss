@@ -18,7 +18,7 @@ def get_elbo_plot(
 
     Parameters
     ----------
-    history : Dict[str, List[float]]
+    history : dict[str, list[float]]
         Dictionary containing 'elbo' key with ELBO values per iteration.
 
     Returns
@@ -40,7 +40,7 @@ def plot_elbo(
 
     Parameters
     ----------
-    history : Dict[str, List[float]]
+    history : dict[str, list[float]]
         Dictionary containing 'elbo' key with ELBO values per iteration.
 
     Returns
@@ -62,11 +62,11 @@ def get_mu_plot(
 
     Parameters
     ----------
-    history : Dict[str, np.ndarray]
+    history : dict[str, np.ndarray]
         Dictionary containing 'mu' key with mean values per iteration.
     component : int, optional
         Index of mixture component to plot.
-    original_feature_names_mapping : Dict[str, str], optional
+    original_feature_names_mapping : dict[str, str] | None, optional
         A mapping from internal feature names (e.g., 'feature_0') to original feature names.
         If provided, the plots will use the original feature names.
 
@@ -119,11 +119,11 @@ def plot_mu(
 
     Parameters
     ----------
-    history : Dict[str, np.ndarray]
+    history : dict[str, np.ndarray]
         Dictionary containing 'mu' key with mean values per iteration.
     component : int, optional
         Index of mixture component to plot.
-    original_feature_names_mapping : Dict[str, str], optional
+    original_feature_names_mapping : dict[str, str] | None, optional
         A mapping from internal feature names (e.g., 'feature_0') to original feature names.
         If provided, the plots will use the original feature names.
 
@@ -148,7 +148,7 @@ def get_alpha_plot(
 
     Parameters
     ----------
-    history : Dict[str, np.ndarray]
+    history : dict[str, np.ndarray]
         Dictionary containing 'alpha' key with weights per iteration.
 
     Returns
@@ -182,7 +182,7 @@ def plot_alpha(
 
     Parameters
     ----------
-    history : Dict[str, np.ndarray]
+    history : dict[str, np.ndarray]
         Dictionary containing 'alpha' key with weights per iteration.
 
     Returns
@@ -208,7 +208,7 @@ def get_correlation_with_response_plot(
         DataFrame containing feature data.
     y : pd.Series
         Binary response variable.
-    support_features : List[str]
+    support_features : list[str]
         List of features to highlight in the plot.
 
     Returns
@@ -251,7 +251,7 @@ def show_correlations_with_response(
         DataFrame containing feature data.
     y : pd.Series
         Binary response variable.
-    support_features : List[str]
+    support_features : list[str]
         List of features to highlight in the plot.
 
     Returns
@@ -431,10 +431,10 @@ def get_features_in_components_plot(
 
     Parameters
     ----------
-    solutions : Dict[str, List[str]]
+    solutions : dict[str, list[str]]
         Dictionary where each key is a component name and each value is a list of features
         in that component.
-    features_to_show : List[str], optional
+    features_to_show : list[str] | None, optional
         List of features to highlight in the heatmap. If None, only features in the provided
         DataFrame are shown.
 
@@ -479,10 +479,10 @@ def show_features_in_components(
 
     Parameters
     ----------
-    solutions : Dict[str, List[str]]
+    solutions : dict[str, list[str]]
         Dictionary where each key is a component name and each value is a list of features
         in that component.
-    features_to_show : List[str], optional
+    features_to_show : list[str] | None, optional
         List of features to highlight in the heatmap. If None, only features in the provided
         DataFrame are shown.
 
@@ -505,7 +505,7 @@ def get_compare_parameters_plot(
 
     Parameters
     ----------
-    parameters : Dict[str, Any]
+    parameters : dict[str, Any]
         Dictionary containing true generating parameters with the key
         'full_weights' (list of lists of full weight vectors for each true solution).
     final_mu : np.ndarray
@@ -576,7 +576,7 @@ def compare_parameters(
 
     Parameters
     ----------
-    parameters : Dict[str, Any]
+    parameters : dict[str, Any]
         Dictionary containing true generating parameters with the key
         'full_weights' (list of lists of full weight vectors for each true solution).
     final_mu : np.ndarray
@@ -713,7 +713,7 @@ def get_final_alphas_plot(
 
     Parameters
     ----------
-    history : Dict[str, List[Any]]
+    history : dict[str, list[Any]]
         Dictionary containing 'alpha' key with weights per iteration.
     show_bar_plot : bool, optional
         Whether to create the bar plot. Default is True.
@@ -722,7 +722,7 @@ def get_final_alphas_plot(
 
     Returns
     -------
-    List[go.Figure]
+    list[go.Figure]
         List of Plotly Figure objects representing the final mixture weights.
     """
     alphas = history['alpha']
@@ -762,7 +762,7 @@ def show_final_alphas(
 
     Parameters
     ----------
-    history : Dict[str, List[Any]]
+    history : dict[str, list[Any]]
         Dictionary containing 'alpha' key with weights per iteration.
     show_bar_plot : bool, optional
         Whether to show the bar plot. Default is True.
@@ -787,12 +787,12 @@ def get_subsampled_history(
 
     Parameters
     ----------
-    history : Dict[str, List[Any]]
+    history : dict[str, list[Any]]
         Original history dictionary.
 
     Returns
     -------
-    Dict[str, List[Any]]
+    dict[str, list[Any]]
         Subsampled history dictionary.
     """
     every_nth_iteration = 20
@@ -826,7 +826,7 @@ def get_algorithm_progress_plots(
 
     Parameters
     ----------
-    history : Dict[str, List[Any]]
+    history : dict[str, list[Any]]
         Dictionary containing optimization history with keys 'elbo', 'mu', and 'alpha'
         (fewer keys allowed if corresponding plots are disabled).
         'mu' should have shape [n_iterations, n_components, n_features].
@@ -837,7 +837,7 @@ def get_algorithm_progress_plots(
         Whether to plot the mixture means (mu) trajectory. Default is True.
     alpha : bool, optional
         Whether to plot the mixture weights (alpha) progress. Default is True.
-    original_feature_names_mapping : Optional[Dict[str, str]], optional
+    original_feature_names_mapping : dict[str, str] | None, optional
         A mapping from internal feature names (e.g., 'feature_0') to original feature names.
         If provided, the plots will use the original feature names where applicable.
         Default is None.
@@ -846,7 +846,7 @@ def get_algorithm_progress_plots(
 
     Returns
     -------
-    Dict[str, go.Figure]
+    dict[str, go.Figure]
         Dictionary of Plotly Figure objects for each requested plot type.
 
     Notes
@@ -893,7 +893,7 @@ def show_algorithm_progress(
 
     Parameters
     ----------
-    history : Dict[str, List[Any]]
+    history : dict[str, list[Any]]
         Dictionary containing optimization history with keys 'elbo', 'mu', and 'alpha'
         (fewer keys allowed if corresponding plots are disabled).
         'mu' should have shape [n_iterations, n_components, n_features].
@@ -904,7 +904,7 @@ def show_algorithm_progress(
         Whether to plot the mixture means (mu) trajectory. Default is True.
     plot_alpha_progress : bool, optional
         Whether to plot the mixture weights (alpha) progress. Default is True.
-    original_feature_names_mapping : Optional[Dict[str, str]], optional
+    original_feature_names_mapping : dict[str, str] | None, optional
         A mapping from internal feature names (e.g., 'feature_0') to original feature names.
         If provided, the plots will use the original feature names where applicable.
         Default is None.

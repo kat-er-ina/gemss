@@ -80,20 +80,20 @@ def plot_solution_grouped(
         The base name of the metric to plot (e.g., "Recall", "Precision").
     x_axis : str
         The parameter to plot on the x-axis.
-    color_by : Optional[str]
+    color_by : str | None
         The parameter to group the lines by (or None for no grouping).
-    symbol_by : Optional[str]
+    symbol_by : str | None
         The parameter to differentiate point symbols by (or None for no differentiation).
     group_identifier : Literal["TIER_ID", "CASE_ID", None]
         The column name used to group the data, or None to use all data.
-    identifiers_list : Optional[List[str]] = None
+    identifiers_list : list[str] | None = None
         The identifier values to filter the data (e.g., tier IDs or case IDs).
         If None, all unique identifiers are used.
         Ignored if group_identifier is None.
-    solution_type : Optional[str] = "all types"
+    solution_type : str | None = "all types"
         The type of solution to plot (e.g., "full", "top", "outlier_STD_2.5").
         Input "all types" to include all solution types.
-    hover_params : Optional[List[str]]
+    hover_params : list[str] | None
         List of parameters to show on hover in the plot.
         If None, defaults to ["EXPERIMENT_ID"]. "EXPERIMENT_ID" is always included.
 
@@ -298,7 +298,7 @@ def plot_solution_comparison(
     -----------
     df : pd.DataFrame
         DataFrame containing the results data.
-    solution_types : List[str]
+    solution_types : list[str]
         List of solution types to compare (e.g., ["full", "top", "outlier_STD_2.5"]).
     metric_name : str
         The base name of the metric to plot (e.g., "Recall", "Precision").
@@ -306,11 +306,11 @@ def plot_solution_comparison(
         The parameter to plot on the x-axis.
     group_identifier : Literal["TIER_ID", "CASE_ID", None]
         The column name used to group the data, or None to use all data.
-    identifiers_list : Optional[List[str]] = None
+    identifiers_list : list[str] | None = None
         The identifier values to filter the data (e.g., tier IDs or case IDs).
         If None, all unique identifiers are used.
         Ignored if group_identifier is None.
-    hover_params : Optional[List[str]]
+    hover_params : list[str] | None
         List of parameters to show on hover in the plot.
         If None, defaults to ["EXPERIMENT_ID"]. "EXPERIMENT_ID" is always included.
     """
@@ -395,15 +395,15 @@ def plot_si_asi_scatter(
         DataFrame containing the results data.
     color_by : str
         The parameter to color the points by (or "None" for no coloring).
-    hover_params : List[str]
+    hover_params : list[str]
         List of parameters to show on hover in the plot.
     group_identifier : Literal["TIER_ID", "CASE_ID", None]
         The column name used to group the data, or None to use all data.
-    identifiers_list : Optional[List[str]] = None
+    identifiers_list : list[str] | None = None
         The identifier values to filter the data (e.g., tier IDs or case IDs).
         If None, all unique identifiers are used.
         Ignored if group_identifier is None.
-    solution_type : Optional[str] = "all types"
+    solution_type : str | None = "all types"
         The type of solution to plot (e.g., "full", "top", "outlier_STD_2.5").
         Input "all types" to include all solution types.
 
@@ -492,7 +492,7 @@ def plot_category_counts(
     ----------
     df_category_counts : pd.DataFrame
         DataFrame containing counts of experiments in each performance category.
-    title : Optional[str] = None
+    title : str | None = None
         Title for the plot, optional.
 
     Returns
@@ -549,14 +549,14 @@ def plot_metric_analysis_overview(
         DataFrame containing the results data.
     group_identifier : Literal["TIER_ID", "CASE_ID", None]
         The column name used to group the data, or None to use all data.
-    identifiers_list : Optional[List[str]] = None
+    identifiers_list : list[str] | None = None
         The unique identifier values to filter the data (e.g., tier IDs).
         If None, all unique identifiers are used.
         Ignored if group_identifier is None.
-    solution_type : Optional[str]
+    solution_type : str | None
         The solution type to analyze (e.g., "full", "top", "outlier_STD_2.5").
         Input "all types" (default) to include all solution types.
-    metric_name : Optional[Literal[
+    metric_name : Literal[
         "Recall",
         "Precision",
         "F1_Score",
@@ -567,14 +567,14 @@ def plot_metric_analysis_overview(
         "FDR",
         "Global_Miss_Rate",
         "Global_FDR",
-    ]] = DEFAULT_METRIC,
+    ] | None = DEFAULT_METRIC,
         The metric to analyze (e.g., "Recall", "Precision"). DEFAULT_METRIC by default.
-    custom_title : Optional[str] = None
+    custom_title : str | None = None
         Custom title for the plot. If None, a default title is generated.
-    thresholds : Optional[Dict[str, float]]
+    thresholds : dict[str, float] | None
         Dictionary defining the lower bounds for performance categories.
         Defaults to THRESHOLDS_FOR_METRIC for the given metric.
-    verbose : Optional[bool] = True
+    verbose : bool | None = True
         Whether to print summary statistics.
     """
     df_category_counts = analyze_metric_results(
@@ -626,18 +626,18 @@ def plot_heatmap(
         Parameter for y-axis.
     group_identifier : Literal["TIER_ID", "CASE_ID", None]
         The column name used to group the data, or None to use all data.
-    identifiers_list : Optional[List[str]] = None
+    identifiers_list : list[str] | None = None
         The identifier values to filter the data (e.g., tier IDs or case IDs).
         If None, all unique identifiers are used.
         Ignored if group_identifier is None.
-    solution_type : Optional[str] = "all types"
+    solution_type : str | None = "all types"
         The solution type to analyze. Input "all types" to include all solution types.
     metric_name : str
         The metric to plot as color.
     aggregation_func : Literal["mean", "median"], optional
         The aggregation function to use when multiple entries exist
         for the same (x_axis, y_axis) pair. DEFAULT_AGGREGATION_FUNC by default.
-    title : Optional[str] = None
+    title : str | None = None
         Title for the plot. If None, a default title is generated.
 
     Returns
@@ -717,7 +717,7 @@ def plot_metric_vs_hyperparam(
         DataFrame containing grouped results data.
     hyperparam : str
         The hyperparameter to plot on the x-axis.
-    solution_options : List[str]
+    solution_options : list[str]
         List of solution types to include in the plot.
 
     Returns

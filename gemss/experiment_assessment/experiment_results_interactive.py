@@ -41,7 +41,7 @@ def show_interactive_performance_overview(
         Must contain 'solution_type' and group_identifier columns.
     group_identifier : Literal["TIER_ID", "CASE_ID"], optional
         The column name used to group the data. Default is "TIER_ID".
-    metrics_list : List[str], optional
+    metrics_list : list[str], optional
         List of metrics available for analysis. Default includes
         "Recall", "Precision", and "F1_Score".
     show_metric_thresholds : bool, optional

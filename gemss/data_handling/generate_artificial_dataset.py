@@ -53,7 +53,7 @@ def generate_multi_solution_data(
         Generated dataset with columns ['feature_0', ..., 'feature_n-1'].
     pd.Series
         Binary response variable (0 or 1) for each sample.
-    Dict[str, List[str]]
+    dict[str, list[str]]
         Dictionary of the generating solutions (supports).
     pd.DataFrame
         DataFrame describing the generating parameters (supports and weights).
@@ -265,7 +265,7 @@ def generate_artificial_dataset(
         Generated dataset with columns ['feature_1', ...].
     pd.Series
         Binary response variable (0 or 1) for each sample.
-    Dict[str, List[str]]
+    dict[str, list[str]]
         Dictionary of the generating solutions (supports).
     pd.DataFrame
         DataFrame describing the generating parameters (supports and weights).

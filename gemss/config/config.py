@@ -304,7 +304,7 @@ def get_core_algorithm_params() -> dict[str, Any]:
 
     Returns
     -------
-    Dict[str, Any]
+    dict[str, Any]
         Dictionary containing algorithm and postprocessing parameters only
     """
     algorithm_params = _config_manager.get_params_by_category('algorithm')
@@ -334,7 +334,7 @@ def get_params_by_category(category: str) -> dict[str, Any]:
 
     Returns
     -------
-    Dict[str, Any]
+    dict[str, Any]
         Filtered parameters dictionary
     """
     return _config_manager.get_params_by_category(category)
@@ -355,11 +355,12 @@ def get_current_config(
 
     Parameters
     ----------
-    constants : Dict[str, Any], optional
+    constants : dict[str, Any] | None, optional
         Configuration parameters to display. If None, uses current config.
     constant_type : str
         Parameter category to display:
         'algorithm', 'postprocessing', 'algorithm_and_postprocessing', 'dataset', 'all'
+
     Returns
     -------
     str
@@ -428,7 +429,7 @@ def display_current_config(
 
     Parameters
     ----------
-    constants : Dict[str, Any], optional
+    constants : dict[str, Any] | None, optional
         Configuration parameters to display. If None, uses current config.
     constant_type : str
         Parameter category to display:

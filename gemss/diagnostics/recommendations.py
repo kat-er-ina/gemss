@@ -31,13 +31,13 @@ class RecommendationEngine:
     ----------
     diagnostics : PerformanceTests
         The performance tests instance with completed test results.
-    constants : Optional[Dict[str, Any]]
+    constants : dict[str, Any] | None
         Configuration constants dictionary for displaying current settings.
-    recommendation_keys : List[str]
+    recommendation_keys : list[str]
         List of applicable recommendation keys based on test results.
     severity_level : str
         Overall severity assessment: "CRITICAL", "WARNING", or "OPTIMIZATION".
-    test_status : Dict[str, str]
+    test_status : dict[str, str]
         Categorized test results by type and status.
     """
 
@@ -67,7 +67,7 @@ class RecommendationEngine:
         ----------
         diagnostics : PerformanceTests
             The performance tests instance with completed test results.
-        constants : Optional[Dict[str, Any]], optional
+        constants : dict[str, Any] | None, optional
             Configuration constants dictionary for displaying current settings.
             Default is None.
         """
@@ -120,7 +120,7 @@ class RecommendationEngine:
 
         Returns
         -------
-        Dict[str, Any]
+        dict[str, Any]
             Dictionary containing recommendation summary with keys:
             - severity_level: Overall severity assessment
             - recommendation_keys: List of recommendation keys
@@ -140,7 +140,7 @@ class RecommendationEngine:
 
         Returns
         -------
-        Dict[str, Any]
+        dict[str, Any]
             Dictionary containing full recommendation data including
             messages and structured analysis results.
         """
@@ -169,7 +169,7 @@ class RecommendationEngine:
 
         Returns
         -------
-        Dict[str, str]
+        dict[str, str]
             Dictionary mapping test types to their status.
         """
         test_status = {}
@@ -191,7 +191,7 @@ class RecommendationEngine:
 
         Returns
         -------
-        List[str]
+        list[str]
             List of recommendation keys to display.
         """
         recommendation_keys = []
@@ -329,7 +329,7 @@ def get_recommendation_keys(diagnostics: 'PerformanceTests') -> list[str]:
 
     Returns
     -------
-    List[str]
+    list[str]
         List of recommendation keys to display.
     """
     engine = RecommendationEngine(diagnostics)
@@ -415,7 +415,7 @@ def display_recommendations(
     ----------
     diagnostics : PerformanceTests
         The performance tests instance with completed test results.
-    constants : Optional[Dict[str, Any]]
+    constants : dict[str, Any] | None
         A dictionary of algorithm-related constants
 
     Returns

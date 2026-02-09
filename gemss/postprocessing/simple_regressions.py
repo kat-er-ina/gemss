@@ -51,7 +51,7 @@ def detect_task(y: pd.Series | np.ndarray, n_class_threshold: int = 10) -> str:
 
     Parameters
     ----------
-    y : Union[pd.Series, np.ndarray]
+    y : pd.Series | np.ndarray
         Target vector.
     n_class_threshold : int, optional
         Maximum number of unique integer values to consider as classification. 10 by default.
@@ -185,7 +185,7 @@ def solve_with_logistic_regression(
 
     Returns
     -------
-    Dict[str, Any]
+    dict[str, Any]
         Dictionary containing performance metrics and model coefficients.
     """
     model = LogisticRegressionCV(
@@ -356,7 +356,7 @@ def solve_with_linear_regression(
 
     Returns
     -------
-    Dict[str, Any]
+    dict[str, Any]
         Dictionary containing performance metrics and model coefficients.
     """
     # Choose model based on penalty
@@ -451,12 +451,12 @@ def solve_any_regression(
 
     Parameters
     ----------
-    solutions : Dict[str, List[str]]
+    solutions : dict[str, list[str]]
         Dictionary mapping each component (solution) to its identified features.
         Feature names should correspond to column names in df.
     df : pd.DataFrame
         Feature matrix with features as columns.
-    response : Union[pd.Series, np.ndarray]
+    response : pd.Series | np.ndarray
         Response vector. Binary values {0, 1} for classification, continuous values for regression.
     apply_scaling : Literal["standard", "minmax", None], optional
         Type of feature scaling to apply before regression. Options are:

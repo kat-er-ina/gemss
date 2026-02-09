@@ -29,11 +29,11 @@ def _create_outlier_info_for_component(
 
     Parameters:
     -----------
-    history : Dict[str, List[Any]]
+    history : dict[str, list[Any]]
         Optimization history containing 'mu' values.
     component : int
         Component index to analyze.
-    feature_names : List[str]
+    feature_names : list[str]
         List of feature names.
     outlier_threshold_coeff : float
         Threshold coefficient for outlier detection.
@@ -42,7 +42,7 @@ def _create_outlier_info_for_component(
 
     Returns:
     --------
-    Dict[str, List[float]]
+    dict[str, list[float]]
         Dictionary containing outlier features and values.
     """
     if outlier_threshold_coeff <= 0:
@@ -86,7 +86,7 @@ def detect_outlier_features(
 
     Returns:
     -----------
-    Dict[str, List[float]]
+    dict[str, list[float]]
         A dictionary with two keys:
         - "features": List of feature indices identified as outliers.
         - "values": Corresponding mu values of the outlier features.
@@ -138,7 +138,7 @@ def get_outlier_info_df(
 
     Parameters:
     -----------
-    outlier_info: Dict[str, List[float]]
+    outlier_info: dict[str, list[float]]
         A dictionary with outlier features and their values.
     component_no: int
         The component number to get outlier information for.
@@ -180,9 +180,9 @@ def show_outlier_info(
 
     Parameters:
     -----------
-    outlier_info: Dict[str, List[float]]
+    outlier_info: dict[str, list[float]]
         A dictionary with outlier features and their values.
-    component_numbers: int or List[int], optional
+    component_numbers: int | list[int] | None, optional
         The component number(s) to print outlier information for.
         If None, shows all available components.
     use_markdown: bool, optional
@@ -254,18 +254,18 @@ def get_outlier_solutions(
 
     Parameters:
     -----------
-    history : Dict[str, List[Any]]
+    history : dict[str, list[Any]]
         The optimization history containing 'mu' values.
     use_medians_for_outliers : bool, optional
         Whether to use medians for outlier detection. Default is False.
     outlier_threshold_coeff : float, optional
         The threshold coefficient for outlier detection. Default is 3.0.
-    original_feature_names_mapping : Optional[Dict[str, str]], optional
+    original_feature_names_mapping : dict[str, str] | None, optional
         Mapping from feature indices to original names. Default is None.
 
     Returns:
     --------
-    Dict[str, pd.DataFrame]
+    dict[str, pd.DataFrame]
         A dictionary where each key is a component identifier (e.g., "component_0")
         and each value is a DataFrame containing outlier features for that component.
     """
@@ -312,13 +312,13 @@ def get_outlier_summary_from_history(
 
     Parameters:
     -----------
-    history : Dict[str, List[Any]]
+    history : dict[str, list[Any]]
         The optimization history containing 'mu' values.
     use_medians_for_outliers : bool, optional
         Whether to use medians for outlier detection. Default is False.
     outlier_threshold_coeff : float, optional
         The threshold coefficient for outlier detection. Default is 3.0.
-    original_feature_names_mapping : Optional[Dict[str, str]], optional
+    original_feature_names_mapping : dict[str, str] | None, optional
         Mapping from feature indices to original names. Default is None.
 
     Returns:
@@ -395,13 +395,13 @@ def show_outlier_features_by_component(
 
     Parameters:
     -----------
-    history: Dict[str, List]
+    history: dict[str, list]
         The search history containing mu values for each iteration.
     use_median: bool, optional
         Whether to use median for outlier detection instead of mean. Default is False.
     outlier_threshold_coeff: float, optional
         The multiplier of absolute deviation for outlier detection. Default is 3.
-    original_feature_names_mapping: Optional[Dict[str, str]], optional
+    original_feature_names_mapping: dict[str, str] | None, optional
         A mapping from feature indices to original feature names.
     use_markdown: bool, optional
         Whether to format the output using Markdown. Default is True.

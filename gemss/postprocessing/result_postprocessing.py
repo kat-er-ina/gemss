@@ -33,23 +33,23 @@ def get_full_solutions(
 
     Parameters
     ----------
-    search_history : Dict[str, List[Any]]
+    search_history : dict[str, list[Any]]
         The history of the optimization process containing 'mu', 'var', and 'alpha'.
         Expected keys: 'mu', 'var', 'alpha' with values as lists of arrays.
         'mu' should have shape [n_iterations, n_components, n_features].
     min_mu_threshold : float, optional
         The threshold for considering a feature as important based on its absolute mu value.
         Default is 1e-6.
-    original_feature_names_mapping : Optional[Dict[str, str]], optional
+    original_feature_names_mapping : dict[str, str] | None, optional
         A mapping from internal feature names (e.g., 'feature_0') to original feature names.
         If provided, the recovered features will be displayed using the original names.
         Default is None.
 
     Returns
     -------
-    Tuple[
-        Dict[str, pd.DataFrame],
-        Dict[str, Union[np.ndarray, int]],
+    tuple[
+        dict[str, pd.DataFrame],
+        dict[str, np.ndarray | int],
     ]
         A tuple containing:
         - full_solutions: Dictionary mapping each component to a DataFrame of all features
@@ -135,7 +135,7 @@ def get_top_solutions(
 
     Parameters:
     -----------
-    full_solutions: Dict[str, pd.DataFrame]
+    full_solutions: dict[str, pd.DataFrame]
         A dictionary where each key is a component identifier and each value is a DataFrame
         of features and their mu values in a column named 'Mu value'.
     top_n: int
@@ -143,7 +143,7 @@ def get_top_solutions(
 
     Returns:
     --------
-    Dict[str, pd.DataFrame]
+    dict[str, pd.DataFrame]
         A dictionary mapping each component to its DataFrame of top features.
     """
     top_solutions = {}
@@ -168,13 +168,13 @@ def get_features_from_solutions(
 
     Parameters:
     -----------
-    solutions: Dict[str, pd.DataFrame]
+    solutions: dict[str, pd.DataFrame]
         A dictionary where each key is a component identifier and each value is a DataFrame
         of features (in columns named 'Feature') and their mu values.
 
     Returns:
     --------
-    Dict[str, List[float]]
+    dict[str, list[float]]
         A dictionary mapping each component to the corresponding list of features.
     """
     feature_lists = {}
@@ -202,7 +202,7 @@ def recover_solutions(
 
     Parameters
     ----------
-    search_history : Dict[str, List[Any]]
+    search_history : dict[str, list[Any]]
         The history of the optimization process containing 'mu', 'var', and 'alpha'.
         Expected keys: 'mu', 'var', 'alpha' with values as lists of arrays.
         'mu' should have shape [n_iterations, n_components, n_features].
@@ -215,20 +215,20 @@ def recover_solutions(
     use_median_for_outlier_detection: bool, optional
         If True, use median and MAD for outlier detection; otherwise, use mean and STD.
         Default is False, i.e. use mean and STD.
-    outlier_deviation_thresholds : List[float], optional
+    outlier_deviation_thresholds : list[float], optional
         A list of deviation thresholds to use for outlier detection. Default is [2.0, 2.5, 3.0].
-    original_feature_names_mapping : Optional[Dict[str, str]], optional
+    original_feature_names_mapping : dict[str, str] | None, optional
         A mapping from internal feature names (e.g., 'feature_0') to original feature names.
         If provided, the recovered features will be displayed using the original names.
         Default is None.
 
     Returns
     -------
-    Tuple[
-        Dict[str, pd.DataFrame],
-        Dict[str, pd.DataFrame],
-        Dict[str, Dict[str, pd.DataFrame]],
-        Dict[str, Union[np.ndarray, int]],
+    tuple[
+        dict[str, pd.DataFrame],
+        dict[str, pd.DataFrame],
+        dict[str, dict[str, pd.DataFrame]],
+        dict[str, np.ndarray | int],
     ]
         A tuple containing:
         - full_solutions: Dictionary mapping each component to a DataFrame of all features
@@ -304,9 +304,9 @@ def compare_true_and_found_features(
 
     Parameters
     ----------
-    features_found : Union[List[str], set]
+    features_found : list[str] | set
         Collection of features found by the model.
-    true_support_features : List[str]
+    true_support_features : list[str]
         List of true support features (ground truth).
     n_total_features : int
         Total number of features in the dataset. Must be positive.
@@ -361,13 +361,13 @@ def get_features_from_long_solutions(
 
     Parameters:
     -----------
-    solutions: Dict[str, pd.DataFrame]
+    solutions: dict[str, pd.DataFrame]
         A dictionary where each key is a solution identifier and each value is a DataFrame
         of features and their mu values.
 
     Returns:
     --------
-    Dict[str, List[str]]
+    dict[str, list[str]]
         A dictionary mapping each component to its list of features.
     """
     extracted_solutions = {}
@@ -383,13 +383,13 @@ def get_unique_features(solutions: dict[str, dict[str, list[Any]]]) -> list[str]
 
     Parameters:
     -----------
-    solutions: Dict[str, Dict[str]]
+    solutions: dict[str, dict[str]]
         A dictionary where each key is a solution identifier and each value is a dictionary
         of features.
 
     Returns:
     --------
-    List[str]
+    list[str]
         A list of unique features across all solutions.
     """
     return list(set().union(*solutions.values()))
@@ -404,7 +404,7 @@ def show_unique_features(
 
     Parameters
     ----------
-    solutions : Dict[str, Dict[str, List[Any]]]
+    solutions : dict[str, dict[str, list[Any]]]
         A dictionary where each key is a solution identifier and each value is a dictionary
         of features.
     use_markdown : bool, optional
@@ -438,7 +438,7 @@ def show_unique_features_from_full_solutions(
 
     Parameters
     ----------
-    solutions : Dict[str, pd.DataFrame]
+    solutions : dict[str, pd.DataFrame]
         A dictionary where each key is a solution identifier and each value is a DataFrame
         of features and their mu values.
     use_markdown : bool, optional
@@ -463,12 +463,12 @@ def show_features_in_solutions(
 
     Parameters:
     -----------
-    solutions : Dict[str, Dict[str]]
+    solutions : dict[str, dict[str]]
         A dictionary where each key is a solution identifier and each value is a dictionary
         of features.
-    history : Dict[str, List[np.ndarray]]
+    history : dict[str, list[np.ndarray]]
         The optimization history containing 'alpha' values.
-    constants : Dict[str, float]
+    constants : dict[str, float]
         A dictionary containing the algorithm settings, namely the 'DESIRED_SPARSITY'.
     use_markdown : bool, optional
         Whether to format the output using Markdown. Default is True.
@@ -513,9 +513,9 @@ def show_final_parameter_comparison(
 
     Parameters:
     -----------
-    true_parameters : Dict[str, Any]
+    true_parameters : dict[str, Any]
         A dictionary containing the true parameters for comparison.
-    final_parameters : Dict[str, Any]
+    final_parameters : dict[str, Any]
         A dictionary containing the final estimated parameters.
 
     Returns:
@@ -552,7 +552,7 @@ def show_algorithm_progress_with_outliers(
 
     Parameters
     ----------
-    history : Dict[str, List[Any]]
+    history : dict[str, list[Any]]
         Dictionary containing optimization history with keys 'elbo', 'mu', and 'alpha'
         (fewer keys allowed if corresponding plots are disabled).
         'mu' should have shape [n_iterations, n_components, n_features].
@@ -563,7 +563,7 @@ def show_algorithm_progress_with_outliers(
         Whether to plot the mixture means (mu) trajectory. Default is True.
     plot_alpha_progress : bool, optional
         Whether to plot the mixture weights (alpha) progress. Default is True.
-    original_feature_names_mapping : Optional[Dict[str, str]], optional
+    original_feature_names_mapping : dict[str, str] | None, optional
         A mapping from internal feature names (e.g., 'feature_0') to original feature names.
         If provided, the plots will use the original feature names where applicable.
         Default is None.

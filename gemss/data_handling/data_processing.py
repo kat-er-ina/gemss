@@ -146,7 +146,7 @@ def preprocess_features(
 
     Returns:
     --------
-    Tuple[np.ndarray, np.ndarray, Dict[str, str]]
+    tuple[np.ndarray, np.ndarray, dict[str, str]]
         A tuple containing:
         - the preprocessed features as a NumPy array
         - the response values as a NumPy array

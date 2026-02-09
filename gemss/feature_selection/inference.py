@@ -355,7 +355,7 @@ class BayesianFeatureSelector:
 
         Returns
         -------
-        history : Dict[str, List[float]]
+        history : dict[str, list[float]]
             Dictionary containing optimization history:
             - 'elbo': list of ELBO values
             - 'mu': list of mixture means per iteration

@@ -22,9 +22,9 @@ class PerformanceTests:
 
     Attributes
     ----------
-    history : Dict[str, List[Any]]
+    history : dict[str, list[Any]]
         The optimization history containing 'mu', 'var', 'alpha', and 'elbo' keys.
-    test_results : List[Dict[str, Any]]
+    test_results : list[dict[str, Any]]
         List of test results, each containing test name, status, and details.
     mu_array : np.ndarray
         Numpy array of mu values with shape [n_iterations, n_components, n_features].
@@ -78,12 +78,12 @@ class PerformanceTests:
 
         Parameters
         ----------
-        history : Dict[str, List[Any]]
+        history : dict[str, list[Any]]
             The optimization history from BayesianFeatureSelector.optimize().
             Expected to contain keys: 'mu', 'var', 'alpha', 'elbo'.
             The 'mu' key should contain a list of arrays with shape [n_components, n_features]
             for each iteration.
-        desired_sparsity : Optional[Union[int, float]], optional
+        desired_sparsity : int | float | None, optional
             Desired number of non-zero features (int) or fraction of features (float).
             If float, should be between 0 and 1. If int, should be positive.
             Default is None.
@@ -122,7 +122,7 @@ class PerformanceTests:
 
         Returns
         -------
-        List[Dict[str, Any]]
+        list[dict[str, Any]]
             List of test results.
         """
         self.test_results = []
@@ -158,7 +158,7 @@ class PerformanceTests:
 
         Returns
         -------
-        Dict[str, Any]
+        dict[str, Any]
             Test result containing status, message, and details.
         """
         if top_n_features is None:
@@ -266,11 +266,11 @@ class PerformanceTests:
 
         Parameters
         ----------
-        desired_sparsity : Optional[int], optional
+        desired_sparsity : int | None, optional
             Number of features to select. If None, uses self.desired_sparsity.
             If that's also not set, defaults to min(10, 25% of n_features).
             Default is None.
-        difference_coefficient_boundary : Optional[float], optional
+        difference_coefficient_boundary : float | None, optional
             Coefficient to determine the threshold for required difference
             at the feature selection boundary. Default is 1.0 / desired_sparsity.
             I.e. the difference at the boundary should be at least
@@ -282,7 +282,7 @@ class PerformanceTests:
 
         Returns
         -------
-        Dict[str, Any]
+        dict[str, Any]
             Test result containing status, message, and details.
         """
         if desired_sparsity is None:
@@ -504,7 +504,7 @@ class PerformanceTests:
 
         Parameters
         ----------
-        details : Dict[str, Any]
+        details : dict[str, Any]
             Test details to display.
 
         Returns
@@ -542,7 +542,7 @@ class PerformanceTests:
 
         Parameters
         ----------
-        details : Dict[str, Any]
+        details : dict[str, Any]
             Test details to display.
 
         Returns
@@ -638,7 +638,7 @@ class PerformanceTests:
 
         Parameters
         ----------
-        result : Dict[str, Any]
+        result : dict[str, Any]
             Test result to display.
 
         Returns
@@ -675,14 +675,14 @@ def run_performance_diagnostics(
 
     Parameters
     ----------
-    history : Dict[str, List[Any]]
+    history : dict[str, list[Any]]
         The optimization history from BayesianFeatureSelector.optimize().
         Expected to contain keys: 'mu', 'var', 'alpha', 'elbo'.
-    desired_sparsity : Optional[Union[int, float]], optional
+    desired_sparsity : int | float | None, optional
         The desired sparsity level for feature selection. If float, should be
         between 0 and 1 representing fraction of features. If int, should be
         positive representing absolute number of features. Default is None.
-    verbose : Optional[bool]
+    verbose : bool | None
         Whether to display test results. Default is True.
 
     Returns

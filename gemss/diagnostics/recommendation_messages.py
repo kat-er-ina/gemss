@@ -131,7 +131,7 @@ def get_recommendation_message(key: str) -> dict[str, str]:
 
     Returns
     -------
-    Dict[str, str]
+    dict[str, str]
         Dictionary containing message data with keys:
         - section_header: Main section title with emoji
         - title: Specific scenario title with emoji

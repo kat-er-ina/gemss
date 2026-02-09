@@ -216,7 +216,7 @@ def get_df_cases(df: pd.DataFrame) -> dict[int, pd.DataFrame]:
 
     Returns
     -------
-    Dict[int, pd.DataFrame]
+    dict[int, pd.DataFrame]
         A dictionary mapping case numbers to their corresponding filtered dataframes.
     """
     df_cases = {}
@@ -419,7 +419,7 @@ def concatenate_cases(df_cases: dict[int, pd.DataFrame]) -> pd.DataFrame:
 
     Parameters
     ----------
-    df_cases : Dict[int, pd.DataFrame]
+    df_cases : dict[int, pd.DataFrame]
         A dictionary where keys are case IDs and values are dataframes for each case.
 
     Returns

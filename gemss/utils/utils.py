@@ -78,7 +78,7 @@ def get_solution_summary_df(
 
     Parameters
     ----------
-    data_dict : Dict[str, pd.DataFrame]
+    data_dict : dict[str, pd.DataFrame]
         Dictionary mapping component/solution names to DataFrames.
         Each DataFrame should contain the specified value_column.
     value_column : str, optional
@@ -160,7 +160,7 @@ def show_solution_summary(
 
     Parameters
     ----------
-    solution_data : Dict[str, pd.DataFrame]
+    solution_data : dict[str, pd.DataFrame]
         Dictionary mapping each component/solution to a DataFrame containing
         the data to display (e.g., features, outliers).
     title : str, optional
@@ -262,13 +262,13 @@ def generate_feature_names(
     -----------
     n_features: int
         The number of features to generate names for.
-    original_feature_names_mapping: Optional[Dict[str, str]], optional
+    original_feature_names_mapping: dict[str, str] | None, optional
         A mapping from feature indices to original feature names.
         If provided, will use original names.
 
     Returns:
     --------
-    List[str]
+    list[str]
         A list of feature names.
     """
     if original_feature_names_mapping is not None:
@@ -302,7 +302,7 @@ def dataframe_to_ascii_table(
 
     Returns
     -------
-    List[str]
+    list[str]
         List of strings representing each line of the ASCII table.
     """
 
@@ -417,7 +417,7 @@ def save_feature_lists_txt(
 
     Parameters
     ----------
-    all_features_lists : Dict[str, Dict[str, List[str]]]
+    all_features_lists : dict[str, dict[str, list[str]]]
         A dictionary mapping feature list titles to their corresponding feature lists. Structure:
         { solution_type: {component1: [feat1, feat2], component2: [feat3]}, title2: {...}, ... }
     filename : str
@@ -473,7 +473,7 @@ def save_feature_lists_json(
 
     Parameters
     ----------
-    all_features_lists : Dict[str, Dict[str, List[str]]]
+    all_features_lists : dict[str, dict[str, list[str]]]
         A dictionary mapping feature list titles to their corresponding feature lists. Structure:
         { solution_type: {component1: [feat1, feat2], component2: [feat3]}, title2: {...}, ... }
     filename : str
@@ -531,7 +531,7 @@ def load_feature_lists_json(
 
     Returns
     -------
-    (all_features_lists, message) : tuple[Dict[str, Dict[str, List[str]]], str]
+    (all_features_lists, message) : tuple[dict[str, dict[str, list[str]]], str]
         ``all_features_lists`` with structure {
             solution_type_A: {
                 component1: [feat1, feat2],
@@ -609,7 +609,7 @@ def save_selector_history_json(history: SelectorHistory, filename: str) -> str:
 
     Parameters
     ----------
-    history : Dict[str, Any]
+    history : dict[str, Any]
         Dictionary expected to contain lists/iterables under keys 'elbo', 'mu', 'var', 'alpha'.
     filename : str
         Path to JSON file to create/overwrite.
@@ -691,7 +691,7 @@ def load_selector_history_json(
 
     Returns
     -------
-    (history, message) : tuple[Dict[str, Any], str]
+    (history, message) : tuple[dict[str, Any], str]
         ``history`` is the loaded dictionary with NumPy arrays for ``mu``, ``var`` and ``alpha``.
         ``message`` is a human-readable status summary.
 
@@ -750,7 +750,7 @@ def save_constants_json(constants: dict[str, object], filename: str) -> str:
 
     Parameters
     ----------
-    constants : Dict[str, Any]
+    constants : dict[str, Any]
         Dictionary of configuration constants.
     filename : str
         Path to JSON file to create/overwrite.
@@ -797,7 +797,7 @@ def load_constants_json(filename: str) -> tuple[dict[str, object], str]:
 
     Returns
     -------
-    (constants, message) : tuple[Dict[str, Any], str]
+    (constants, message) : tuple[dict[str, Any], str]
         ``constants`` is the loaded dictionary of configuration values.
         ``message`` summarizes the load status (file, number of keys).
 

@@ -116,7 +116,7 @@ def load_experiment_results(
 
     Parameters:
     -----------
-    tier_id_list: List[int], optional
+    tier_id_list: list[int], optional
         List of tier IDs to load experiment results from. Each tier corresponds to a subdirectory
         named "tier{tier_id}" under the results_path (if provided) or the default experiment
         results directory.
@@ -128,7 +128,7 @@ def load_experiment_results(
 
     Returns:
     --------
-    Tuple[pd.DataFrame, List[str]]
+    tuple[pd.DataFrame, list[str]]
         A tuple containing:
         - A DataFrame with combined experiment results from the specified tiers.
         - A list of metric column names (containing both metric names and solution types).
@@ -253,7 +253,7 @@ def get_all_experiment_results(
 
     Parameters
     ----------
-    tier_id_list : List[int], optional
+    tier_id_list : list[int], optional
         List of tier IDs to load results from. Default is [1, 2, 3, 4, 5, 6, 7].
     verbose : bool, optional
         If True, print loading status for each tier and an overview
@@ -295,7 +295,7 @@ def get_average_metrics_per_group(
 
     Returns
     -------
-    Dict[str, pd.DataFrame]
+    dict[str, pd.DataFrame]
         A dictionary where keys are group identifiers and values are DataFrames
         containing mean or median performance metrics per solution type for that group.
     """
@@ -417,7 +417,7 @@ def get_best_solution_type_per_group(
 
     Returns
     -------
-    Dict[str, str]
+    dict[str, str]
         A dictionary where keys are group identifiers and values are the best
         solution type based on the chosen performance metric.
     """
@@ -474,7 +474,7 @@ def choose_best_solution_per_group(
 
     Returns
     -------
-    Dict[str, str]
+    dict[str, str]
         A dictionary where keys are group identifiers and values are the best
         solution type based on the chosen performance metric.
     """
@@ -507,7 +507,7 @@ def filter_df_best_solutions(
     ----------
     df : pd.DataFrame
         DataFrame containing experiment results with performance metrics.
-    best_solutions : Dict[str, str]
+    best_solutions : dict[str, str]
         A dictionary where keys are group identifiers and values are the best
         solution type based on the chosen performance metric.
     group_identifier : str, optional
@@ -589,13 +589,13 @@ def analyze_metric_results(
         DataFrame containing the results data.
     group_identifier : Literal["TIER_ID", "CASE_ID", None]
         The column name used to group the data, or None to use all data.
-    identifiers_list : Optional[List[str]] = None
+    identifiers_list : list[int] | list[str] | None = None
         The unique identifier values to filter the data (e.g., tier IDs).
         If None, all unique identifiers are used. Ignored if group_identifier is None.
-    solution_type : Optional[str]
+    solution_type : str | None
         The solution type to analyze (e.g., "full", "top", "outlier_STD_2.5").
         Input "all types" (default) to include all solution types.
-    metric_name : Optional[Literal[
+    metric_name : Literal[
         "Recall",
         "Precision",
         "F1_Score",
@@ -606,10 +606,10 @@ def analyze_metric_results(
         "FDR",
         "Global_Miss_Rate",
         "Global_FDR",
-    ]] = DEFAULT_METRIC,
+    ] | None = DEFAULT_METRIC,
         One of the coverage metrics to be analyze (e.g., "Recall", "Precision").
         DEFAULT_METRIC by default.
-    thresholds : Optional[Dict[str, float]]
+    thresholds : dict[str, float] | None
         Dictionary defining the lower bounds for performance categories.
         Defaults to THRESHOLDS_FOR_METRIC for the given metric.
 
