@@ -5,7 +5,8 @@ description = "GEMSS: Gaussian Ensemble for Multiple Sparse Solutions."
 readme = "README.md"
 requires-python = ">=3.13,<4.0"
 authors = [
-  { name = "Katerina Henclova", email = "katerina.henclova@datamole.ai" }
+  { name = "Katerina Henclova", email = "katerina.henclova@datamole.ai" },
+  { name = "Marek Nevole", email = "nevole.marek@gmail.com" }
 ]
 license = { text = "MIT" }
 keywords = [
