@@ -107,7 +107,7 @@ lint.ignore = [
     "N806",
     "N812",
 ]
-src = ["src"]
+src = ["gemss"]
 
 [tool.ruff.format]
 quote-style = "single"
