@@ -9,7 +9,6 @@ build/
 *.egg-info/
 
 # Project specific
-*.html
 *.parquet
 
 # IDEs and editors
