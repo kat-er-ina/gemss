@@ -252,6 +252,6 @@ Then run:
 
 ## License
 
-The GEMSS algorithm is licensed under the MIT License.
+The GEMSS algorithm is licensed under the [MIT License](https://github.com/kat-er-ina/gemss/blob/main/LICENSE).
 
 The optional add-on for modeling, [TabPFN](https://huggingface.co/Prior-Labs/tabpfn_2_5), is used in compliance with its non-commercial [license](https://huggingface.co/Prior-Labs/tabpfn_2_5#licensing).
