@@ -5,8 +5,26 @@ Interactive [marimo](https://marimo.io/) applications are available for explorin
 
 ## Running the apps
 
-### 1. Install uv
-If you do not have `uv` installed, run one of the following commands:
+### 1. Clone this repository
+
+First, you need to download this repository to your computer.
+
+**If you have Git installed:**
+```bash
+git clone https://github.com/kat-er-ina/gemss.git
+cd gemss
+```
+
+**If you don't have Git:**
+1. Go to the [repository page](https://github.com/kat-er-ina/gemss)
+2. Click the green "Code" button
+3. Select "Download ZIP"
+4. Extract the ZIP file to a location on your computer
+5. Open a terminal/command prompt and navigate to the extracted folder
+
+
+### 2. Install uv
+If you do not have `uv` installed, run the following:
 
 **macOS/Linux:**
 ```bash
@@ -18,7 +36,9 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-### 2. Launch an app
+### 3. Launch the app
+
+Finally, run the app from the root 'gemss' folder using `uv run`:
 
 ```bash
 # Unlimited version (commercial use allowed)
@@ -29,6 +49,9 @@ uv run marimo run app/gemss_explorer_noncommercial.py
 ```
 
 The app will open in your default web browser at `http://localhost:2718`.
+
+⚠️ **For Windows users:** If you encounter errors, see the [troubleshooting guide](../README.md#2-set-up-the-environment) in the main README.
+
 
 ## Available apps
 

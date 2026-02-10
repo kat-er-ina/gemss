@@ -1,8 +1,8 @@
 # GEMSS: Gaussian Ensemble for Multiple Sparse Solutions
 
-This repository implements Bayesian sparse feature selection using variational inference with Gaussian mixture models. The main objective is to recover all sparse feature subsets (supports) that explain the response in high-dimensional regression or classification tasks.
+This repository implements Bayesian sparse feature selection using variational inference with Gaussian mixture models ([paper](https://arxiv.org/abs/2602.08913)). The main objective is to recover all sparse feature subsets (supports) that explain the response in high-dimensional regression or classification tasks.
 
-**To make this tool accessible by non-coders (typically domain experts), we provide a [user-friendly application](./app/README.md) for the entire exploratory GEMSS workflow.**
+**To make this tool accessible by non-coders (typically domain experts), we provide a [user-friendly application](https://github.com/kat-er-ina/gemss/tree/main/app) for the entire exploratory GEMSS workflow.**
 
 ## Motivation
 
@@ -45,14 +45,17 @@ GEMSS provides a comprehensive framework for Bayesian feature selection with the
 
 ## Citation
 
-If you use GEMSS in your research, please cite the [technical report](./technical_report.pdf):
+If you use GEMSS in your research, please cite the [preprint paper](https://arxiv.org/abs/2602.08913):
 
 ```bibtex
-@misc{GEMSS2026,
-  author = {Henclova, Katerina and Smidl, Vaclav},
-  title = {GEMSS: A Variational Bayesian Method for Discovering Multiple Sparse Solutions in Classification and Regression Problems},
-  year = {2026},
-  note = {arXiv preprint arXiv:XXXX.XXXXX}
+@misc{henclova2026gemssvariationalbayesianmethod,
+      title={GEMSS: A Variational Bayesian Method for Discovering Multiple Sparse Solutions in Classification and Regression Problems}, 
+      author={Kateřina Henclová and Václav Šmídl},
+      year={2026},
+      eprint={2602.08913},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2602.08913}, 
 }
 ```
 
@@ -249,6 +252,6 @@ Then run:
 
 ## License
 
-The GEMSS algorithm is licensed under the MIT License.
+The GEMSS algorithm is licensed under the [MIT License](https://github.com/kat-er-ina/gemss/blob/main/LICENSE).
 
 The optional add-on for modeling, [TabPFN](https://huggingface.co/Prior-Labs/tabpfn_2_5), is used in compliance with its non-commercial [license](https://huggingface.co/Prior-Labs/tabpfn_2_5#licensing).
