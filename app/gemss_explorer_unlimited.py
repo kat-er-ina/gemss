@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.19.7"
+__generated_with = "0.19.10"
 app = marimo.App(width="full")
 
 
@@ -367,6 +367,7 @@ def _(file_uploader, io, mo, pd):
         index_col_selector = None
         label_col_selector = None
         scaling_selector = None
+        data_setup_ui = None
 
     (
         mo.vstack(
@@ -374,6 +375,7 @@ def _(file_uploader, io, mo, pd):
                 mo.md("**Your loaded dataset:**"),
                 mo.ui.table(df_raw),
                 mo.md("<br>"),
+                data_setup_ui,
             ]
         )
         if df_raw is not None

@@ -116,11 +116,13 @@ def _(current_dir, mo, os):
 
 @app.cell
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     # 💎 **GEMSS Explorer** [non-commercial]
 
     This app helps you discover **multiple distinct feature sets** that explain your data using GEMSS: Gaussian Ensemble for Multiple Sparse Solutions.
-    """)
+    """
+    )
     return
 
 
@@ -171,9 +173,11 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     ## **1. Set up input and output**
-    """)
+    """
+    )
     return
 
 
@@ -369,6 +373,7 @@ def _(file_uploader, io, mo, pd):
         index_col_selector = None
         label_col_selector = None
         scaling_selector = None
+        data_setup_ui = None
 
     (
         mo.vstack(
@@ -376,6 +381,7 @@ def _(file_uploader, io, mo, pd):
                 mo.md("**Your loaded dataset:**"),
                 mo.ui.table(df_raw),
                 mo.md("<br>"),
+                data_setup_ui,
             ]
         )
         if df_raw is not None
@@ -483,11 +489,13 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     ## **2. The feature selection algorithm**
 
     Configure parameters of the GEMSS feature selection algorithm.
-    """)
+    """
+    )
     return
 
 
@@ -795,11 +803,13 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     ## **3. Algorithm progress history**
 
     Assess convergence and features in the components. If needed, adjust the algorithm's parameters and rerun.
-    """)
+    """
+    )
     return
 
 
@@ -929,11 +939,13 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     ## **4. Recover solutions from components**
 
     Each component can be handled in multiple ways to yield feature sets = candidate solutions. Select your strategy.
-    """)
+    """
+    )
     return
 
 
@@ -1227,7 +1239,9 @@ def _(
 
     if save_results:
         # Save candidate solutions
-        msg_features_json = save_feature_lists_json(all_feature_sets, features_path_json)
+        msg_features_json = save_feature_lists_json(
+            all_feature_sets, features_path_json
+        )
         msg_features_txt = save_feature_lists_txt(all_feature_sets, features_path_txt)
 
         # Stack all the outputs in the correct order
@@ -1291,13 +1305,15 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     ## **5. Modeling with candidate solutions** [non-commercial use only]
 
     Using an advanced algorithm to create and evaluate models for each feature set of the chosen solution type. Proper train-test cross-validation is run.
 
     **WARNING:** For downstream modeling, we use TabPFN, whose free licence can be used only for research purposes. [(Read more.)](https://huggingface.co/Prior-Labs/tabpfn_2_5)
-    """)
+    """
+    )
     return
 
 
