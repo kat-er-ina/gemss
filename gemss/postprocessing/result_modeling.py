@@ -10,6 +10,7 @@ Main functions:
 - evaluate_all_solutions: Evaluate multiple solutions (like solve_any_regression)
 """
 
+import traceback
 from typing import Any, Literal
 
 import numpy as np
@@ -67,71 +68,71 @@ def _get_classification_model_registry(
         Dictionary mapping model names to model instances.
     """
     return {
-        "logistic_l2": LogisticRegressionCV(
+        'logistic_l2': LogisticRegressionCV(
             Cs=10,
             cv=5,
-            penalty="l2",
-            solver="saga",
-            scoring="roc_auc",
+            penalty='l2',
+            solver='saga',
+            scoring='roc_auc',
             max_iter=2000,
             random_state=random_state,
-            class_weight="balanced",
+            class_weight='balanced',
         ),
-        "logistic_l1": LogisticRegressionCV(
+        'logistic_l1': LogisticRegressionCV(
             Cs=10,
             cv=5,
-            penalty="l1",
-            solver="saga",
-            scoring="roc_auc",
+            penalty='l1',
+            solver='saga',
+            scoring='roc_auc',
             max_iter=2000,
             random_state=random_state,
-            class_weight="balanced",
+            class_weight='balanced',
         ),
-        "logistic_elasticnet": LogisticRegressionCV(
+        'logistic_elasticnet': LogisticRegressionCV(
             Cs=10,
             cv=5,
-            penalty="elasticnet",
-            solver="saga",
+            penalty='elasticnet',
+            solver='saga',
             l1_ratios=[0.1, 0.5, 0.7, 0.9, 0.95, 0.99],
-            scoring="roc_auc",
+            scoring='roc_auc',
             max_iter=2000,
             random_state=random_state,
-            class_weight="balanced",
+            class_weight='balanced',
         ),
-        "svm": SVC(
-            kernel="rbf",
+        'svm': SVC(
+            kernel='rbf',
             C=1.0,
-            gamma="scale",
+            gamma='scale',
             probability=True,
             random_state=random_state,
-            class_weight="balanced",
+            class_weight='balanced',
         ),
-        "knn": KNeighborsClassifier(n_neighbors=3, weights="uniform"),
-        "xgboost": XGBClassifier(
+        'knn': KNeighborsClassifier(n_neighbors=3, weights='uniform'),
+        'xgboost': XGBClassifier(
             n_estimators=100,
             learning_rate=0.1,
             max_depth=6,
             random_state=random_state,
-            eval_metric="logloss",
+            eval_metric='logloss',
         ),
-        "random_forest": RandomForestClassifier(
+        'random_forest': RandomForestClassifier(
             n_estimators=100,
             max_depth=None,
             min_samples_split=2,
             min_samples_leaf=1,
             random_state=random_state,
-            class_weight="balanced",
+            class_weight='balanced',
         ),
-        "decision_tree": DecisionTreeClassifier(
+        'decision_tree': DecisionTreeClassifier(
             max_depth=10,
             min_samples_split=2,
             min_samples_leaf=1,
             random_state=random_state,
-            class_weight="balanced",
+            class_weight='balanced',
         ),
-        "naive_bayes": GaussianNB(),
-        "lda": LinearDiscriminantAnalysis(),
-        "qda": QuadraticDiscriminantAnalysis(),
+        'naive_bayes': GaussianNB(),
+        'lda': LinearDiscriminantAnalysis(),
+        'qda': QuadraticDiscriminantAnalysis(),
     }
 
 
@@ -150,30 +151,30 @@ def _get_regression_model_registry(random_state: int | None = None) -> dict[str,
         Dictionary mapping model names to model instances.
     """
     return {
-        "linear_l2": RidgeCV(cv=5),
-        "linear_l1": LassoCV(cv=5, max_iter=2000, random_state=random_state),
-        "linear_elasticnet": ElasticNetCV(
+        'linear_l2': RidgeCV(cv=5),
+        'linear_l1': LassoCV(cv=5, max_iter=2000, random_state=random_state),
+        'linear_elasticnet': ElasticNetCV(
             cv=5,
             l1_ratio=[0.1, 0.5, 0.7, 0.9, 0.95, 0.99],
             max_iter=2000,
             random_state=random_state,
         ),
-        "svm": SVR(kernel="rbf", C=1.0, gamma="scale"),
-        "knn": KNeighborsRegressor(n_neighbors=3, weights="uniform"),
-        "xgboost": XGBRegressor(
+        'svm': SVR(kernel='rbf', C=1.0, gamma='scale'),
+        'knn': KNeighborsRegressor(n_neighbors=3, weights='uniform'),
+        'xgboost': XGBRegressor(
             n_estimators=100,
             learning_rate=0.1,
             max_depth=6,
             random_state=random_state,
         ),
-        "random_forest": RandomForestRegressor(
+        'random_forest': RandomForestRegressor(
             n_estimators=100,
             max_depth=None,
             min_samples_split=2,
             min_samples_leaf=1,
             random_state=random_state,
         ),
-        "decision_tree": DecisionTreeRegressor(
+        'decision_tree': DecisionTreeRegressor(
             max_depth=10,
             min_samples_split=2,
             min_samples_leaf=1,
@@ -196,13 +197,33 @@ def _get_available_models(task: str) -> list[str]:
     list[str]
         List of available model names.
     """
-    if task == "classification":
+    if task == 'classification':
         return list(_get_classification_model_registry().keys())
     else:
         return list(_get_regression_model_registry().keys())
 
 
-def _create_model(model_name: str, task: str, random_state: int | None = None) -> Any:
+def _create_model(
+    model_name: str, task: str, random_state: int | None = None
+) -> (
+    LogisticRegressionCV
+    | LassoCV
+    | RidgeCV
+    | ElasticNetCV
+    | SVC
+    | SVR
+    | KNeighborsClassifier
+    | KNeighborsRegressor
+    | XGBClassifier
+    | XGBRegressor
+    | RandomForestClassifier
+    | RandomForestRegressor
+    | DecisionTreeClassifier
+    | DecisionTreeRegressor
+    | GaussianNB
+    | LinearDiscriminantAnalysis
+    | QuadraticDiscriminantAnalysis
+):
     """
     Create a model instance based on name and task type.
 
@@ -225,27 +246,25 @@ def _create_model(model_name: str, task: str, random_state: int | None = None) -
     ValueError
         If model_name is not in the registry for the given task.
     """
-    if task == "classification":
+    if task == 'classification':
         registry = _get_classification_model_registry(random_state)
     else:
         registry = _get_regression_model_registry(random_state)
 
     if model_name not in registry:
-        available = ", ".join(registry.keys())
-        raise ValueError(
-            f"Model '{model_name}' not found for {task}. Available: {available}"
-        )
+        available = ', '.join(registry.keys())
+        raise ValueError(f"Model '{model_name}' not found for {task}. Available: {available}")
 
     return registry[model_name]
 
 
 def _create_cv_splitter(
-    outer_cv_folds: int | Literal["loo"],
+    outer_cv_folds: int | Literal['loo'],
     y: np.ndarray,
     task: str,
     random_state: int | None = None,
     stratify: np.ndarray | pd.Series | None = None,
-):
+) -> LeaveOneOut | StratifiedKFold | KFold:
     """
     Create appropriate CV splitter based on parameters.
 
@@ -269,7 +288,7 @@ def _create_cv_splitter(
     cv_splitter
         Scikit-learn CV splitter instance.
     """
-    if outer_cv_folds == "loo":
+    if outer_cv_folds == 'loo':
         return LeaveOneOut()
 
     # Determine stratification vector
@@ -277,15 +296,13 @@ def _create_cv_splitter(
     if stratify is not None:
         # Use provided stratification vector
         stratify_vector = stratify
-    elif task == "classification":
+    elif task == 'classification':
         # Use response for classification
         stratify_vector = y
     # else: no stratification for regression (stratify_vector remains None)
 
     if stratify_vector is not None:
-        return StratifiedKFold(
-            n_splits=outer_cv_folds, shuffle=True, random_state=random_state
-        )
+        return StratifiedKFold(n_splits=outer_cv_folds, shuffle=True, random_state=random_state)
     else:
         return KFold(n_splits=outer_cv_folds, shuffle=True, random_state=random_state)
 
@@ -329,14 +346,14 @@ def _compute_regression_metrics(
         else np.nan
     )
     return {
-        "adjusted_r2": np.round(adj_r2, 3) if not np.isnan(adj_r2) else np.nan,
-        "r2_score": np.round(r2, 3),
-        "MSE": np.round(mse, 3),
-        "RMSE": np.round(rmse, 3),
-        "MAE": np.round(mae, 3),
-        "MAPE": np.round(mape, 3) if not np.isnan(mape) else np.nan,
-        "n_samples": int(n_samples),
-        "n_features": int(n_features),
+        'adjusted_r2': np.round(adj_r2, 3) if not np.isnan(adj_r2) else np.nan,
+        'r2_score': np.round(r2, 3),
+        'MSE': np.round(mse, 3),
+        'RMSE': np.round(rmse, 3),
+        'MAE': np.round(mae, 3),
+        'MAPE': np.round(mape, 3) if not np.isnan(mape) else np.nan,
+        'n_samples': int(n_samples),
+        'n_features': int(n_features),
     }
 
 
@@ -375,30 +392,25 @@ def _compute_classification_metrics(
     else:
         roc = np.nan
 
-    class_dist = {
-        f"class_{v}": np.round(np.mean(y_true == v), 3) for v in unique_classes
-    }
     acc = accuracy_score(y_true, y_pred)
     bal_acc = balanced_accuracy_score(y_true, y_pred)
-    f1 = f1_score(y_true, y_pred, average="weighted")
+    f1 = f1_score(y_true, y_pred, average='weighted')
     cm = confusion_matrix(y_true, y_pred)
 
     # Class-specific precision and recall
     precisions = {
-        f"precision_class_{v}": np.round(
+        f'precision_class_{v}': np.round(
             precision_score(y_true, y_pred, pos_label=v, zero_division=0), 3
         )
         for v in unique_classes
     }
     recalls = {
-        f"recall_class_{v}": np.round(
-            recall_score(y_true, y_pred, pos_label=v, zero_division=0), 3
-        )
+        f'recall_class_{v}': np.round(recall_score(y_true, y_pred, pos_label=v, zero_division=0), 3)
         for v in unique_classes
     }
 
     metrics = {
-        "f1_score": np.round(f1, 3),
+        'f1_score': np.round(f1, 3),
     }
 
     # Add class-specific metrics
@@ -406,16 +418,16 @@ def _compute_classification_metrics(
     metrics.update(recalls)
     metrics.update(
         {
-            "balanced_accuracy": np.round(bal_acc, 3),
-            "accuracy": np.round(acc, 3),
-            "roc_auc": np.round(roc, 3) if not np.isnan(roc) else np.nan,
-            "n_samples": int(n_samples),
-            "n_features": int(n_features),
+            'balanced_accuracy': np.round(bal_acc, 3),
+            'accuracy': np.round(acc, 3),
+            'roc_auc': np.round(roc, 3) if not np.isnan(roc) else np.nan,
+            'n_samples': int(n_samples),
+            'n_features': int(n_features),
         }
     )
 
     if n_classes == 2:
-        metrics["confusion_matrix [TN, FP, FN, TP]"] = cm.ravel()
+        metrics['confusion_matrix [TN, FP, FN, TP]'] = cm.ravel()
 
     return metrics
 
@@ -423,9 +435,9 @@ def _compute_classification_metrics(
 def evaluate_with_nested_cv(
     X: pd.DataFrame | np.ndarray,
     y: pd.Series | np.ndarray,
-    model_name: str = "logistic_l2",
-    apply_scaling: Literal["standard", "minmax", None] = None,
-    outer_cv_folds: int | Literal["loo"] = 5,
+    model_name: str = 'logistic_l2',
+    apply_scaling: Literal['standard', 'minmax', None] = None,
+    outer_cv_folds: int | Literal['loo'] = 5,
     inner_cv_folds: int = 5,
     random_state: int | None = None,
     verbose: bool = False,
@@ -499,17 +511,15 @@ def evaluate_with_nested_cv(
 
     # Create CV splitter
     outer_cv = _create_cv_splitter(outer_cv_folds, y, task, random_state, stratify)
-    cv_description = (
-        "Leave-One-Out" if outer_cv_folds == "loo" else f"{outer_cv_folds}-fold CV"
-    )
+    cv_description = 'Leave-One-Out' if outer_cv_folds == 'loo' else f'{outer_cv_folds}-fold CV'
 
     if verbose:
-        print(f"Task: {task}")
-        print(f"Model: {model_name}")
-        print(f"Outer CV: {cv_description}")
-        print(f"Features: {n_features}")
-        print(f"Samples: {len(y)}")
-        print("-" * 50)
+        print(f'Task: {task}')
+        print(f'Model: {model_name}')
+        print(f'Outer CV: {cv_description}')
+        print(f'Features: {n_features}')
+        print(f'Samples: {len(y)}')
+        print('-' * 50)
 
     # Collect all predictions across folds
     all_y_true = []
@@ -521,11 +531,11 @@ def evaluate_with_nested_cv(
         y_train, y_test = y[train_idx], y[test_idx]
 
         # Apply scaling
-        if apply_scaling == "standard":
+        if apply_scaling == 'standard':
             scaler = StandardScaler()
             X_train = scaler.fit_transform(X_train)
             X_test = scaler.transform(X_test)
-        elif apply_scaling == "minmax":
+        elif apply_scaling == 'minmax':
             scaler = MinMaxScaler(feature_range=(0, 1))
             X_train = scaler.fit_transform(X_train)
             X_test = scaler.transform(X_test)
@@ -545,30 +555,30 @@ def evaluate_with_nested_cv(
 
         if verbose:
             fold_num = fold_idx + 1
-            total_folds = len(y) if outer_cv_folds == "loo" else outer_cv_folds
-            print(f"Fold {fold_num}/{total_folds} completed")
+            total_folds = len(y) if outer_cv_folds == 'loo' else outer_cv_folds
+            print(f'Fold {fold_num}/{total_folds} completed')
 
     # Convert to numpy arrays
     all_y_true = np.array(all_y_true)
     all_y_pred = np.array(all_y_pred)
 
     # Compute aggregated metrics
-    if task == "classification":
+    if task == 'classification':
         metrics = _compute_classification_metrics(all_y_true, all_y_pred, n_features)
     else:
         metrics = _compute_regression_metrics(all_y_true, all_y_pred, n_features)
 
     result = {
-        "task": task,
-        "model": model_name,
-        "cv_type": cv_description,
-        "metrics": metrics,
-        "n_features": n_features,
+        'task': task,
+        'model': model_name,
+        'cv_type': cv_description,
+        'metrics': metrics,
+        'n_features': n_features,
     }
 
     if verbose:
-        print("-" * 50)
-        print("Aggregated metrics:")
+        print('-' * 50)
+        print('Aggregated metrics:')
         print(pd.Series(metrics))
 
     return result
@@ -578,9 +588,9 @@ def evaluate_all_solutions(
     solutions: dict[str, list[str]],
     df: pd.DataFrame,
     response: pd.Series | np.ndarray,
-    model_name: str | Literal["auto"] = "auto",
-    apply_scaling: Literal["standard", "minmax", None] = None,
-    outer_cv_folds: int | Literal["loo"] = 5,
+    model_name: str | Literal['auto'] = 'auto',
+    apply_scaling: Literal['standard', 'minmax', None] = None,
+    outer_cv_folds: int | Literal['loo'] = 5,
     inner_cv_folds: int = 5,
     random_state: int | None = None,
     verbose: bool = False,
@@ -645,23 +655,21 @@ def evaluate_all_solutions(
     task = detect_task(response)
 
     # Auto-select model if requested
-    if model_name == "auto":
-        model_name = "logistic_l2" if task == "classification" else "linear_l2"
+    if model_name == 'auto':
+        model_name = 'logistic_l2' if task == 'classification' else 'linear_l2'
 
     if verbose:
         myprint(
-            msg=f"Evaluating solutions with nested CV using {model_name}",
+            msg=f'Evaluating solutions with nested CV using {model_name}',
             use_markdown=use_markdown,
             header=2,
         )
-        cv_desc = (
-            "Leave-One-Out" if outer_cv_folds == "loo" else f"{outer_cv_folds}-fold"
-        )
+        cv_desc = 'Leave-One-Out' if outer_cv_folds == 'loo' else f'{outer_cv_folds}-fold'
         myprint(
-            msg=f"Task: {task.capitalize()}, Outer CV: {cv_desc}",
+            msg=f'Task: {task.capitalize()}, Outer CV: {cv_desc}',
             use_markdown=use_markdown,
         )
-        myprint(msg="=" * 60, use_markdown=use_markdown)
+        myprint(msg='=' * 60, use_markdown=use_markdown)
 
     results = {}
 
@@ -669,50 +677,51 @@ def evaluate_all_solutions(
     for component, features in solutions.items():
         if verbose:
             myprint(
-                msg=f"Evaluating **{component}**",
+                msg=f'Evaluating **{component}**',
                 use_markdown=use_markdown,
                 header=3,
             )
             myprint(
-                f"- {len(features)} features: {features}",
+                f'- {len(features)} features: {features}',
                 use_markdown=use_markdown,
             )
 
         # Filter data to selected features and drop NaNs
         df_filtered = df[features].copy()
-        df_filtered["response"] = response
+        df_filtered['response'] = response
 
         # Handle stratification vector if provided
         if stratify is not None:
-            df_filtered["__stratify__"] = stratify
+            df_filtered['__stratify__'] = stratify
 
         df_filtered = df_filtered.dropna()
-        y_filtered = df_filtered.pop("response")
+        y_filtered = df_filtered.pop('response')
 
         # Extract filtered stratification vector if it was provided
         stratify_filtered = None
         if stratify is not None:
-            stratify_filtered = df_filtered.pop("__stratify__")
+            stratify_filtered = df_filtered.pop('__stratify__')
 
         # Check if we have enough samples
         if df_filtered.shape[0] < MIN_ALLOWED_SAMPLES:
             n_left = df_filtered.shape[0]
             myprint(
                 msg=(
-                    f"**Cannot evaluate {component}.** "
-                    f"After dropping NaNs: {n_left} samples "
-                    f"(need ≥ {MIN_ALLOWED_SAMPLES})."
+                    f'**Cannot evaluate {component}.** '
+                    f'After dropping NaNs: {n_left} samples '
+                    f'(need ≥ {MIN_ALLOWED_SAMPLES}).'
                 ),
                 use_markdown=use_markdown,
             )
             continue
 
         # Check if we have enough samples for CV
-        if outer_cv_folds != "loo" and df_filtered.shape[0] < outer_cv_folds:
+        if outer_cv_folds != 'loo' and df_filtered.shape[0] < outer_cv_folds:
             myprint(
                 msg=(
-                    f"**Cannot evaluate {component}.** "
-                    f"Only {df_filtered.shape[0]} samples, need ≥ {outer_cv_folds} for {outer_cv_folds}-fold CV. "
+                    f'**Cannot evaluate {component}.** '
+                    f'Only {df_filtered.shape[0]} samples, '
+                    f'need ≥ {outer_cv_folds} for {outer_cv_folds}-fold CV. '
                     f'Consider using fewer folds or "loo".'
                 ),
                 use_markdown=use_markdown,
@@ -732,39 +741,37 @@ def evaluate_all_solutions(
                 verbose=False,  # We handle verbosity here
                 stratify=stratify_filtered,
             )
-            results[component] = result["metrics"]
+            results[component] = result['metrics']
 
             if verbose:
-                print(f"OK - Completed: {result['cv_type']}")
+                print(f'OK - Completed: {result["cv_type"]}')
                 print()
 
         except Exception as e:
             myprint(
-                msg=f"**Error evaluating {component}:** {str(e)}",
+                msg=f'**Error evaluating {component}:** {str(e)}',
                 use_markdown=use_markdown,
             )
             if verbose:
-                import traceback
-
                 traceback.print_exc()
             continue
 
         if verbose:
-            myprint(msg="-" * 60, use_markdown=use_markdown)
+            myprint(msg='-' * 60, use_markdown=use_markdown)
 
     # Convert results to DataFrame
     if not results:
         myprint(
-            msg="No solutions could be evaluated.",
+            msg='No solutions could be evaluated.',
             use_markdown=use_markdown,
         )
         return pd.DataFrame()
 
-    metrics_df = pd.DataFrame.from_dict(results, orient="index")
+    metrics_df = pd.DataFrame.from_dict(results, orient='index')
 
     if verbose:
         myprint(
-            msg=f"## Summary: Nested CV Results ({model_name}, {cv_desc})",
+            msg=f'## Summary: Nested CV Results ({model_name}, {cv_desc})',
             use_markdown=use_markdown,
             header=2,
         )
@@ -775,9 +782,9 @@ def evaluate_all_solutions(
             for c in display_df.columns
             if c
             in [
-                "confusion_matrix",
-                "confusion_matrix [TN, FP, FN, TP]",
-                "class_distribution",
+                'confusion_matrix',
+                'confusion_matrix [TN, FP, FN, TP]',
+                'class_distribution',
             ]
         ]
         if cols_to_drop:
@@ -785,12 +792,12 @@ def evaluate_all_solutions(
         print(display_df.to_string())
 
         # Display confusion matrices separately if present
-        if "confusion_matrix" in metrics_df.columns:
-            print("\nConfusion Matrices:")
+        if 'confusion_matrix' in metrics_df.columns:
+            print('\nConfusion Matrices:')
             for sol_name in metrics_df.index:
-                cm = metrics_df.loc[sol_name, "confusion_matrix"]
-                print(f"  {sol_name}:")
-                print(f"    {cm}")
+                cm = metrics_df.loc[sol_name, 'confusion_matrix']
+                print(f'  {sol_name}:')
+                print(f'    {cm}')
         print()
 
     return metrics_df
