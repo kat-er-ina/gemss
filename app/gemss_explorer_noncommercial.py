@@ -1443,13 +1443,150 @@ def _(
         label="OR use Leave-One-Out CV instead (for small datasets)",
     )
 
+    # Describe the modeling options with their default values
+    help_models_regression = mo.accordion(
+        {
+            "📖 Guide": mo.md(
+                """
+                ### Regression Models
+
+                **Ridge regression**
+                - L2-regularized linear regression
+                - Configuration: 5-fold cross-validation (RidgeCV)
+                - Best for: simple baseline, robust to multicollinearity
+                - Weakness: linear model
+
+                **Lasso**
+                - L1-regularized linear regression with
+                - Configuration: 5-fold cross-validation for hyperparameter tuning
+                - Best for: enforcing additional sparsity
+                - Weakness: correlated features can cause instability, linear model
+
+                **Elastic net**
+                - Combined L1+L2 regularization with automatic hyperparameter tuning
+                - Configuration: 5-fold cross-validation for hyperparameter tuning
+                - Best for: balance between Ridge and Lasso
+                - Weakness: may not perform well on highly correlated features
+
+                **XGBoost**
+                - Gradient boosting with regularization
+                - Configuration: 100 estimators, learning_rate=0.1, max_depth=6
+                - Best for: high performative complex modeling, handles missing data well
+                - Weakness: can overfit, less interpretable
+
+                **Support Vector Machine (SVM)**
+                - SVM regression with RBF kernel
+                - Configuration: C=1.0, gamma='scale' (SVR)
+                - Best for: non-linear patterns
+                - Weakness: sensitive to outliers, less interpretable
+
+                **3-Nearest Neighbors (kNN)**
+                - Instance-based learning using 3 nearest neighbors
+                - Configuration: uniform weights
+                - Best for: simple baseline, local patterns
+                - Weakness: degrades in high dimensions, sensitive to irrelevant features
+
+                **Decision tree**
+                - Single decision tree with pruning
+                - Configuration: max_depth=10, min_samples_split=2
+                - Best for: interpretability, non-linear relationships
+                - Weakness: can overfit, less stable
+                
+                **Random forest**
+                - Ensemble of decision trees
+                - Configuration: 100 trees, no max depth limit
+                - Best for: non-linear relationships, feature interactions, robust to outliers
+                - Weakness: can overfit on small datasets, less interpretable
+                """
+            )
+        }
+    )
+    help_models_classification = mo.accordion(
+        {
+            "📖 Guide": mo.md(
+                """
+                ### Classification Models
+
+                **Ridge regression**
+                - L2-regularized linear regression
+                - Configuration: 5-fold cross-validation (RidgeCV)
+                - Best for: simple baseline, robust to multicollinearity
+                - Weakness: linear model
+
+                **Lasso**
+                - L1-regularized linear regression with
+                - Configuration: 5-fold cross-validation for hyperparameter tuning
+                - Best for: enforcing additional sparsity
+                - Weakness: correlated features can cause instability, linear model
+
+                **Elastic net**
+                - Combined L1+L2 regularization with automatic hyperparameter tuning
+                - Configuration: 5-fold cross-validation for hyperparameter tuning
+                - Best for: balance between Ridge and Lasso
+                - Weakness: may not perform well on highly correlated features
+
+                **XGBoost**
+                - Gradient boosting with regularization
+                - Configuration: 100 estimators, learning_rate=0.1, max_depth=6
+                - Best for: high performative complex modeling, handles missing data well
+                - Weakness: can overfit, less interpretable
+
+                **Support Vector Machine (SVM)**
+                - SVM regression with RBF kernel
+                - Configuration: C=1.0, gamma='scale' (SVR)
+                - Best for: non-linear patterns
+                - Weakness: sensitive to outliers, less interpretable
+
+                **3-Nearest Neighbors (kNN)**
+                - Instance-based learning using 3 nearest neighbors
+                - Configuration: uniform weights
+                - Best for: simple baseline, local patterns
+                - Weakness: degrades in high dimensions, sensitive to irrelevant features
+
+                **Decision tree**
+                - Single decision tree with pruning
+                - Configuration: max_depth=10, min_samples_split=2
+                - Best for: interpretability, non-linear relationships
+                - Weakness: can overfit, less stable
+                
+                **Random forest**
+                - Ensemble of decision trees
+                - Configuration: 100 trees, no max depth limit
+                - Best for: non-linear relationships, feature interactions, robust to outliers
+                - Weakness: can overfit on small datasets, less interpretable
+
+                **Naive Bayes**
+                - Gaussian Naive Bayes classifier
+                - Best for: simple baseline, small sample size
+                - Weakness: strong independence assumption, may underperform on complex datasets
+
+                **Linear Discriminant Analysis (LDA)**
+                - Linear classifier assuming Gaussian distributions
+                - Best for: multi-class problems, dimensionality reduction
+                - Weakness: assumes equal covariance matrices, may underperform on non-linear boundaries
+
+                **Quadratic Discriminant Analysis (QDA)**
+                - Quadratic classifier assuming Gaussian distributions with different covariances
+                - Best for: non-linear decision boundaries, different class covariances
+                - Weakness: sensitive to outliers, may overfit on small datasets
+                """
+            )
+        }
+    )
+
+    if task_type == "regression":
+        help_models = help_models_regression
+    elif task_type == "classification":
+        help_models = help_models_classification
+
     # Model selection UI
     model_selection_ui = mo.vstack(
         [
             mo.md("### Select models to evaluate:"),
             mo.md(
-                f"*Task type: **{task_type}** — showing {len(available_models)} available models*"
+                f"*{task_type.capitalize()}: {len(available_models)} available models*"
             ),
+            help_models,
         ]
         + [
             model_checkboxes[nice_model_names[model_name]]
