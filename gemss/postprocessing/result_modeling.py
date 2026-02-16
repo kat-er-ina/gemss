@@ -249,6 +249,7 @@ def _create_cv_splitter(
     y: np.ndarray,
     task: str,
     random_state: int | None = None,
+    stratify: np.ndarray | pd.Series | None = None,
 ):
     """
     Create appropriate CV splitter based on parameters.
@@ -258,11 +259,15 @@ def _create_cv_splitter(
     outer_cv_folds : int or 'loo'
         Number of outer CV folds or 'loo' for leave-one-out.
     y : np.ndarray
-        Target values (used to determine stratification).
+        Target values (used for default stratification in classification).
     task : str
         Either 'classification' or 'regression'.
     random_state : int, optional
         Random seed for reproducibility.
+    stratify : np.ndarray or pd.Series, optional
+        Stratification vector. If provided, used for stratification regardless of task type.
+        If None and task is classification, y is used for stratification.
+        If None and task is regression, no stratification is applied.
 
     Returns
     -------
@@ -271,7 +276,18 @@ def _create_cv_splitter(
     """
     if outer_cv_folds == "loo":
         return LeaveOneOut()
+
+    # Determine stratification vector
+    stratify_vector = None
+    if stratify is not None:
+        # Use provided stratification vector
+        stratify_vector = stratify
     elif task == "classification":
+        # Use response for classification
+        stratify_vector = y
+    # else: no stratification for regression (stratify_vector remains None)
+
+    if stratify_vector is not None:
         return StratifiedKFold(
             n_splits=outer_cv_folds, shuffle=True, random_state=random_state
         )
@@ -426,6 +442,7 @@ def evaluate_with_nested_cv(
     inner_cv_folds: int = 5,
     random_state: int | None = None,
     verbose: bool = False,
+    stratify: np.ndarray | pd.Series | None = None,
 ) -> dict[str, Any]:
     """
     Evaluate a single solution using nested cross-validation.
@@ -461,6 +478,11 @@ def evaluate_with_nested_cv(
         Random seed for reproducibility.
     verbose : bool, optional
         Whether to print progress information. Default is False.
+    stratify : np.ndarray or pd.Series, optional
+        Stratification vector for cross-validation splits. If provided, used for
+        stratification regardless of task type. If None and task is classification,
+        y is used for stratification. If None and task is regression, no stratification
+        is applied. Default is None.
 
     Returns
     -------
@@ -489,7 +511,7 @@ def evaluate_with_nested_cv(
     n_features = X.shape[1]
 
     # Create CV splitter
-    outer_cv = _create_cv_splitter(outer_cv_folds, y, task, random_state)
+    outer_cv = _create_cv_splitter(outer_cv_folds, y, task, random_state, stratify)
     cv_description = (
         f"Leave-One-Out" if outer_cv_folds == "loo" else f"{outer_cv_folds}-fold CV"
     )
@@ -576,6 +598,7 @@ def evaluate_all_solutions(
     random_state: int | None = None,
     verbose: bool = False,
     use_markdown: bool = True,
+    stratify: np.ndarray | pd.Series | None = None,
 ) -> pd.DataFrame:
     """
     Evaluate multiple solutions using nested cross-validation.
@@ -608,6 +631,11 @@ def evaluate_all_solutions(
         Whether to print detailed information for each solution. Default is False.
     use_markdown : bool, optional
         Whether to use markdown formatting for verbose output. Default is True.
+    stratify : np.ndarray or pd.Series, optional
+        Stratification vector for cross-validation splits. If provided, used for
+        stratification regardless of task type. If None and task is classification,
+        response is used for stratification. If None and task is regression, no
+        stratification is applied. Default is None.
 
     Returns
     -------
@@ -666,8 +694,18 @@ def evaluate_all_solutions(
         # Filter data to selected features and drop NaNs
         df_filtered = df[features].copy()
         df_filtered["response"] = response
+
+        # Handle stratification vector if provided
+        if stratify is not None:
+            df_filtered["__stratify__"] = stratify
+
         df_filtered = df_filtered.dropna()
         y_filtered = df_filtered.pop("response")
+
+        # Extract filtered stratification vector if it was provided
+        stratify_filtered = None
+        if stratify is not None:
+            stratify_filtered = df_filtered.pop("__stratify__")
 
         # Check if we have enough samples
         if df_filtered.shape[0] < MIN_ALLOWED_SAMPLES:
@@ -705,6 +743,7 @@ def evaluate_all_solutions(
                 inner_cv_folds=inner_cv_folds,
                 random_state=random_state,
                 verbose=False,  # We handle verbosity here
+                stratify=stratify_filtered,
             )
             results[component] = result["metrics"]
 

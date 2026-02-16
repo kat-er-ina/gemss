@@ -201,7 +201,22 @@ def _(mo):
                 - must contain an index column,
                 - must contain a target/label column: binary classification and regression are supported,
                 - can contain missing values,
-                - only numeric features are supported.
+                - only numeric features are supported,
+                - may contain a column used for stratification during cross-validation.
+                
+                ### Stratification in cross-validation
+                
+                Stratification ensures that each CV fold maintains the same distribution as the full dataset.
+                
+                **Default behavior:**
+                - Classification tasks: stratified by target/label column (preserves class distribution)
+                - Regression tasks: no stratification (random splits)
+                
+                **Custom stratification column:**
+                - Enable the "Use custom stratification column" checkbox to specify a different column for stratification
+                - Useful when samples have inherent grouping (experimental batches, time periods, patient cohorts, etc.)
+                - The stratification column values should be categorical or discrete
+                - If disabled, default behavior is used
 
                 ### Data scaling
 
@@ -352,6 +367,18 @@ def _(file_uploader, io, mo, pd):
             label="Target/label column",
             value=df_raw.columns[-1] if not df_raw.empty else None,
         )
+
+        # Checkbox to enable custom stratification
+        use_custom_stratification = mo.ui.checkbox(
+            value=False,
+            label="Use custom stratification column",
+        )
+
+        stratification_col_selector = mo.ui.dropdown(
+            options=list(df_raw.columns),
+            label="Custom stratification column",
+            value=df_raw.columns[-1] if not df_raw.empty else None,
+        )
         scaling_selector = mo.ui.dropdown(
             options=["standard", "minmax", None],
             label="Scaling to use",
@@ -371,13 +398,25 @@ def _(file_uploader, io, mo, pd):
                 mo.md(
                     f"✅ **Data loaded:** `{file_uploader.value[0].name}` ({df_raw.shape[0]} rows, {df_raw.shape[1]} cols)"
                 ),
-                mo.vstack([index_col_selector, label_col_selector, scaling_selector]),
+                mo.vstack(
+                    [
+                        index_col_selector,
+                        label_col_selector,
+                        mo.md("---"),
+                        scaling_selector,
+                        mo.md("---"),
+                        use_custom_stratification,
+                        stratification_col_selector,
+                    ]
+                ),
             ]
         )
     else:
         df_raw = None
         index_col_selector = None
         label_col_selector = None
+        use_custom_stratification = None
+        stratification_col_selector = None
         scaling_selector = None
         data_setup_ui = None
 
@@ -402,6 +441,8 @@ def _(file_uploader, io, mo, pd):
         df_raw,
         index_col_selector,
         label_col_selector,
+        use_custom_stratification,
+        stratification_col_selector,
         scaling_selector,
     )
 
@@ -420,13 +461,35 @@ def _(
     pd,
     preprocess_features,
     scaling_selector,
+    use_custom_stratification,
+    stratification_col_selector,
 ):
     # Stop if data not loaded
     mo.stop(df_raw is None, mo.md("*Please upload your dataset to proceed.*<br><hr>"))
 
+    # Handle stratification column
+    # If custom stratification is enabled and the stratification column is different from label column, extract it
+    # Otherwise use None to trigger default backend behavior
+    if (
+        use_custom_stratification.value
+        and stratification_col_selector.value != label_col_selector.value
+    ):
+        # Extract stratification column WITHOUT modifying df_raw
+        stratify_col = df_raw[stratification_col_selector.value].copy()
+        cols_to_exclude = [stratification_col_selector.value]
+    else:
+        stratify_col = None
+        cols_to_exclude = []
+
     # Data Preprocessing
     try:
         _df_proc = df_raw.copy()
+
+        # Drop stratification column if it's separate from label
+        for col in cols_to_exclude:
+            if col in _df_proc.columns:
+                _df_proc = _df_proc.drop(columns=[col])
+
         if index_col_selector.value:
             _df_proc.set_index(index_col_selector.value, inplace=True)
 
@@ -443,6 +506,14 @@ def _(
         )
         overall_nan_ratio = np.isnan(X).sum() / (X.shape[0] * X.shape[1])
         df_processed = get_df_from_X(X, feature_map)
+
+        # Filter stratification column to match preprocessing (dropna on response)
+        if stratify_col is not None:
+            # preprocess_features dropped rows where response is NA
+            # Apply same filter to stratification column
+            response_values = df_raw[label_col_selector.value]
+            valid_mask = response_values.notna()
+            stratify_col = stratify_col[valid_mask].reset_index(drop=True)
 
     except Exception as e:
         mo.stop(True, mo.md(f"**Error processing data:** {str(e)}"))
@@ -469,6 +540,17 @@ def _(
         ),
     )
 
+    # Determine stratification description for display
+    if stratify_col is not None:
+        _n_strat_groups = pd.Series(stratify_col).nunique()
+        _strat_desc = f"custom stratification: by column *{stratification_col_selector.value}* ({_n_strat_groups} unique groups)"
+    else:
+        _task_type = "classification" if _n_response_values < 10 else "regression"
+        if _task_type == "classification":
+            _strat_desc = f"default stratification: by target column *{label_col_selector.value}* (preserves class distribution)"
+        else:
+            _strat_desc = "default stratification: none (fully random splits, suitable for regression tasks)"
+
     mo.vstack(
         [
             mo.md(
@@ -478,6 +560,8 @@ def _(
                 - no. features: {n_features}
                 - no. unique response values: {_n_response_values}
                 - missing data: {overall_nan_ratio}%
+                - scaling applied: {scaling_selector.value}
+                - {_strat_desc}
                 """
             ),
             # show label distribution either as a pie chart or a histogram, depending on the number of unique values
@@ -667,6 +751,9 @@ def _(
     y,
 ):
     # Main execution logic
+
+    # Initialize history to None (in case cell stops early)
+    history = None
 
     # 1. Stop if data not loaded
     mo.stop(df_raw is None, mo.md("*Please upload data first.*"))
@@ -1058,7 +1145,7 @@ def _(df_processed, history, mo, sparsity_est):
 
     mo.vstack(
         [
-            mo.md("### Pick solution types to be recovered from components:"),
+            mo.md("### 4.1 Pick solution types to be recovered from components:"),
             solution_recovery_help,
             mo.vstack(
                 [
@@ -1078,7 +1165,7 @@ def _(df_processed, history, mo, sparsity_est):
                 }
             ),
             mo.md("<br>"),
-            mo.md("### Pick what is to be shown:"),
+            mo.md("### 4.2 Pick what is to be shown:"),
             solution_display_help,
             mo.vstack(
                 [
@@ -1135,7 +1222,7 @@ def _(
     checkbox_regression_l2,
     checkbox_top_sol,
     detect_task,
-    df_raw,
+    df_processed,
     experiment_dir,
     feature_map,
     features_path_json,
@@ -1224,20 +1311,20 @@ def _(
 
         # Quick validation with simple linear/logistic regression
         # l2-regularized
-        if checkbox_regression_l2.value and (df_raw is not None):
+        if checkbox_regression_l2.value and (df_processed is not None):
             regression_metrics_l2[_type] = solve_any_regression(
                 solutions=all_feature_sets[_type],
-                df=df_raw,  # df_processed,
+                df=df_processed,
                 response=y,
                 apply_scaling=scaling_selector.value,
                 penalty="l2",
                 verbose=False,
             )
         # l1-regularized
-        if checkbox_regression_l1.value and (df_raw is not None):
+        if checkbox_regression_l1.value and (df_processed is not None):
             regression_metrics_l1[_type] = solve_any_regression(
                 solutions=all_feature_sets[_type],
-                df=df_raw,  # df_processed,
+                df=df_processed,
                 response=y,
                 apply_scaling=scaling_selector.value,
                 penalty="l1",
@@ -1333,7 +1420,7 @@ def _(all_solutions, mo):
     # Select solution type for nested CV modeling
     radio_solutions_cv = mo.ui.radio(
         options=all_solutions.keys(),
-        label="### Choose one solution type to evaluate:",
+        label="### 5.1 Choose one solution type to evaluate:",
     )
 
     modeling_help = mo.accordion(
@@ -1362,7 +1449,6 @@ def _(all_solutions, mo):
     mo.vstack(
         [
             modeling_help,
-            mo.md("<br>"),
             radio_solutions_cv,
         ]
     )
@@ -1582,7 +1668,7 @@ def _(
     # Model selection UI
     model_selection_ui = mo.vstack(
         [
-            mo.md("### Select models to evaluate:"),
+            mo.md("### 5.2 Select models to evaluate:"),
             mo.md(
                 f"*{task_type.capitalize()}: {len(available_models)} available models*"
             ),
@@ -1664,7 +1750,7 @@ def _(
     all_solutions,
     cv_folds_selector,
     cv_loo_checkbox,
-    df_raw,
+    df_processed,
     evaluate_all_solutions,
     experiment_dir,
     mo,
@@ -1675,11 +1761,13 @@ def _(
     save_results,
     selected_models,
     scaling_selector,
+    stratification_col_selector,
+    stratify_col,
     y,
 ):
     mo.stop(
         not run_cv_btn.value,
-        output=mo.md("*Ready to evaluate. Press button above.*"),
+        output=mo.md("*Ready to run modeling. Press button above.*"),
     )
 
     # Get the selected solution type
@@ -1690,15 +1778,23 @@ def _(
     # Determine CV folds
     cv_folds = "loo" if cv_loo_checkbox.value else cv_folds_selector.value
 
+    # Determine stratification description for CV display
+    if stratify_col is not None:
+        _strat_info = f"Custom (column: {stratification_col_selector.value})"
+    else:
+        _strat_info = "Default (by target for classification, none for regression)"
+
     _cv_displays = []
     _cv_displays.append(
         mo.md(
             f"""
-            ### Evaluating: **{selected_solution_type_cv}**
+            ### 5.3 Evaluating solution: **{selected_solution_type_cv}**
             - Number of feature sets: **{len(selected_solution_cv)}**
             - Models: **{', '.join([nice_model_names.get(m, m) for m in selected_models])}**
-            - Outer CV type: **{"Leave-One-Out" if cv_folds == "loo" else f"{cv_folds}-fold"}**
             - Scaling: **{scaling_selector.value or 'None'}**
+            - Outer CV type: **{"Leave-One-Out" if cv_folds == "loo" else f"{cv_folds}-fold"}**
+            - {_strat_info.capitalize()}
+            
             """
         )
     )
@@ -1711,15 +1807,13 @@ def _(
     all_cv_results = {}
     for model_name in selected_models:
         _cv_displays.append(
-            mo.md(
-                f"#### Evaluating with model: **{nice_model_names.get(model_name, model_name)}**"
-            )
+            mo.md(f"### Model: **{nice_model_names.get(model_name, model_name)}**")
         )
 
         # Run nested CV evaluation
         cv_results = evaluate_all_solutions(
             solutions=component_features_cv,
-            df=df_raw,
+            df=df_processed,
             response=y,
             model_name=model_name,
             apply_scaling=scaling_selector.value,
@@ -1727,6 +1821,7 @@ def _(
             random_state=42,
             verbose=False,
             use_markdown=False,
+            stratify=stratify_col,
         )
 
         all_cv_results[model_name] = cv_results
@@ -1800,7 +1895,7 @@ def _(
             lambda val: highlight_values(val, vmin, vmax), subset=numeric_cols
         ).format({col: "{:.3f}" for col in numeric_cols})
 
-        _cv_displays.append(mo.md("### 📊 Model Comparison"))
+        _cv_displays.append(mo.md("### 📊 5.4 Model comparison"))
         _cv_displays.append(
             mo.md(
                 f"Best performance for each solution across all models (by {primary_metric}):"
@@ -1815,7 +1910,7 @@ def _(
             comparison_df.to_csv(_comparison_path, index=False)
             _cv_displays.append(
                 mo.md(
-                    f"📊 Model comparison saved to: `{_comparison_path.split('/')[-1]}`"
+                    f"📁 Model comparison saved to: `{_comparison_path.split('/')[-1]}`"
                 )
             )
 
@@ -1895,7 +1990,7 @@ def _(
     all_feature_sets,
     all_solutions,
     checkbox_shap,
-    df_raw,
+    df_processed,
     experiment_dir,
     mo,
     model_btn,
@@ -1920,7 +2015,7 @@ def _(
     _eval_displays.append(
         mo.md(
             f"""
-            ### Evaluating: **{selected_solution_type}**
+            ### 6.1 Evaluating: **{selected_solution_type}**
             - Task type: **{task_type}**
             - Number of components: **{len(selected_solution)}**
             - Computing SHAP explanations: **{"Yes" if checkbox_shap.value else "No"}**
@@ -1938,7 +2033,7 @@ def _(
     tabpfn_results = {}
     for component_name, feature_list in component_features.items():
         # Get the feature subset
-        X_component = df_raw[feature_list]  # df_processed[feature_list]
+        X_component = df_processed[feature_list]
 
         # Run TabPFN evaluation
         tabpfn_results[component_name] = tabpfn_evaluate(
@@ -1996,7 +2091,7 @@ def _(
             pd.DataFrame(_result["shap_explanations"]).to_csv(shap_path)
             _eval_displays.append(
                 mo.md(
-                    f"📊 **Shapley values saved to:** `{shap_path.split('/')[-1]}`<br><br>"
+                    f"📁 **Shapley values saved to:** `{shap_path.split('/')[-1]}`<br><br>"
                 ),
             )
 
