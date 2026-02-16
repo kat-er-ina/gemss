@@ -3,6 +3,7 @@ This module aggregates all postprocessing and downstream modeling functionalitie
 - Outlier detection and handling
 - Extraction of solutions from the optimization run
 - Simple regression analyses
+- Nested cross-validated modeling with sklearn
 """
 
 from gemss.postprocessing.outliers import (
@@ -13,6 +14,10 @@ from gemss.postprocessing.outliers import (
     show_outlier_features_by_component,
     show_outlier_info,
     show_outlier_summary,
+)
+from gemss.postprocessing.result_modeling import (
+    evaluate_all_solutions,
+    evaluate_with_nested_cv,
 )
 from gemss.postprocessing.result_postprocessing import (
     compare_true_and_found_features,
