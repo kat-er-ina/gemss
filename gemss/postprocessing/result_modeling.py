@@ -19,10 +19,6 @@ from sklearn.discriminant_analysis import (
     QuadraticDiscriminantAnalysis,
 )
 from sklearn.ensemble import (
-    GradientBoostingClassifier,
-    GradientBoostingRegressor,
-    HistGradientBoostingClassifier,
-    HistGradientBoostingRegressor,
     RandomForestClassifier,
     RandomForestRegressor,
 )
@@ -38,10 +34,9 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
 )
-from sklearn.model_selection import GridSearchCV, KFold, LeaveOneOut, StratifiedKFold
+from sklearn.model_selection import KFold, LeaveOneOut, StratifiedKFold
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
-from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
@@ -505,7 +500,7 @@ def evaluate_with_nested_cv(
     # Create CV splitter
     outer_cv = _create_cv_splitter(outer_cv_folds, y, task, random_state, stratify)
     cv_description = (
-        f"Leave-One-Out" if outer_cv_folds == "loo" else f"{outer_cv_folds}-fold CV"
+        "Leave-One-Out" if outer_cv_folds == "loo" else f"{outer_cv_folds}-fold CV"
     )
 
     if verbose:
