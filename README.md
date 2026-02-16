@@ -38,6 +38,7 @@ GEMSS provides a comprehensive framework for Bayesian feature selection with the
 * **Flexible priors:** Structured spike-and-slab (default), Student-t, vanilla spike-and-slab
 * **Variational inference:** PyTorch-based optimization
 * **Diversity regularization:** Optional Jaccard penalty for enforcing solution diversity
+* **Solution evaluation by predictive models:** Predictive modeling metrics for various algorithms from Scikit-learn, XGBoost and (optionally) TabPFN. Supports custom stratification.
 * **Visualization:** Interactive plots and comprehensive diagnostics
 * **Modular configuration:** JSON-based dataset/algorithm/postprocessing settings
 * **Batch experiments:** Parameter sweeps and tiered validation suites

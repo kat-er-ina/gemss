@@ -91,16 +91,19 @@ For additional marimo features, see the [marimo documentation](https://docs.mari
 - **Structure:** Features in columns, samples in rows
 - **Target:** Must include an index column and a target/label column
 - **Task types:** Binary classification or regression
+- **Stratification (optional):** May include a column for custom cross-validation stratification (e.g., experimental batches, time periods, patient cohorts...)
 
 ## Workflow overview
 
 1. **Configure outputs** — Set save directory and file names
 2. **Upload data** — Load your CSV and select index/target columns
-3. **Configure algorithm** — Set number of components, sparsity, and optimization parameters
-4. **Run feature selection** — Execute Bayesian inference to discover multiple solutions
-5. **Assess convergence** — Review ELBO and feature trajectory plots
-6. **Recover solutions** — Extract sparse feature sets using different strategies
-7. **Evaluate solutions** — Validate with simple regression (and TabPFN if using non-commercial version)
+3. **Configure data** — Choose scaling method and optionally enable custom stratification for cross-validation
+4. **Configure algorithm** — Set desired number of components, sparsity, and optimization parameters
+5. **Run feature selection** — Execute Bayesian inference to discover multiple solutions
+6. **Assess convergence** — Review ELBO and feature trajectory plots
+7. **Recover solutions** — Extract sparse feature sets using different strategies
+8. **Preliminary solution evaluation** — Quickly validate with simple regression
+9. **Predictive modeling metrics** - Assess metrics of various predictive models based on candidate solutions
 
 ## Output files
 

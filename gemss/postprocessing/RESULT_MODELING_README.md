@@ -32,7 +32,8 @@ result = evaluate_with_nested_cv(
     outer_cv_folds=5,                # Number of CV folds or 'loo'
     inner_cv_folds=5,                # Inner CV folds (default)
     random_state=42,                 # For reproducibility
-    verbose=True                     # Print progress
+    verbose=True,                    # Print progress
+    stratify=None                    # Optional custom stratification vector
 )
 ```
 
@@ -60,7 +61,8 @@ results_df = evaluate_all_solutions(
     apply_scaling='standard',
     outer_cv_folds=5,
     random_state=42,
-    verbose=True
+    verbose=True,
+    stratify=None                    # Optional custom stratification vector
 )
 ```
 
@@ -207,6 +209,35 @@ print(comparison_df)
 - `MAE` - Mean absolute error
 - `MAPE` - Mean absolute percentage error
 
+## Stratification in Cross-Validation
+
+Both `evaluate_with_nested_cv` and `evaluate_all_solutions` support custom stratification vectors:
+
+**Default behavior:**
+- Classification: Stratified by target values (preserves class distribution)
+- Regression: No stratification (random splits)
+
+**Custom stratification:**
+Use the `stratify` parameter to provide a custom vector for stratification:
+- Useful when samples have inherent grouping (experimental batches, time periods, patient cohorts)
+- Must have the same length as the target vector
+- Values should be categorical or discrete
+
+```python
+# Example: stratify by experimental batch
+batch_ids = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, ...])
+
+results = evaluate_all_solutions(
+    solutions=solutions,
+    df=df,
+    response=y,
+    model_name='logistic_l2',
+    outer_cv_folds=5,
+    stratify=batch_ids,  # Ensure each fold has samples from all batches
+    random_state=42
+)
+```
+
 ## Comparison with Other Modules
 
 | Module | Evaluation Method | Use Case |
@@ -276,27 +307,6 @@ MIN_ALLOWED_SAMPLES = 15
 # Solutions with < MIN_ALLOWED_SAMPLES after dropna() are skipped
 ```
 
-## Best Practices
+### Leave-one-out cross-validation
 
-1. **Use nested CV for final evaluation**: Gets unbiased performance estimates
-2. **Start with `model_name='auto'`**: Automatically selects appropriate model
-3. **Use `apply_scaling='standard'`**: Most models benefit from scaling
-4. **Set `random_state`**: For reproducible results
-5. **Use LOO for small datasets**: When n_samples < 50
-6. **Compare multiple models**: Different models may perform better on different data
-7. **Check sample sizes**: Ensure enough samples for meaningful CV
-
-## Performance Considerations
-
-- **Nested CV is computationally expensive**: Use fewer folds for initial exploration
-- **LOO can be slow**: Only for small datasets (n < 100)
-- **Tree-based models**: Generally slower but don't require scaling
-- **Linear models**: Fast and benefit from scaling
-
-## See Also
-
-- `simple_regressions.py` - Training-only evaluation
-- `tabpfn_evaluation.py` - Evaluation with TabPFN
-- `result_postprocessing.py` - Solution recovery from GEMSS
-- Examples: `examples/result_modeling_usage.py`
-- Tests: `tests/test_result_modeling.py`
+This is suitable only for the smallest datasets (sample size n < 50). No stratification is applied.
