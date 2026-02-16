@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.19.7"
+__generated_with = "0.19.8"
 app = marimo.App(width="full")
 
 
@@ -58,6 +58,10 @@ def _():
         solve_any_regression,
         show_regression_metrics,
     )
+    from gemss.postprocessing.result_modeling import (
+        evaluate_all_solutions,
+        _get_available_models,
+    )
     from gemss.postprocessing.tabpfn_evaluation import (
         tabpfn_evaluate,
     )
@@ -71,6 +75,7 @@ def _():
     return (
         BayesianFeatureSelector,
         detect_task,
+        evaluate_all_solutions,
         get_algorithm_progress_plots,
         get_df_from_X,
         get_features_from_solutions,
@@ -152,7 +157,9 @@ def _(mo):
                 **II. Algorithm setup** - Configure hyperparameters of GEMSS feature selector. <br>
                 **III. Feature selection** - Run Bayesian inference to discover multiple components that describe your data. <br>
                 **IV. Solution recovery** - Extract one sparse solution from each component, obtaining an ensemble of feature sets. <br>
-                **V. Model evaluation** - Validate each solution by a simple linear/logistic regression model and then a full predictive model.
+                **V. Preliminary evaluation** - Validate each solution by a quick linear/logistic regression model. <br>
+                **VI. Full predictive model** - Evaluate the chosen solution type by training and testing full predictive models (e.g. random forest, gradient boosting) with nested cross-validation. <br>
+                **VII. Modeling with TabPFN** - Evaluate the solutions with the state-of-the-art transformer-based TabPFN model (powerful but expensive, suitable for small to medium numbers of features only).
 
                 Each step builds on the previous one, so please follow the workflow in order.
 
@@ -321,7 +328,6 @@ def _(mo):
         [
             mo.md("### 1.2 Input data"),
             file_uploader,
-            mo.md("<br>"),
         ]
     )
     return (file_uploader,)
@@ -747,6 +753,7 @@ def _(
         setup_path = None
         features_path_json = None
         features_path_txt = None
+        constants = None
     return (
         constants,
         experiment_dir,
@@ -1037,11 +1044,11 @@ def _(df_processed, history, mo, sparsity_est):
                 - Checking solution diversity (do different components select different features?)
                 - Understanding feature overlap patterns
 
-                **Regression validation**: Quick assessment of each solution's predictive performance using simple linear/logistic regression:
+                **Regression validation**: Quick, preliminary assessment of each solution's predictive potential using simple linear/logistic regression:
                 - **L2 regularization** (Ridge): Handles correlated features well, generally more stable
                 - **L1 regularization** (Lasso): Performs additional feature selection, may be more interpretable
 
-                ⚠️ **Important:** These regression metrics use the *same data for training and testing* (no cross-validation), so they provide only a preliminary quality check. For rigorous evaluation, create full models.
+                ⚠️ **Important:** These regression metrics use the *same data for training and testing* (no cross-validation), so they provide only a preliminary quality check. For rigorous evaluation, see the next step.
 
                 The regression results help you quickly identify which solutions show promise before investing time in full model evaluation.
                 """
@@ -1307,11 +1314,9 @@ def _(
 def _(mo):
     mo.md(
         r"""
-    ## **5. Modeling with candidate solutions** [non-commercial use only]
+    ## **5. Modeling with candidate solutions**
 
-    Using an advanced algorithm to create and evaluate models for each feature set of the chosen solution type. Proper train-test cross-validation is run.
-
-    **WARNING:** For downstream modeling, we use TabPFN, whose free licence can be used only for research purposes. [(Read more.)](https://huggingface.co/Prior-Labs/tabpfn_2_5)
+    Evaluate discovered feature sets using nested cross-validation with scikit-learn models. This provides proper generalization performance estimates.
     """
     )
     return
@@ -1319,29 +1324,411 @@ def _(mo):
 
 @app.cell
 def _(all_solutions, mo):
-    # pick one solution type for further evaluation
+    # Stop if solutions not recovered
     mo.stop(
         all_solutions is None,
         mo.md("*Must recover solutions from components first. Click button above.*"),
     )
 
-    radio_solutions = mo.ui.radio(
+    # Select solution type for nested CV modeling
+    radio_solutions_cv = mo.ui.radio(
         options=all_solutions.keys(),
-        label="Choose one solution type:",
+        label="### Choose one solution type to evaluate:",
+    )
+
+    modeling_help = mo.accordion(
+        {
+            "📖 About cross-validation": mo.md(
+                """
+                ### Why use cross-validation?
+
+                Unlike the preliminary results above, this modeling provides cross-validation:
+                - **Proper generalization estimates** through train/test splitting
+                - **Unbiased performance metrics** that reflect real-world performance
+                - **Multiple model options** beyond simple linear/logistic regression
+
+                ### How it works
+
+                - **Outer loop:** Splits data for performance evaluation
+                - **Inner loop:** Fits models with hyperparameter tuning (implemented only for linear/logistic regressions, other models use default hyperparameters for speed)
+                - **Result:** Metrics computed on held-out test data, aggregated over all outer folds
+                
+                This is the gold standard for evaluating predictive performance of discovered solutions, providing the most reliable assessment of their real-world utility.
+                """
+            )
+        }
     )
 
     mo.vstack(
         [
-            radio_solutions,
+            modeling_help,
+            mo.md("<br>"),
+            radio_solutions_cv,
         ]
     )
-    return (radio_solutions,)
+    return (radio_solutions_cv,)
 
 
 @app.cell
-def _(mo, radio_solutions):
+def _(
+    _get_available_models,
+    all_solutions,
+    mo,
+    radio_solutions_cv,
+    task_type,
+):
+    # Stop if solutions not recovered (task_type won't exist)
     mo.stop(
-        radio_solutions.value is None,
+        all_solutions is None,
+        output=mo.md("*Must recover solutions from components first.*<br><br>"),
+    )
+
+    mo.stop(
+        radio_solutions_cv.value is None,
+        output=mo.md("*Select a solution type above to continue.*<br><br>"),
+    )
+
+    # Get available models based on task type
+    available_models = _get_available_models(task_type)
+
+    # Create checkboxes for model selection
+    # Default: only L2-regularized linear/logistic regression
+    default_model = "logistic_l2" if task_type == "classification" else "linear_l2"
+
+    nice_model_names = {
+        "logistic_l2": "Ridge regression",
+        "logistic_l1": "Lasso",
+        "logistic_elasticnet": "Elastic net",
+        "linear_l2": "Ridge regression",
+        "linear_l1": "Lasso",
+        "linear_elasticnet": "Elastic net",
+        "decision_tree": "Decision tree",
+        "random_forest": "Random forest",
+        "xgboost": "XGBoost",
+        "svm": "Support Vector Machine with RBF kernel",
+        "knn": "3-Nearest Neighbors",
+        "naive_bayes": "Naive Bayes",
+        "lda": "Linear Discriminant Analysis",
+        "qda": "Quadratic Discriminant Analysis",
+    }
+
+    # Create reverse mapping for converting nice names back to technical names
+    # Only include models available for this task type to avoid conflicts
+    technical_model_names = {
+        nice_model_names[model_name]: model_name for model_name in available_models
+    }
+
+    # Use mo.ui.dictionary to properly track checkbox state changes
+    model_checkboxes = mo.ui.dictionary(
+        {
+            nice_model_names[model_name]: mo.ui.checkbox(
+                value=(model_name == default_model),
+                label=nice_model_names[model_name],
+            )
+            for model_name in available_models
+        }
+    )
+
+    # CV configuration
+    cv_folds_selector = mo.ui.number(
+        start=2,
+        stop=20,
+        value=5,
+        step=1,
+        label="Number of CV folds (outer loop)",
+    )
+
+    cv_loo_checkbox = mo.ui.checkbox(
+        value=False,
+        label="OR use Leave-One-Out CV instead (for small datasets)",
+    )
+
+    # Model selection UI
+    model_selection_ui = mo.vstack(
+        [
+            mo.md("### Select models to evaluate:"),
+            mo.md(
+                f"*Task type: **{task_type}** — showing {len(available_models)} available models*"
+            ),
+        ]
+        + [
+            model_checkboxes[nice_model_names[model_name]]
+            for model_name in available_models
+        ]
+    )
+
+    cv_config_ui = mo.accordion(
+        {
+            "Cross-validation settings": mo.vstack(
+                [
+                    cv_folds_selector,
+                    cv_loo_checkbox,
+                ]
+            )
+        }
+    )
+
+    mo.vstack(
+        [
+            mo.md("<br>"),
+            model_selection_ui,
+            cv_config_ui,
+        ]
+    )
+    return (
+        available_models,
+        cv_folds_selector,
+        cv_loo_checkbox,
+        model_checkboxes,
+        technical_model_names,
+    )
+
+
+@app.cell
+def _(mo, model_checkboxes, radio_solutions_cv, technical_model_names):
+    mo.stop(
+        radio_solutions_cv.value is None,
+        output=mo.md("*Select solution type first.*"),
+    )
+
+    # Check if at least one model is selected
+    # model_checkboxes.value returns a dict of {nice_name: True/False}
+    # Convert nice names back to technical names for evaluation
+    selected_models = [
+        technical_model_names[nice_name]
+        for nice_name, is_checked in model_checkboxes.value.items()
+        if is_checked
+    ]
+
+    mo.stop(
+        len(selected_models) == 0,
+        output=mo.md("*Please select at least one model to evaluate.*"),
+    )
+
+    # Run button for nested CV modeling
+    run_cv_btn = mo.ui.run_button(
+        label=f"Run modeling ({len(selected_models)} model{'s' if len(selected_models) > 1 else ''})",
+        kind="success",
+    )
+
+    mo.vstack(
+        [
+            mo.md("<br>"),
+            run_cv_btn,
+            mo.md("---"),
+        ]
+    )
+    return run_cv_btn, selected_models
+
+
+@app.cell
+def _(
+    all_feature_sets,
+    all_solutions,
+    cv_folds_selector,
+    cv_loo_checkbox,
+    df_raw,
+    evaluate_all_solutions,
+    experiment_dir,
+    mo,
+    nice_model_names,
+    pd,
+    radio_solutions_cv,
+    run_cv_btn,
+    save_results,
+    selected_models,
+    scaling_selector,
+    y,
+):
+    mo.stop(
+        not run_cv_btn.value,
+        output=mo.md("*Ready to evaluate. Press button above.*"),
+    )
+
+    # Get the selected solution type
+    selected_solution_type_cv = radio_solutions_cv.value
+    selected_solution_cv = all_solutions[selected_solution_type_cv]
+    _solution_name = selected_solution_type_cv.replace(" ", "_").lower()
+
+    # Determine CV folds
+    cv_folds = "loo" if cv_loo_checkbox.value else cv_folds_selector.value
+
+    _cv_displays = []
+    _cv_displays.append(
+        mo.md(
+            f"""
+            ### Evaluating: **{selected_solution_type_cv}**
+            - Number of feature sets: **{len(selected_solution_cv)}**
+            - Models: **{', '.join([nice_model_names.get(m, m) for m in selected_models])}**
+            - Outer CV type: **{"Leave-One-Out" if cv_folds == "loo" else f"{cv_folds}-fold"}**
+            - Scaling: **{scaling_selector.value or 'None'}**
+            """
+        )
+    )
+    _cv_displays.append(mo.md("<br>"))
+
+    # Get feature sets for this solution type
+    component_features_cv = all_feature_sets[selected_solution_type_cv]
+
+    # Evaluate with each selected model
+    all_cv_results = {}
+    for model_name in selected_models:
+        _cv_displays.append(
+            mo.md(
+                f"#### Evaluating with model: **{nice_model_names.get(model_name, model_name)}**"
+            )
+        )
+
+        # Run nested CV evaluation
+        cv_results = evaluate_all_solutions(
+            solutions=component_features_cv,
+            df=df_raw,
+            response=y,
+            model_name=model_name,
+            apply_scaling=scaling_selector.value,
+            outer_cv_folds=cv_folds,
+            random_state=42,
+            verbose=False,
+            use_markdown=False,
+        )
+
+        all_cv_results[model_name] = cv_results
+
+        # Display results for this model
+        if not cv_results.empty:
+            _cv_displays.append(mo.ui.table(cv_results))
+
+            # Save results if enabled
+            if save_results:
+                _results_path = (
+                    f"{experiment_dir}/modeling_{model_name}_{_solution_name}.csv"
+                )
+                cv_results.to_csv(_results_path)
+                _cv_displays.append(
+                    mo.md(f"📁 Saved to: `{_results_path.split('/')[-1]}`")
+                )
+        else:
+            _cv_displays.append(
+                mo.md("⚠️ No solutions could be evaluated (insufficient samples).")
+            )
+
+        _cv_displays.append(mo.md("<br>"))
+
+    # Model comparison if multiple models
+    if len(selected_models) > 1 and all(not df.empty for df in all_cv_results.values()):
+        # Create comparison table
+        comparison_data = []
+        for solution_name in all_cv_results[selected_models[0]].index:
+            row = {"Solution": solution_name}
+            for model_name in selected_models:
+                if solution_name in all_cv_results[model_name].index:
+                    # Get primary metric (store as float for styling)
+                    if "f1_score" in all_cv_results[model_name].columns:
+                        metric_val = all_cv_results[model_name].loc[
+                            solution_name, "f1_score"
+                        ]
+                        row[model_name] = metric_val
+                        primary_metric = "f1_score"
+                    elif "r2_score" in all_cv_results[model_name].columns:
+                        metric_val = all_cv_results[model_name].loc[
+                            solution_name, "r2_score"
+                        ]
+                        row[model_name] = metric_val
+                        primary_metric = "r2_score"
+            comparison_data.append(row)
+
+        comparison_df = pd.DataFrame(comparison_data)
+
+        # Apply yellow gradient highlighting with custom function
+        def highlight_values(val, vmin, vmax):
+            """Apply white-to-yellow background based on value"""
+            if pd.isna(val) or not isinstance(val, (int, float)):
+                return ""
+            # Normalize value to 0-1 range
+            norm_val = (val - vmin) / (vmax - vmin) if vmax > vmin else 0.5
+            # Create white to light yellow gradient: higher values = lighter yellow
+            # RGB: white (255, 255, 255) to light yellow (255, 255, 150)
+            r = 255  # stays at 255
+            g = 255  # stays at 255
+            b = int(255 - 105 * norm_val)  # 255 to 150 (lighter yellow)
+            return f"background-color: rgb({r}, {g}, {b})"
+
+        # Get min/max for normalization
+        numeric_cols = [col for col in comparison_df.columns if col != "Solution"]
+        vmin = comparison_df[numeric_cols].min().min()
+        vmax = comparison_df[numeric_cols].max().max()
+
+        # Apply styling
+        styled_comparison = comparison_df.style.map(
+            lambda val: highlight_values(val, vmin, vmax), subset=numeric_cols
+        ).format({col: "{:.3f}" for col in numeric_cols})
+
+        _cv_displays.append(mo.md("### 📊 Model Comparison"))
+        _cv_displays.append(
+            mo.md(
+                f"Best performance for each solution across all models (by {primary_metric}):"
+            )
+        )
+        # Render styled dataframe as HTML
+        _cv_displays.append(mo.Html(styled_comparison.to_html()))
+
+        # if comparison_df is not empty, save it to a file
+        if not comparison_df.empty and save_results:
+            _comparison_path = f"{experiment_dir}/model_comparison_{_solution_name}.csv"
+            comparison_df.to_csv(_comparison_path, index=False)
+            _cv_displays.append(
+                mo.md(
+                    f"📊 Model comparison saved to: `{_comparison_path.split('/')[-1]}`"
+                )
+            )
+
+    _cv_displays.append(mo.md("<br>"))
+    _cv_displays.append(mo.md("---"))
+    _cv_displays.append(mo.md("<br>"))
+
+    mo.vstack(_cv_displays)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    ## **6. Advanced modeling with TabPFN** [non-commercial use only]
+
+    Using an advanced algorithm to create and evaluate models for each feature set of the chosen solution type. Proper train-test cross-validation is run.
+
+    **WARNING:** TabPFN's free licence can be used only for research purposes. [(Read more.)](https://huggingface.co/Prior-Labs/tabpfn_2_5)
+    """
+    )
+    return
+
+
+@app.cell
+def _(all_solutions, mo):
+    # pick one solution type for TabPFN evaluation
+    mo.stop(
+        all_solutions is None,
+        mo.md("*Must recover solutions from components first. Click button above.*"),
+    )
+
+    radio_solutions_tabpfn = mo.ui.radio(
+        options=all_solutions.keys(),
+        label="Choose one solution type for TabPFN:",
+    )
+
+    mo.vstack(
+        [
+            radio_solutions_tabpfn,
+        ]
+    )
+    return (radio_solutions_tabpfn,)
+
+
+@app.cell
+def _(mo, radio_solutions_tabpfn):
+    mo.stop(
+        radio_solutions_tabpfn.value is None,
         output=mo.md("*Cannot proceed to modeling. Pick a solution type.*"),
     )
 
@@ -1376,7 +1763,7 @@ def _(
     mo,
     model_btn,
     pd,
-    radio_solutions,
+    radio_solutions_tabpfn,
     save_results,
     tabpfn_evaluate,
     task_type,
@@ -1389,7 +1776,7 @@ def _(
     )
 
     # Get the selected solution type
-    selected_solution_type = radio_solutions.value
+    selected_solution_type = radio_solutions_tabpfn.value
     selected_solution = all_solutions[selected_solution_type]
 
     _eval_displays = []
@@ -1449,23 +1836,32 @@ def _(
     # Show Shapley values if computed
     for _comp, _result in tabpfn_results.items():
         if "shap_explanations" in _result:
+            _shap_values = mo.ui.table(pd.DataFrame(_result["shap_explanations"]))
             _eval_displays.append(
                 mo.md(
                     f"**Shapley values:** feature importances in the model from {_comp}"
                 )
             )
-            _eval_displays.append(
-                mo.ui.table(pd.DataFrame(_result["shap_explanations"]))
-            )
+            _eval_displays.append(_shap_values)
             _eval_displays.append(mo.md("<br>"))
 
     # Save results if enabled
     if save_results:
-        scores_path = f"{experiment_dir}/tabpfn_scores_{selected_solution_type.replace(' ', '_')}.csv"
-        all_scores.to_csv(scores_path)
+        _solution_name = selected_solution_type.replace(" ", "_").lower()
+        _scores_path = f"{experiment_dir}/modeling_tabpfn_{_solution_name}.csv"
+        all_scores.to_csv(_scores_path)
         _eval_displays.append(
-            mo.md(f"📊 **Results saved to:** `{scores_path.split('/')[-1]}`<br><br>"),
+            mo.md(f"📁 Saved to: `{_scores_path.split('/')[-1]}`<br><br>"),
         )
+        # save shapley values, if available
+        if "shap_explanations" in _result:
+            shap_path = f"{experiment_dir}/modeling_tabpfn_shapley_{_solution_name}.csv"
+            pd.DataFrame(_result["shap_explanations"]).to_csv(shap_path)
+            _eval_displays.append(
+                mo.md(
+                    f"📊 **Shapley values saved to:** `{shap_path.split('/')[-1]}`<br><br>"
+                ),
+            )
 
     mo.vstack(_eval_displays)
     return
