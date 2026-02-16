@@ -158,12 +158,12 @@ def _(mo):
                 **III. Feature selection** - Run Bayesian inference to discover multiple components that describe your data. <br>
                 **IV. Solution recovery** - Extract one sparse solution from each component, obtaining an ensemble of feature sets. <br>
                 **V. Preliminary evaluation** - Validate each solution by a quick linear/logistic regression model. <br>
-                **VI. Full predictive model** - Evaluate the chosen solution type by training and testing full predictive models (e.g. random forest, gradient boosting) with nested cross-validation. <br>
+                **VI. Full predictive modeling** - Evaluate the chosen solution type by training and testing full predictive models (e.g. random forest, gradient boosting) with nested cross-validation. <br>
                 **VII. Modeling with TabPFN** - Evaluate the solutions with the state-of-the-art transformer-based TabPFN model (powerful but expensive, suitable for small to medium numbers of features only).
 
                 Each step builds on the previous one, so please follow the workflow in order.
 
-                Model evaluation requires agreement with the [license of TabPFN](https://huggingface.co/Prior-Labs/tabpfn_2_5#licensing) modeling tool.
+                Model evaluation with TabPFN requires agreement with its [license](https://huggingface.co/Prior-Labs/tabpfn_2_5#licensing).
                 """
             )
         }
@@ -553,6 +553,7 @@ def _(
 
     mo.vstack(
         [
+            mo.md("<br>"),
             mo.md(
                 f"""
                 ✅ **Data preprocessed:**
