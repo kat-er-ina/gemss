@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.19.10"
+__generated_with = "0.19.8"
 app = marimo.App(width="full")
 
 
@@ -58,6 +58,10 @@ def _():
         solve_any_regression,
         show_regression_metrics,
     )
+    from gemss.postprocessing.result_modeling import (
+        evaluate_all_solutions,
+        _get_available_models,
+    )
     from gemss.data_handling.data_processing import (
         preprocess_features,
         get_df_from_X,
@@ -68,6 +72,7 @@ def _():
     return (
         BayesianFeatureSelector,
         detect_task,
+        evaluate_all_solutions,
         get_algorithm_progress_plots,
         get_df_from_X,
         get_features_from_solutions,
@@ -112,11 +117,13 @@ def _(current_dir, mo, os):
 
 @app.cell
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     # 💎 **GEMSS Explorer**
 
     This app helps you discover **multiple distinct feature sets** that explain your data using GEMSS: Gaussian Ensemble for Multiple Sparse Solutions.
-    """)
+    """
+    )
     return
 
 
@@ -146,7 +153,8 @@ def _(mo):
                 **II. Algorithm setup** - Configure hyperparameters of GEMSS feature selector. <br>
                 **III. Feature selection** - Run Bayesian inference to discover multiple components that describe your data. <br>
                 **IV. Solution recovery** - Extract one sparse solution from each component, obtaining an ensemble of feature sets. <br>
-                **V. Model evaluation** - Validate each solution by a simple linear/logistic model. Full modeling not implemented in this app. <br>
+                **V. Preliminary evaluation** - Validate each solution by a quick linear/logistic regression model. <br>
+                **VI. Full predictive modeling** - Evaluate the chosen solution type by training and testing full predictive models (e.g. random forest, gradient boosting) with nested cross-validation. <br>
 
                 Each step builds on the previous one, so please follow the workflow in order.
                 """
@@ -165,9 +173,11 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     ## **1. Set up input and output**
-    """)
+    """
+    )
     return
 
 
@@ -184,7 +194,22 @@ def _(mo):
                 - must contain an index column,
                 - must contain a target/label column: binary classification and regression are supported,
                 - can contain missing values,
-                - only numeric features are supported.
+                - only numeric features are supported,
+                - may contain a column used for stratification during cross-validation.
+                
+                ### Stratification in cross-validation
+                
+                Stratification ensures that each CV fold maintains the same distribution as the full dataset.
+                
+                **Default behavior:**
+                - Classification tasks: stratified by target/label column (preserves class distribution)
+                - Regression tasks: no stratification (random splits)
+                
+                **Custom stratification column:**
+                - Enable the "Use custom stratification column" checkbox to specify a different column for stratification
+                - Useful when samples have inherent grouping (experimental batches, time periods, patient cohorts, etc.)
+                - The stratification column values should be categorical or discrete
+                - If disabled, default behavior is used
 
                 ### Data scaling
 
@@ -224,9 +249,7 @@ def _(current_dir, mo):
         label="Parent directory for saving this experiment",
     )
 
-    save_experiment_id = mo.ui.number(
-        1, 1000, value=1, step=1, label="Experiment ID"
-    )
+    save_experiment_id = mo.ui.number(1, 1000, value=1, step=1, label="Experiment ID")
     save_history_name = mo.ui.text(
         value="search_history_results",
         label="History filename (no extension)",
@@ -313,7 +336,6 @@ def _(mo):
         [
             mo.md("### 1.2 Input data"),
             file_uploader,
-            mo.md("<br>"),
         ]
     )
     return (file_uploader,)
@@ -338,6 +360,18 @@ def _(file_uploader, io, mo, pd):
             label="Target/label column",
             value=df_raw.columns[-1] if not df_raw.empty else None,
         )
+
+        # Checkbox to enable custom stratification
+        use_custom_stratification = mo.ui.checkbox(
+            value=False,
+            label="Use custom stratification column",
+        )
+
+        stratification_col_selector = mo.ui.dropdown(
+            options=list(df_raw.columns),
+            label="Custom stratification column",
+            value=df_raw.columns[-1] if not df_raw.empty else None,
+        )
         scaling_selector = mo.ui.dropdown(
             options=["standard", "minmax", None],
             label="Scaling to use",
@@ -358,7 +392,15 @@ def _(file_uploader, io, mo, pd):
                     f"✅ **Data loaded:** `{file_uploader.value[0].name}` ({df_raw.shape[0]} rows, {df_raw.shape[1]} cols)"
                 ),
                 mo.vstack(
-                    [index_col_selector, label_col_selector, scaling_selector]
+                    [
+                        index_col_selector,
+                        label_col_selector,
+                        mo.md("---"),
+                        scaling_selector,
+                        mo.md("---"),
+                        use_custom_stratification,
+                        stratification_col_selector,
+                    ]
                 ),
             ]
         )
@@ -366,6 +408,8 @@ def _(file_uploader, io, mo, pd):
         df_raw = None
         index_col_selector = None
         label_col_selector = None
+        use_custom_stratification = None
+        stratification_col_selector = None
         scaling_selector = None
         data_setup_ui = None
 
@@ -390,6 +434,8 @@ def _(file_uploader, io, mo, pd):
         df_raw,
         index_col_selector,
         label_col_selector,
+        use_custom_stratification,
+        stratification_col_selector,
         scaling_selector,
     )
 
@@ -408,15 +454,35 @@ def _(
     pd,
     preprocess_features,
     scaling_selector,
+    use_custom_stratification,
+    stratification_col_selector,
 ):
     # Stop if data not loaded
-    mo.stop(
-        df_raw is None, mo.md("*Please upload your dataset to proceed.*<br><hr>")
-    )
+    mo.stop(df_raw is None, mo.md("*Please upload your dataset to proceed.*<br><hr>"))
+
+    # Handle stratification column
+    # If custom stratification is enabled and the stratification column is different from label column, extract it
+    # Otherwise use None to trigger default backend behavior
+    if (
+        use_custom_stratification.value
+        and stratification_col_selector.value != label_col_selector.value
+    ):
+        # Extract stratification column WITHOUT modifying df_raw
+        stratify_col = df_raw[stratification_col_selector.value].copy()
+        cols_to_exclude = [stratification_col_selector.value]
+    else:
+        stratify_col = None
+        cols_to_exclude = []
 
     # Data Preprocessing
     try:
         _df_proc = df_raw.copy()
+
+        # Drop stratification column if it's separate from label
+        for col in cols_to_exclude:
+            if col in _df_proc.columns:
+                _df_proc = _df_proc.drop(columns=[col])
+
         if index_col_selector.value:
             _df_proc.set_index(index_col_selector.value, inplace=True)
 
@@ -433,6 +499,14 @@ def _(
         )
         overall_nan_ratio = np.isnan(X).sum() / (X.shape[0] * X.shape[1])
         df_processed = get_df_from_X(X, feature_map)
+
+        # Filter stratification column to match preprocessing (dropna on response)
+        if stratify_col is not None:
+            # preprocess_features dropped rows where response is NA
+            # Apply same filter to stratification column
+            response_values = df_raw[label_col_selector.value]
+            valid_mask = response_values.notna()
+            stratify_col = stratify_col[valid_mask].reset_index(drop=True)
 
     except Exception as e:
         mo.stop(True, mo.md(f"**Error processing data:** {str(e)}"))
@@ -459,8 +533,20 @@ def _(
         ),
     )
 
+    # Determine stratification description for display
+    if stratify_col is not None:
+        _n_strat_groups = pd.Series(stratify_col).nunique()
+        _strat_desc = f"custom stratification: by column *{stratification_col_selector.value}* ({_n_strat_groups} unique groups)"
+    else:
+        _task_type = "classification" if _n_response_values < 10 else "regression"
+        if _task_type == "classification":
+            _strat_desc = f"default stratification: by target column *{label_col_selector.value}* (preserves class distribution)"
+        else:
+            _strat_desc = "default stratification: none (fully random splits, suitable for regression tasks)"
+
     mo.vstack(
         [
+            mo.md("<br>"),
             mo.md(
                 f"""
                 ✅ **Data preprocessed:**
@@ -468,7 +554,9 @@ def _(
                 - no. features: {n_features}
                 - no. unique response values: {_n_response_values}
                 - missing data: {overall_nan_ratio}%
-                """
+                - scaling applied: {scaling_selector.value}
+                - {_strat_desc}
+                """,
             ),
             # show label distribution either as a pie chart or a histogram, depending on the number of unique values
             (
@@ -485,11 +573,13 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     ## **2. The feature selection algorithm**
 
     Configure parameters of the GEMSS feature selection algorithm.
-    """)
+    """
+    )
     return
 
 
@@ -512,9 +602,7 @@ def _(df_processed, mo):
 
     # Advanced Settings
     adv_iter = mo.ui.number(500, 20000, value=3500, step=250, label="Iterations")
-    adv_lr = mo.ui.number(
-        0.0000, 0.1, value=0.002, step=0.0001, label="Learning rate"
-    )
+    adv_lr = mo.ui.number(0.0000, 0.1, value=0.002, step=0.0001, label="Learning rate")
     adv_batch = mo.ui.number(
         8,
         256,
@@ -658,6 +746,9 @@ def _(
 ):
     # Main execution logic
 
+    # Initialize history to None (in case cell stops early)
+    history = None
+
     # 1. Stop if data not loaded
     mo.stop(df_raw is None, mo.md("*Please upload data first.*"))
 
@@ -712,9 +803,7 @@ def _(
     if save_results:
         # Configure saving options, if saving is enabled
         # Prepare directory
-        experiment_dir = (
-            f"{save_dir_input.value}/experiment_{save_experiment_id.value}"
-        )
+        experiment_dir = f"{save_dir_input.value}/experiment_{save_experiment_id.value}"
         os.makedirs(experiment_dir, exist_ok=True)
 
         # Prepare save paths
@@ -745,6 +834,7 @@ def _(
         setup_path = None
         features_path_json = None
         features_path_txt = None
+        constants = None
     return (
         constants,
         experiment_dir,
@@ -801,11 +891,13 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     ## **3. Algorithm progress history**
 
     Assess convergence and features in the components. If needed, adjust the algorithm's parameters and rerun.
-    """)
+    """
+    )
     return
 
 
@@ -935,11 +1027,13 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(r"""
+    mo.md(
+        r"""
     ## **4. Recover solutions from components**
 
     Each component can be handled in multiple ways to yield feature sets = candidate solutions. Select your strategy.
-    """)
+    """
+    )
     return
 
 
@@ -948,18 +1042,10 @@ def _(df_processed, history, mo, sparsity_est):
     mo.stop(history is None, "")  # Show only after feature selector is run
 
     # checkboxes to pick solution types
-    checkbox_out20_sol = mo.ui.checkbox(
-        label="Outliers with STD > 2.0", value=True
-    )
-    checkbox_out25_sol = mo.ui.checkbox(
-        label="Outliers with STD > 2.5", value=True
-    )
-    checkbox_out30_sol = mo.ui.checkbox(
-        label="Outliers with STD > 3.0", value=True
-    )
-    checkbox_out35_sol = mo.ui.checkbox(
-        label="Outliers with STD > 3.5", value=False
-    )
+    checkbox_out20_sol = mo.ui.checkbox(label="Outliers with STD > 2.0", value=True)
+    checkbox_out25_sol = mo.ui.checkbox(label="Outliers with STD > 2.5", value=True)
+    checkbox_out30_sol = mo.ui.checkbox(label="Outliers with STD > 3.0", value=True)
+    checkbox_out35_sol = mo.ui.checkbox(label="Outliers with STD > 3.5", value=False)
     checkbox_top_sol = mo.ui.checkbox(label="Top few features", value=False)
     checkbox_full_sol = mo.ui.checkbox(
         label="All features with mu > threshold", value=False
@@ -1039,11 +1125,11 @@ def _(df_processed, history, mo, sparsity_est):
                 - Checking solution diversity (do different components select different features?)
                 - Understanding feature overlap patterns
 
-                **Regression validation**: Quick assessment of each solution's predictive performance using simple linear/logistic regression:
+                **Regression validation**: Quick, preliminary assessment of each solution's predictive potential using simple linear/logistic regression:
                 - **L2 regularization** (Ridge): Handles correlated features well, generally more stable
                 - **L1 regularization** (Lasso): Performs additional feature selection, may be more interpretable
 
-                ⚠️ **Important:** These regression metrics use the *same data for training and testing* (no cross-validation), so they provide only a preliminary quality check. For rigorous evaluation, create full models.
+                ⚠️ **Important:** These regression metrics use the *same data for training and testing* (no cross-validation), so they provide only a preliminary quality check. For rigorous evaluation, see the next step.
 
                 The regression results help you quickly identify which solutions show promise before investing time in full model evaluation.
                 """
@@ -1053,7 +1139,7 @@ def _(df_processed, history, mo, sparsity_est):
 
     mo.vstack(
         [
-            mo.md("### Pick solution types to be recovered from components:"),
+            mo.md("### 4.1 Pick solution types to be recovered from components:"),
             solution_recovery_help,
             mo.vstack(
                 [
@@ -1073,7 +1159,7 @@ def _(df_processed, history, mo, sparsity_est):
                 }
             ),
             mo.md("<br>"),
-            mo.md("### Pick what is to be shown:"),
+            mo.md("### 4.2 Pick what is to be shown:"),
             solution_display_help,
             mo.vstack(
                 [
@@ -1130,7 +1216,7 @@ def _(
     checkbox_regression_l2,
     checkbox_top_sol,
     detect_task,
-    df_raw,
+    df_processed,
     experiment_dir,
     feature_map,
     features_path_json,
@@ -1159,8 +1245,7 @@ def _(
         mo.md("*Ready to recover solutions from components. Click button above.*"),
     )
     mo.stop(
-        (top_n_features_selector.value is None)
-        or (top_n_features_selector.value < 1),
+        (top_n_features_selector.value is None) or (top_n_features_selector.value < 1),
         mo.md("Please set 'top few features' to value 1 or more."),
     )
 
@@ -1203,9 +1288,13 @@ def _(
 
     # Extract which features are contained in which solution type
     # Get overviews and simple performance metrics
-    solution_summary = {}  # one dateframe per solution type: feature names with mu values
+    solution_summary = (
+        {}
+    )  # one dateframe per solution type: feature names with mu values
     all_feature_sets = {}  # features per component, for each solution type
-    unique_features_found = {}  # all unique features across all components of a solution type
+    unique_features_found = (
+        {}
+    )  # all unique features across all components of a solution type
     regression_metrics_l1 = {}
     regression_metrics_l2 = {}
 
@@ -1216,20 +1305,20 @@ def _(
 
         # Quick validation with simple linear/logistic regression
         # l2-regularized
-        if checkbox_regression_l2.value and (df_raw is not None):
+        if checkbox_regression_l2.value and (df_processed is not None):
             regression_metrics_l2[_type] = solve_any_regression(
                 solutions=all_feature_sets[_type],
-                df=df_raw,  # df_processed,
+                df=df_processed,
                 response=y,
                 apply_scaling=scaling_selector.value,
                 penalty="l2",
                 verbose=False,
             )
         # l1-regularized
-        if checkbox_regression_l1.value and (df_raw is not None):
+        if checkbox_regression_l1.value and (df_processed is not None):
             regression_metrics_l1[_type] = solve_any_regression(
                 solutions=all_feature_sets[_type],
-                df=df_raw,  # df_processed,
+                df=df_processed,
                 response=y,
                 apply_scaling=scaling_selector.value,
                 penalty="l1",
@@ -1246,12 +1335,8 @@ def _(
         # Stack all the outputs in the correct order
         _displays = [
             mo.md(f"📁 **All recovered solutions saved to:** `{experiment_dir}`"),
-            mo.md(
-                f"- {msg_features_txt.split('Candidate solutions saved to ')[1]}"
-            ),
-            mo.md(
-                f"- {msg_features_json.split('Candidate solutions saved to ')[1]}"
-            ),
+            mo.md(f"- {msg_features_txt.split('Candidate solutions saved to ')[1]}"),
+            mo.md(f"- {msg_features_json.split('Candidate solutions saved to ')[1]}"),
             mo.md("---"),
             mo.md("<br><br>"),
         ]
@@ -1277,9 +1362,7 @@ def _(
 
         # Get quick validation with a simple regression
         if checkbox_regression_l2.value or checkbox_regression_l1.value:
-            regression_type = (
-                "logistic" if task_type == "classification" else "linear"
-            )
+            regression_type = "logistic" if task_type == "classification" else "linear"
 
         # l2-regularized
         if checkbox_regression_l2.value:
@@ -1305,6 +1388,536 @@ def _(
 
     # Return all displays stacked vertically
     mo.vstack(_displays)
+    return all_feature_sets, all_solutions, task_type, unique_features_found
+
+
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    ## **5. Modeling with candidate solutions**
+
+    Evaluate discovered feature sets using nested cross-validation with scikit-learn models. This provides proper generalization performance estimates.
+    """
+    )
+    return
+
+
+@app.cell
+def _(all_solutions, mo):
+    # Stop if solutions not recovered
+    mo.stop(
+        all_solutions is None,
+        mo.md("*Must recover solutions from components first. Click button above.*"),
+    )
+
+    # Select solution type for nested CV modeling
+    radio_solutions_cv = mo.ui.radio(
+        options=all_solutions.keys(),
+        label="### 5.1 Choose one solution type to evaluate:",
+    )
+
+    modeling_help = mo.accordion(
+        {
+            "📖 About cross-validation": mo.md(
+                """
+                ### Why use cross-validation?
+
+                Unlike the preliminary results above, this modeling provides cross-validation:
+                - **Proper generalization estimates** through train/test splitting
+                - **Unbiased performance metrics** that reflect real-world performance
+                - **Multiple model options** beyond simple linear/logistic regression
+
+                ### How it works
+
+                - **Outer loop:** Splits data for performance evaluation
+                - **Inner loop:** Fits models with hyperparameter tuning (implemented only for linear/logistic regressions, other models use default hyperparameters for speed)
+                - **Result:** Metrics computed on held-out test data, aggregated over all outer folds
+                
+                This is the gold standard for evaluating predictive performance of discovered solutions, providing the most reliable assessment of their real-world utility.
+                """
+            )
+        }
+    )
+
+    mo.vstack(
+        [
+            modeling_help,
+            radio_solutions_cv,
+        ]
+    )
+    return (radio_solutions_cv,)
+
+
+@app.cell
+def _(
+    _get_available_models,
+    all_solutions,
+    mo,
+    radio_solutions_cv,
+    task_type,
+):
+    # Stop if solutions not recovered (task_type won't exist)
+    mo.stop(
+        all_solutions is None,
+        output=mo.md("*Must recover solutions from components first.*<br><br>"),
+    )
+
+    mo.stop(
+        radio_solutions_cv.value is None,
+        output=mo.md("*Select a solution type above to continue.*<br><br>"),
+    )
+
+    # Get available models based on task type
+    available_models = _get_available_models(task_type)
+
+    # Create checkboxes for model selection
+    # Default: only L2-regularized linear/logistic regression
+    default_model = "logistic_l2" if task_type == "classification" else "linear_l2"
+
+    nice_model_names = {
+        "logistic_l2": "Ridge regression",
+        "logistic_l1": "Lasso",
+        "logistic_elasticnet": "Elastic net",
+        "linear_l2": "Ridge regression",
+        "linear_l1": "Lasso",
+        "linear_elasticnet": "Elastic net",
+        "decision_tree": "Decision tree",
+        "random_forest": "Random forest",
+        "xgboost": "XGBoost",
+        "svm": "Support Vector Machine with RBF kernel",
+        "knn": "3-Nearest Neighbors",
+        "naive_bayes": "Naive Bayes",
+        "lda": "Linear Discriminant Analysis",
+        "qda": "Quadratic Discriminant Analysis",
+    }
+
+    # Create reverse mapping for converting nice names back to technical names
+    # Only include models available for this task type to avoid conflicts
+    technical_model_names = {
+        nice_model_names[model_name]: model_name for model_name in available_models
+    }
+
+    # Use mo.ui.dictionary to properly track checkbox state changes
+    model_checkboxes = mo.ui.dictionary(
+        {
+            nice_model_names[model_name]: mo.ui.checkbox(
+                value=(model_name == default_model),
+                label=nice_model_names[model_name],
+            )
+            for model_name in available_models
+        }
+    )
+
+    # CV configuration
+    cv_folds_selector = mo.ui.number(
+        start=2,
+        stop=20,
+        value=5,
+        step=1,
+        label="Number of CV folds (outer loop)",
+    )
+
+    cv_loo_checkbox = mo.ui.checkbox(
+        value=False,
+        label="OR use Leave-One-Out CV instead (for small datasets)",
+    )
+
+    # Describe the modeling options with their default values
+    help_models_regression = mo.accordion(
+        {
+            "📖 Guide": mo.md(
+                """
+                ### Regression Models
+
+                **Ridge regression**
+                - L2-regularized linear regression
+                - Configuration: 5-fold cross-validation (RidgeCV)
+                - Best for: simple baseline, robust to multicollinearity
+                - Weakness: linear model
+
+                **Lasso**
+                - L1-regularized linear regression with
+                - Configuration: 5-fold cross-validation for hyperparameter tuning
+                - Best for: enforcing additional sparsity
+                - Weakness: correlated features can cause instability, linear model
+
+                **Elastic net**
+                - Combined L1+L2 regularization with automatic hyperparameter tuning
+                - Configuration: 5-fold cross-validation for hyperparameter tuning
+                - Best for: balance between Ridge and Lasso
+                - Weakness: may not perform well on highly correlated features
+
+                **XGBoost**
+                - Gradient boosting with regularization
+                - Configuration: 100 estimators, learning_rate=0.1, max_depth=6
+                - Best for: high performative complex modeling, handles missing data well
+                - Weakness: can overfit, less interpretable
+
+                **Support Vector Machine (SVM)**
+                - SVM regression with RBF kernel
+                - Configuration: C=1.0, gamma='scale' (SVR)
+                - Best for: non-linear patterns
+                - Weakness: sensitive to outliers, less interpretable
+
+                **3-Nearest Neighbors (kNN)**
+                - Instance-based learning using 3 nearest neighbors
+                - Configuration: uniform weights
+                - Best for: simple baseline, local patterns
+                - Weakness: degrades in high dimensions, sensitive to irrelevant features
+
+                **Decision tree**
+                - Single decision tree with pruning
+                - Configuration: max_depth=10, min_samples_split=2
+                - Best for: interpretability, non-linear relationships
+                - Weakness: can overfit, less stable
+                
+                **Random forest**
+                - Ensemble of decision trees
+                - Configuration: 100 trees, no max depth limit
+                - Best for: non-linear relationships, feature interactions, robust to outliers
+                - Weakness: can overfit on small datasets, less interpretable
+                """
+            )
+        }
+    )
+    help_models_classification = mo.accordion(
+        {
+            "📖 Guide": mo.md(
+                """
+                ### Classification Models
+
+                **Ridge regression**
+                - L2-regularized linear regression
+                - Configuration: 5-fold cross-validation (RidgeCV)
+                - Best for: simple baseline, robust to multicollinearity
+                - Weakness: linear model
+
+                **Lasso**
+                - L1-regularized linear regression with
+                - Configuration: 5-fold cross-validation for hyperparameter tuning
+                - Best for: enforcing additional sparsity
+                - Weakness: correlated features can cause instability, linear model
+
+                **Elastic net**
+                - Combined L1+L2 regularization with automatic hyperparameter tuning
+                - Configuration: 5-fold cross-validation for hyperparameter tuning
+                - Best for: balance between Ridge and Lasso
+                - Weakness: may not perform well on highly correlated features
+
+                **XGBoost**
+                - Gradient boosting with regularization
+                - Configuration: 100 estimators, learning_rate=0.1, max_depth=6
+                - Best for: high performative complex modeling, handles missing data well
+                - Weakness: can overfit, less interpretable
+
+                **Support Vector Machine (SVM)**
+                - SVM regression with RBF kernel
+                - Configuration: C=1.0, gamma='scale' (SVR)
+                - Best for: non-linear patterns
+                - Weakness: sensitive to outliers, less interpretable
+
+                **3-Nearest Neighbors (kNN)**
+                - Instance-based learning using 3 nearest neighbors
+                - Configuration: uniform weights
+                - Best for: simple baseline, local patterns
+                - Weakness: degrades in high dimensions, sensitive to irrelevant features
+
+                **Decision tree**
+                - Single decision tree with pruning
+                - Configuration: max_depth=10, min_samples_split=2
+                - Best for: interpretability, non-linear relationships
+                - Weakness: can overfit, less stable
+                
+                **Random forest**
+                - Ensemble of decision trees
+                - Configuration: 100 trees, no max depth limit
+                - Best for: non-linear relationships, feature interactions, robust to outliers
+                - Weakness: can overfit on small datasets, less interpretable
+
+                **Naive Bayes**
+                - Gaussian Naive Bayes classifier
+                - Best for: simple baseline, small sample size
+                - Weakness: strong independence assumption, may underperform on complex datasets
+
+                **Linear Discriminant Analysis (LDA)**
+                - Linear classifier assuming Gaussian distributions
+                - Best for: multi-class problems, dimensionality reduction
+                - Weakness: assumes equal covariance matrices, may underperform on non-linear boundaries
+
+                **Quadratic Discriminant Analysis (QDA)**
+                - Quadratic classifier assuming Gaussian distributions with different covariances
+                - Best for: non-linear decision boundaries, different class covariances
+                - Weakness: sensitive to outliers, may overfit on small datasets
+                """
+            )
+        }
+    )
+
+    if task_type == "regression":
+        help_models = help_models_regression
+    elif task_type == "classification":
+        help_models = help_models_classification
+
+    # Model selection UI
+    model_selection_ui = mo.vstack(
+        [
+            mo.md("### 5.2 Select models to evaluate:"),
+            mo.md(
+                f"*{task_type.capitalize()}: {len(available_models)} available models*"
+            ),
+            help_models,
+        ]
+        + [
+            model_checkboxes[nice_model_names[model_name]]
+            for model_name in available_models
+        ]
+    )
+
+    cv_config_ui = mo.accordion(
+        {
+            "Cross-validation settings": mo.vstack(
+                [
+                    cv_folds_selector,
+                    cv_loo_checkbox,
+                ]
+            )
+        }
+    )
+
+    mo.vstack(
+        [
+            mo.md("<br>"),
+            model_selection_ui,
+            cv_config_ui,
+        ]
+    )
+    return (
+        available_models,
+        cv_folds_selector,
+        cv_loo_checkbox,
+        model_checkboxes,
+        technical_model_names,
+    )
+
+
+@app.cell
+def _(mo, model_checkboxes, radio_solutions_cv, technical_model_names):
+    mo.stop(
+        radio_solutions_cv.value is None,
+        output=mo.md("*Select solution type first.*"),
+    )
+
+    # Check if at least one model is selected
+    # model_checkboxes.value returns a dict of {nice_name: True/False}
+    # Convert nice names back to technical names for evaluation
+    selected_models = [
+        technical_model_names[nice_name]
+        for nice_name, is_checked in model_checkboxes.value.items()
+        if is_checked
+    ]
+
+    mo.stop(
+        len(selected_models) == 0,
+        output=mo.md("*Please select at least one model to evaluate.*"),
+    )
+
+    # Run button for nested CV modeling
+    run_cv_btn = mo.ui.run_button(
+        label=f"Run modeling ({len(selected_models)} model{'s' if len(selected_models) > 1 else ''})",
+        kind="success",
+    )
+
+    mo.vstack(
+        [
+            mo.md("<br>"),
+            run_cv_btn,
+            mo.md("---"),
+        ]
+    )
+    return run_cv_btn, selected_models
+
+
+@app.cell
+def _(
+    all_feature_sets,
+    all_solutions,
+    cv_folds_selector,
+    cv_loo_checkbox,
+    df_processed,
+    evaluate_all_solutions,
+    experiment_dir,
+    mo,
+    nice_model_names,
+    pd,
+    radio_solutions_cv,
+    run_cv_btn,
+    save_results,
+    selected_models,
+    scaling_selector,
+    stratification_col_selector,
+    stratify_col,
+    y,
+):
+    mo.stop(
+        not run_cv_btn.value,
+        output=mo.md("*Ready to run modeling. Press button above.*"),
+    )
+
+    # Get the selected solution type
+    selected_solution_type_cv = radio_solutions_cv.value
+    selected_solution_cv = all_solutions[selected_solution_type_cv]
+    _solution_name = selected_solution_type_cv.replace(" ", "_").lower()
+
+    # Determine CV folds
+    cv_folds = "loo" if cv_loo_checkbox.value else cv_folds_selector.value
+
+    # Determine stratification description for CV display
+    if stratify_col is not None:
+        _strat_info = f"Custom (column: {stratification_col_selector.value})"
+    else:
+        _strat_info = "Default (by target for classification, none for regression)"
+
+    _cv_displays = []
+    _cv_displays.append(
+        mo.md(
+            f"""
+            ### 5.3 Evaluating solution: **{selected_solution_type_cv}**
+            - Number of feature sets: **{len(selected_solution_cv)}**
+            - Models: **{', '.join([nice_model_names.get(m, m) for m in selected_models])}**
+            - Scaling: **{scaling_selector.value or 'None'}**
+            - Outer CV type: **{"Leave-One-Out" if cv_folds == "loo" else f"{cv_folds}-fold"}**
+            - {_strat_info.capitalize()}
+            
+            """
+        )
+    )
+    _cv_displays.append(mo.md("<br>"))
+
+    # Get feature sets for this solution type
+    component_features_cv = all_feature_sets[selected_solution_type_cv]
+
+    # Evaluate with each selected model
+    all_cv_results = {}
+    for model_name in selected_models:
+        _cv_displays.append(
+            mo.md(f"### Model: **{nice_model_names.get(model_name, model_name)}**")
+        )
+
+        # Run nested CV evaluation
+        cv_results = evaluate_all_solutions(
+            solutions=component_features_cv,
+            df=df_processed,
+            response=y,
+            model_name=model_name,
+            apply_scaling=scaling_selector.value,
+            outer_cv_folds=cv_folds,
+            random_state=42,
+            verbose=False,
+            use_markdown=False,
+            stratify=stratify_col,
+        )
+
+        all_cv_results[model_name] = cv_results
+
+        # Display results for this model
+        if not cv_results.empty:
+            _cv_displays.append(mo.ui.table(cv_results))
+
+            # Save results if enabled
+            if save_results:
+                _results_path = (
+                    f"{experiment_dir}/modeling_{model_name}_{_solution_name}.csv"
+                )
+                cv_results.to_csv(_results_path)
+                _cv_displays.append(
+                    mo.md(f"📁 Saved to: `{_results_path.split('/')[-1]}`")
+                )
+        else:
+            _cv_displays.append(
+                mo.md("⚠️ No solutions could be evaluated (insufficient samples).")
+            )
+
+        _cv_displays.append(mo.md("<br>"))
+
+    # Model comparison if multiple models
+    if len(selected_models) > 1 and all(not df.empty for df in all_cv_results.values()):
+        # Create comparison table
+        comparison_data = []
+        for solution_name in all_cv_results[selected_models[0]].index:
+            row = {"Solution": solution_name}
+            for model_name in selected_models:
+                if solution_name in all_cv_results[model_name].index:
+                    # Get primary metric (store as float for styling)
+                    if "f1_score" in all_cv_results[model_name].columns:
+                        metric_val = all_cv_results[model_name].loc[
+                            solution_name, "f1_score"
+                        ]
+                        row[model_name] = metric_val
+                        primary_metric = "f1_score"
+                    elif "r2_score" in all_cv_results[model_name].columns:
+                        metric_val = all_cv_results[model_name].loc[
+                            solution_name, "r2_score"
+                        ]
+                        row[model_name] = metric_val
+                        primary_metric = "r2_score"
+            comparison_data.append(row)
+
+        comparison_df = pd.DataFrame(comparison_data)
+
+        # Apply yellow gradient highlighting with custom function
+        def highlight_values(val, vmin, vmax):
+            """Apply white-to-yellow background based on value"""
+            if pd.isna(val) or not isinstance(val, (int, float)):
+                return ""
+            # Normalize value to 0-1 range
+            norm_val = (val - vmin) / (vmax - vmin) if vmax > vmin else 0.5
+            # Create white to light yellow gradient: higher values = lighter yellow
+            # RGB: white (255, 255, 255) to light yellow (255, 255, 150)
+            r = 255  # stays at 255
+            g = 255  # stays at 255
+            b = int(255 - 105 * norm_val)  # 255 to 150 (lighter yellow)
+            return f"background-color: rgb({r}, {g}, {b})"
+
+        # Get min/max for normalization
+        numeric_cols = [col for col in comparison_df.columns if col != "Solution"]
+        vmin = comparison_df[numeric_cols].min().min()
+        vmax = comparison_df[numeric_cols].max().max()
+
+        # Apply styling
+        styled_comparison = comparison_df.style.map(
+            lambda val: highlight_values(val, vmin, vmax), subset=numeric_cols
+        ).format({col: "{:.3f}" for col in numeric_cols})
+
+        _cv_displays.append(mo.md("### 📊 5.4 Model comparison"))
+        _cv_displays.append(
+            mo.md(
+                f"Best performance for each solution across all models (by {primary_metric}):"
+            )
+        )
+        # Render styled dataframe as HTML
+        _cv_displays.append(mo.Html(styled_comparison.to_html()))
+
+        # if comparison_df is not empty, save it to a file
+        if not comparison_df.empty and save_results:
+            _comparison_path = f"{experiment_dir}/model_comparison_{_solution_name}.csv"
+            comparison_df.to_csv(_comparison_path, index=False)
+            _cv_displays.append(
+                mo.md(
+                    f"📁 Model comparison saved to: `{_comparison_path.split('/')[-1]}`"
+                )
+            )
+
+    _cv_displays.append(mo.md("<br>"))
+    _cv_displays.append(mo.md("---"))
+    _cv_displays.append(mo.md("<br>"))
+
+    mo.vstack(_cv_displays)
+    return
+
+
+@app.cell
+def _():
     return
 
 
