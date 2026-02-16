@@ -404,29 +404,21 @@ def _compute_classification_metrics(
 
     metrics = {
         "f1_score": np.round(f1, 3),
-        "balanced_accuracy": np.round(bal_acc, 3),
-        "accuracy": np.round(acc, 3),
-        "roc_auc": np.round(roc, 3) if not np.isnan(roc) else np.nan,
-        "n_samples": int(n_samples),
-        "n_features": int(n_features),
-        "class_distribution": class_dist,
     }
 
     # Add class-specific metrics
     metrics.update(precisions)
     metrics.update(recalls)
+    metrics.update(
+        {
+            "balanced_accuracy": np.round(bal_acc, 3),
+            "accuracy": np.round(acc, 3),
+            "roc_auc": np.round(roc, 3) if not np.isnan(roc) else np.nan,
+            "n_samples": int(n_samples),
+            "n_features": int(n_features),
+        }
+    )
 
-    # Add convenience metrics for binary classification (class 1 is typically positive class)
-    # if n_classes == 2:
-    #     # Assume classes are 0 and 1, or take the second unique value as positive
-    #     positive_class = (
-    #         unique_classes[1] if 1 in unique_classes else unique_classes[-1]
-    #     )
-    #     metrics["precision"] = metrics[f"precision_class_{positive_class}"]
-    #     metrics["recall"] = metrics[f"recall_class_{positive_class}"]
-
-    # # Add confusion matrix (both 2D and flattened for binary)
-    # metrics["confusion_matrix"] = cm
     if n_classes == 2:
         metrics["confusion_matrix [TN, FP, FN, TP]"] = cm.ravel()
 
