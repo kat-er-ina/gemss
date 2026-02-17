@@ -13,9 +13,9 @@ from gemss.postprocessing.result_modeling import (
 
 def test_classification_basic():
     """Test basic classification with nested CV."""
-    print("\n" + "=" * 60)
-    print("TEST 1: Basic Classification (logistic_l2)")
-    print("=" * 60)
+    print('\n' + '=' * 60)
+    print('TEST 1: Basic Classification (logistic_l2)')
+    print('=' * 60)
 
     # Generate synthetic classification data
     X, y = make_classification(
@@ -26,39 +26,39 @@ def test_classification_basic():
         n_classes=2,
         random_state=42,
     )
-    X_df = pd.DataFrame(X, columns=[f"feature_{i}" for i in range(10)])
+    X_df = pd.DataFrame(X, columns=[f'feature_{i}' for i in range(10)])
 
     # Evaluate with nested CV
     result = evaluate_with_nested_cv(
         X=X_df,
         y=y,
-        model_name="logistic_l2",
-        apply_scaling="standard",
+        model_name='logistic_l2',
+        apply_scaling='standard',
         outer_cv_folds=5,
         random_state=42,
         verbose=True,
     )
 
-    print("\nResult keys:", result.keys())
-    print("Task:", result["task"])
-    print("Model:", result["model"])
-    print("CV Type:", result["cv_type"])
-    print("\nMetrics:")
-    for key, value in result["metrics"].items():
-        if key not in ["confusion_matrix", "class_distribution"]:
-            print(f"  {key}: {value}")
+    print('\nResult keys:', result.keys())
+    print('Task:', result['task'])
+    print('Model:', result['model'])
+    print('CV Type:', result['cv_type'])
+    print('\nMetrics:')
+    for key, value in result['metrics'].items():
+        if key not in ['confusion_matrix', 'class_distribution']:
+            print(f'  {key}: {value}')
 
-    assert result["task"] == "classification"
-    assert result["model"] == "logistic_l2"
-    assert "accuracy" in result["metrics"]
-    print("\n[PASSED] Test passed!")
+    assert result['task'] == 'classification'
+    assert result['model'] == 'logistic_l2'
+    assert 'accuracy' in result['metrics']
+    print('\n[PASSED] Test passed!')
 
 
 def test_regression_basic():
     """Test basic regression with nested CV."""
-    print("\n" + "=" * 60)
-    print("TEST 2: Basic Regression (linear_l2)")
-    print("=" * 60)
+    print('\n' + '=' * 60)
+    print('TEST 2: Basic Regression (linear_l2)')
+    print('=' * 60)
 
     # Generate synthetic regression data
     X, y = make_regression(
@@ -68,38 +68,38 @@ def test_regression_basic():
         noise=10.0,
         random_state=42,
     )
-    X_df = pd.DataFrame(X, columns=[f"feature_{i}" for i in range(10)])
+    X_df = pd.DataFrame(X, columns=[f'feature_{i}' for i in range(10)])
 
     # Evaluate with nested CV
     result = evaluate_with_nested_cv(
         X=X_df,
         y=y,
-        model_name="linear_l2",
-        apply_scaling="standard",
+        model_name='linear_l2',
+        apply_scaling='standard',
         outer_cv_folds=5,
         random_state=42,
         verbose=True,
     )
 
-    print("\nResult keys:", result.keys())
-    print("Task:", result["task"])
-    print("Model:", result["model"])
-    print("CV Type:", result["cv_type"])
-    print("\nMetrics:")
-    for key, value in result["metrics"].items():
-        print(f"  {key}: {value}")
+    print('\nResult keys:', result.keys())
+    print('Task:', result['task'])
+    print('Model:', result['model'])
+    print('CV Type:', result['cv_type'])
+    print('\nMetrics:')
+    for key, value in result['metrics'].items():
+        print(f'  {key}: {value}')
 
-    assert result["task"] == "regression"
-    assert result["model"] == "linear_l2"
-    assert "r2_score" in result["metrics"]
-    print("\n[PASSED] Test passed!")
+    assert result['task'] == 'regression'
+    assert result['model'] == 'linear_l2'
+    assert 'r2_score' in result['metrics']
+    print('\n[PASSED] Test passed!')
 
 
 def test_leave_one_out():
     """Test leave-one-out cross-validation."""
-    print("\n" + "=" * 60)
-    print("TEST 3: Leave-One-Out CV")
-    print("=" * 60)
+    print('\n' + '=' * 60)
+    print('TEST 3: Leave-One-Out CV')
+    print('=' * 60)
 
     # Generate small dataset suitable for LOO
     X, y = make_classification(
@@ -109,28 +109,28 @@ def test_leave_one_out():
         n_classes=2,
         random_state=42,
     )
-    X_df = pd.DataFrame(X, columns=[f"feature_{i}" for i in range(5)])
+    X_df = pd.DataFrame(X, columns=[f'feature_{i}' for i in range(5)])
 
     # Evaluate with LOO
     result = evaluate_with_nested_cv(
         X=X_df,
         y=y,
-        model_name="logistic_l2",
-        outer_cv_folds="loo",
+        model_name='logistic_l2',
+        outer_cv_folds='loo',
         random_state=42,
         verbose=True,
     )
 
-    print("\nCV Type:", result["cv_type"])
-    assert result["cv_type"] == "Leave-One-Out"
-    print("\n[PASSED] Test passed!")
+    print('\nCV Type:', result['cv_type'])
+    assert result['cv_type'] == 'Leave-One-Out'
+    print('\n[PASSED] Test passed!')
 
 
 def test_multiple_solutions():
     """Test evaluating multiple solutions."""
-    print("\n" + "=" * 60)
-    print("TEST 4: Multiple Solutions")
-    print("=" * 60)
+    print('\n' + '=' * 60)
+    print('TEST 4: Multiple Solutions')
+    print('=' * 60)
 
     # Generate data with more features
     X, y = make_classification(
@@ -140,13 +140,13 @@ def test_multiple_solutions():
         n_classes=2,
         random_state=42,
     )
-    df = pd.DataFrame(X, columns=[f"feature_{i}" for i in range(20)])
+    df = pd.DataFrame(X, columns=[f'feature_{i}' for i in range(20)])
 
     # Create multiple solutions
     solutions = {
-        "solution_1": [f"feature_{i}" for i in range(5)],
-        "solution_2": [f"feature_{i}" for i in range(5, 10)],
-        "solution_3": [f"feature_{i}" for i in range(10, 15)],
+        'solution_1': [f'feature_{i}' for i in range(5)],
+        'solution_2': [f'feature_{i}' for i in range(5, 10)],
+        'solution_3': [f'feature_{i}' for i in range(10, 15)],
     }
 
     # Evaluate all solutions
@@ -154,56 +154,56 @@ def test_multiple_solutions():
         solutions=solutions,
         df=df,
         response=y,
-        model_name="auto",
-        apply_scaling="standard",
+        model_name='auto',
+        apply_scaling='standard',
         outer_cv_folds=5,
         random_state=42,
         verbose=True,
         use_markdown=False,
     )
 
-    print("\nResults shape:", results_df.shape)
-    print("\nSolutions evaluated:", list(results_df.index))
-    print("\nMetrics available:", list(results_df.columns))
+    print('\nResults shape:', results_df.shape)
+    print('\nSolutions evaluated:', list(results_df.index))
+    print('\nMetrics available:', list(results_df.columns))
 
     assert len(results_df) == 3
-    assert "solution_1" in results_df.index
-    assert "accuracy" in results_df.columns
-    print("\n[PASSED] Test passed!")
+    assert 'solution_1' in results_df.index
+    assert 'accuracy' in results_df.columns
+    print('\n[PASSED] Test passed!')
 
 
 def test_available_models():
     """Test model registry."""
-    print("\n" + "=" * 60)
-    print("TEST 5: Available Models")
-    print("=" * 60)
+    print('\n' + '=' * 60)
+    print('TEST 5: Available Models')
+    print('=' * 60)
 
-    class_models = _get_available_models("classification")
-    reg_models = _get_available_models("regression")
+    class_models = _get_available_models('classification')
+    reg_models = _get_available_models('regression')
 
-    print("\nClassification models:")
+    print('\nClassification models:')
     for model in class_models:
-        print(f"  - {model}")
+        print(f'  - {model}')
 
-    print("\nRegression models:")
+    print('\nRegression models:')
     for model in reg_models:
-        print(f"  - {model}")
+        print(f'  - {model}')
 
-    assert "logistic_l1" in class_models
-    assert "logistic_l2" in class_models
-    assert "logistic_elasticnet" in class_models
-    assert "random_forest" in class_models
-    assert "linear_l1" in reg_models
-    assert "linear_l2" in reg_models
-    assert "linear_elasticnet" in reg_models
-    print("\n[PASSED] Test passed!")
+    assert 'logistic_l1' in class_models
+    assert 'logistic_l2' in class_models
+    assert 'logistic_elasticnet' in class_models
+    assert 'random_forest' in class_models
+    assert 'linear_l1' in reg_models
+    assert 'linear_l2' in reg_models
+    assert 'linear_elasticnet' in reg_models
+    print('\n[PASSED] Test passed!')
 
 
 def test_different_models():
     """Test different model types."""
-    print("\n" + "=" * 60)
-    print("TEST 6: Different Models")
-    print("=" * 60)
+    print('\n' + '=' * 60)
+    print('TEST 6: Different Models')
+    print('=' * 60)
 
     # Generate data
     X, y = make_classification(
@@ -213,32 +213,32 @@ def test_different_models():
         n_classes=2,
         random_state=42,
     )
-    X_df = pd.DataFrame(X, columns=[f"feature_{i}" for i in range(10)])
+    X_df = pd.DataFrame(X, columns=[f'feature_{i}' for i in range(10)])
 
     # Test different classification models
-    models_to_test = ["logistic_l1", "random_forest", "gradient_boosting", "knn"]
+    models_to_test = ['logistic_l1', 'random_forest', 'xgboost', 'knn']
 
     for model_name in models_to_test:
-        print(f"\nTesting model: {model_name}")
+        print(f'\nTesting model: {model_name}')
         result = evaluate_with_nested_cv(
             X=X_df,
             y=y,
             model_name=model_name,
-            apply_scaling="standard",
+            apply_scaling='standard',
             outer_cv_folds=3,
             random_state=42,
             verbose=False,
         )
-        print(f"  Accuracy: {result['metrics']['accuracy']}")
-        assert result["model"] == model_name
+        print(f'  Accuracy: {result["metrics"]["accuracy"]}')
+        assert result['model'] == model_name
 
-    print("\n[PASSED] Test passed!")
+    print('\n[PASSED] Test passed!')
 
 
-if __name__ == "__main__":
-    print("\n" + "=" * 60)
-    print("TESTING RESULT_MODELING MODULE")
-    print("=" * 60)
+if __name__ == '__main__':
+    print('\n' + '=' * 60)
+    print('TESTING RESULT_MODELING MODULE')
+    print('=' * 60)
 
     test_classification_basic()
     test_regression_basic()
@@ -247,6 +247,6 @@ if __name__ == "__main__":
     test_available_models()
     test_different_models()
 
-    print("\n" + "=" * 60)
-    print("ALL TESTS PASSED!")
-    print("=" * 60)
+    print('\n' + '=' * 60)
+    print('ALL TESTS PASSED!')
+    print('=' * 60)
