@@ -250,6 +250,7 @@ def _(current_dir, mo):
     checkbox_save_results = mo.ui.checkbox(
         value=True,
         label='Save results',
+        disabled=True,
     )
     save_dir_input = mo.ui.text(
         value=f'{current_dir}\\results',
