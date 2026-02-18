@@ -373,13 +373,13 @@ def _(file_uploader, io, mo, pd):
 
         stratification_col_selector = mo.ui.dropdown(
             options=list(df_raw.columns),
-            label='Custom stratification column',
+            label='    → Custom stratification column:',
             value=df_raw.columns[-1] if not df_raw.empty else None,
         )
         scaling_selector = mo.ui.dropdown(
             options=['standard', 'minmax', None],
             label='Scaling to use',
-            value='minmax',
+            value='standard',
         )
         allowed_missing_percentage_selector = mo.ui.number(
             0,
@@ -596,14 +596,14 @@ def _(df_processed, mo):
     )
     sparsity_est = mo.ui.number(
         1,
-        15,
+        50,
         value=4,
         step=1,
         label='Desired sparsity (no. features per component)',
     )
 
     # Advanced Settings
-    adv_iter = mo.ui.number(500, 20000, value=3500, step=250, label='Iterations')
+    adv_iter = mo.ui.number(200, 20000, value=3000, step=100, label='Iterations')
     adv_lr = mo.ui.number(0.0000, 0.1, value=0.002, step=0.0001, label='Learning rate')
     adv_batch = mo.ui.number(
         8,
@@ -1449,10 +1449,7 @@ def _(
     # Get available models based on task type
     available_models = _get_available_models(task_type)
 
-    # Create checkboxes for model selection
-    # Default: only L2-regularized linear/logistic regression
-    default_model = 'logistic_l2' if task_type == 'classification' else 'linear_l2'
-
+    # Create checkboxes for model selection with nice names
     nice_model_names = {
         'logistic_l2': 'Ridge regression',
         'logistic_l1': 'Lasso',
@@ -1480,7 +1477,7 @@ def _(
     model_checkboxes = mo.ui.dictionary(
         {
             nice_model_names[model_name]: mo.ui.checkbox(
-                value=(model_name == default_model),
+                value=True,
                 label=nice_model_names[model_name],
             )
             for model_name in available_models
@@ -1730,6 +1727,7 @@ def _(
     scaling_selector,
     stratification_col_selector,
     stratify_col,
+    task_type,
     y,
 ):
     mo.stop(
@@ -1749,7 +1747,7 @@ def _(
     if stratify_col is not None:
         _strat_info = f'Custom (column: {stratification_col_selector.value})'
     else:
-        _strat_info = 'Default (by target for classification, none for regression)'
+        _strat_info = 'Default: by target' if task_type == 'classification' else 'None'
 
     _cv_displays = []
     _cv_displays.append(
@@ -1760,7 +1758,7 @@ def _(
             - Models: **{', '.join([nice_model_names.get(m, m) for m in selected_models])}**
             - Scaling: **{scaling_selector.value or 'None'}**
             - Outer CV type: **{'Leave-One-Out' if cv_folds == 'loo' else f'{cv_folds}-fold'}**
-            - {_strat_info.capitalize()}
+            - Stratification: **{_strat_info}**
             
             """
         )
