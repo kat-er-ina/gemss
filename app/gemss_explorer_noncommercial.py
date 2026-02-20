@@ -295,6 +295,10 @@ def _(
 ):
     # configure saving options, if saving is enabled
     save_results = checkbox_save_results.value
+    
+    # UI Components for Data Loading
+    file_uploader = mo.ui.file(kind='button', label='Upload CSV dataset', filetypes=['.csv'])
+    
     if save_results:
         _display = mo.vstack(
             [
@@ -322,27 +326,15 @@ def _(
                         )
                     }
                 ),
+                mo.md('### 1.2 Input data'),
+                file_uploader,
             ]
         )
     else:
         _display = None
 
     _display
-    return (save_results,)
-
-
-@app.cell
-def _(mo):
-    # UI Components for Data Loading
-    file_uploader = mo.ui.file(kind='button', label='Upload CSV dataset', filetypes=['.csv'])
-
-    mo.vstack(
-        [
-            mo.md('### 1.2 Input data'),
-            file_uploader,
-        ]
-    )
-    return (file_uploader,)
+    return (save_results, file_uploader,)
 
 
 @app.cell
@@ -627,7 +619,7 @@ def _(df_processed, mo):
         0,
         1000,
         value=100,
-        step=10,
+        step=1,
         label='Slab distribution variance',
     )
 
