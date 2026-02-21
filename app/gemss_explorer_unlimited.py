@@ -1,7 +1,7 @@
 import marimo
 
-__generated_with = '0.19.8'
-app = marimo.App(width='full')
+__generated_with = "0.19.11"
+app = marimo.App(width="full")
 
 
 @app.cell
@@ -117,13 +117,11 @@ def _(current_dir, mo, os):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     # 💎 **GEMSS Explorer**
 
     This app helps you discover **multiple distinct feature sets** that explain your data using GEMSS: Gaussian Ensemble for Multiple Sparse Solutions.
-    """
-    )
+    """)
     return
 
 
@@ -173,11 +171,9 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     ## **1. Set up input and output**
-    """
-    )
+    """)
     return
 
 
@@ -196,15 +192,15 @@ def _(mo):
                 - can contain missing values,
                 - only numeric features are supported,
                 - may contain a column used for stratification during cross-validation.
-                
+
                 ### Stratification in cross-validation
-                
+
                 Stratification ensures that each CV fold maintains the same distribution as the full dataset.
-                
+
                 **Default behavior:**
                 - Classification tasks: stratified by target/label column (preserves class distribution)
                 - Regression tasks: no stratification (random splits)
-                
+
                 **Custom stratification column:**
                 - Enable the "Use custom stratification column" checkbox to specify a different column for stratification
                 - Useful when samples have inherent grouping (experimental batches, time periods, patient cohorts, etc.)
@@ -250,12 +246,16 @@ def _(current_dir, mo):
         label='Parent directory for saving this experiment',
     )
 
-    save_experiment_id = mo.ui.number(1, 1000, value=1, step=1, label='Experiment ID')
+    save_experiment_id = mo.ui.number(
+        1, 1000, value=1, step=1, label='Experiment ID'
+    )
     save_history_name = mo.ui.text(
         value='search_history_results',
         label='History filename (no extension)',
     )
-    save_setup_name = mo.ui.text(value='search_setup', label='Setup filename (no extension)')
+    save_setup_name = mo.ui.text(
+        value='search_setup', label='Setup filename (no extension)'
+    )
     save_features_name = mo.ui.text(
         value='all_candidate_solutions', label='Features filename (no extension)'
     )
@@ -288,10 +288,12 @@ def _(
 ):
     # configure saving options, if saving is enabled
     save_results = checkbox_save_results.value
-    
+
     # UI Components for Data Loading
-    file_uploader = mo.ui.file(kind='button', label='Upload CSV dataset', filetypes=['.csv'])
-    
+    file_uploader = mo.ui.file(
+        kind='button', label='Upload CSV dataset', filetypes=['.csv']
+    )
+
     if save_results:
         _display = mo.vstack(
             [
@@ -327,7 +329,8 @@ def _(
         _display = None
 
     _display
-    return (save_results, file_uploader,)
+    return file_uploader, save_results
+
 
 @app.cell
 def _(file_uploader, io, mo, pd):
@@ -422,9 +425,9 @@ def _(file_uploader, io, mo, pd):
         df_raw,
         index_col_selector,
         label_col_selector,
-        use_custom_stratification,
-        stratification_col_selector,
         scaling_selector,
+        stratification_col_selector,
+        use_custom_stratification,
     )
 
 
@@ -442,11 +445,13 @@ def _(
     pd,
     preprocess_features,
     scaling_selector,
-    use_custom_stratification,
     stratification_col_selector,
+    use_custom_stratification,
 ):
     # Stop if data not loaded
-    mo.stop(df_raw is None, mo.md('*Please upload your dataset to proceed.*<br><hr>'))
+    mo.stop(
+        df_raw is None, mo.md('*Please upload your dataset to proceed.*<br><hr>')
+    )
 
     # Handle stratification column
     # If custom stratification is enabled and the stratification column is different from label column, extract it
@@ -530,9 +535,7 @@ def _(
         if _task_type == 'classification':
             _strat_desc = f'default stratification: by target column *{label_col_selector.value}* (preserves class distribution)'
         else:
-            _strat_desc = (
-                'default stratification: none (fully random splits, suitable for regression tasks)'
-            )
+            _strat_desc = 'default stratification: none (fully random splits, suitable for regression tasks)'
 
     mo.vstack(
         [
@@ -549,23 +552,25 @@ def _(
                 """,
             ),
             # show label distribution either as a pie chart or a histogram, depending on the number of unique values
-            (get_label_piechart(y) if _n_response_values < 5 else get_label_histogram_plot(y)),
+            (
+                get_label_piechart(y)
+                if _n_response_values < 5
+                else get_label_histogram_plot(y)
+            ),
             mo.md('---'),
             mo.md('<br>'),
         ]
     )
-    return X, df_processed, feature_map, n_features, y
+    return X, df_processed, feature_map, n_features, stratify_col, y
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     ## **2. The feature selection algorithm**
 
     Configure parameters of the GEMSS feature selection algorithm.
-    """
-    )
+    """)
     return
 
 
@@ -588,12 +593,14 @@ def _(df_processed, mo):
 
     # Advanced Settings
     adv_iter = mo.ui.number(200, 20000, value=3000, step=100, label='Iterations')
-    adv_lr = mo.ui.number(0.0000, 0.1, value=0.002, step=0.0001, label='Learning rate')
+    adv_lr = mo.ui.number(
+        0.0000, 0.1, value=0.002, step=0.0001, label='Learning rate'
+    )
     adv_batch = mo.ui.number(
         8,
         256,
         value=16,
-        step=4,
+        step=1,
         label='Batch size (no. samples in a minibatch)',
     )
     adv_jaccard = mo.ui.checkbox(
@@ -611,7 +618,7 @@ def _(df_processed, mo):
         0,
         1000,
         value=100,
-        step=10,
+        step=1,
         label='Slab distribution variance',
     )
 
@@ -789,7 +796,9 @@ def _(
     if save_results:
         # Configure saving options, if saving is enabled
         # Prepare directory
-        experiment_dir = f'{save_dir_input.value}/experiment_{save_experiment_id.value}'
+        experiment_dir = (
+            f'{save_dir_input.value}/experiment_{save_experiment_id.value}'
+        )
         os.makedirs(experiment_dir, exist_ok=True)
 
         # Prepare save paths
@@ -877,13 +886,11 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     ## **3. Algorithm progress history**
 
     Assess convergence and features in the components. If needed, adjust the algorithm's parameters and rerun.
-    """
-    )
+    """)
     return
 
 
@@ -987,13 +994,17 @@ def _(
             mo.md('<br>'),
             mo.md('### 3.1 Objective function convergence'),
             elbo_help,
-            progress_plots_dict['elbo'].update_layout(height=400, width=200 + adv_iter.value / 8),
+            progress_plots_dict['elbo'].update_layout(
+                height=400, width=200 + adv_iter.value / 8
+            ),
             mo.md('<br>'),
             mo.md('### 3.2 Feature convergence in components'),
             mu_help,
             # Unpack all mu plots
             *[
-                progress_plots_dict[_plot].update_layout(height=400, width=400 + adv_iter.value / 8)
+                progress_plots_dict[_plot].update_layout(
+                    height=400, width=400 + adv_iter.value / 8
+                )
                 for _plot in progress_plots_dict.keys()
                 if 'mu_' in _plot
             ],
@@ -1009,13 +1020,11 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     ## **4. Recover solutions from components**
 
     Each component can be handled in multiple ways to yield feature sets = candidate solutions. Select your strategy.
-    """
-    )
+    """)
     return
 
 
@@ -1024,12 +1033,22 @@ def _(df_processed, history, mo, sparsity_est):
     mo.stop(history is None, '')  # Show only after feature selector is run
 
     # checkboxes to pick solution types
-    checkbox_out20_sol = mo.ui.checkbox(label='Outliers with STD > 2.0', value=True)
-    checkbox_out25_sol = mo.ui.checkbox(label='Outliers with STD > 2.5', value=True)
-    checkbox_out30_sol = mo.ui.checkbox(label='Outliers with STD > 3.0', value=True)
-    checkbox_out35_sol = mo.ui.checkbox(label='Outliers with STD > 3.5', value=False)
+    checkbox_out20_sol = mo.ui.checkbox(
+        label='Outliers with STD > 2.0', value=True
+    )
+    checkbox_out25_sol = mo.ui.checkbox(
+        label='Outliers with STD > 2.5', value=True
+    )
+    checkbox_out30_sol = mo.ui.checkbox(
+        label='Outliers with STD > 3.0', value=True
+    )
+    checkbox_out35_sol = mo.ui.checkbox(
+        label='Outliers with STD > 3.5', value=False
+    )
     checkbox_top_sol = mo.ui.checkbox(label='Top few features', value=False)
-    checkbox_full_sol = mo.ui.checkbox(label='All features with mu > threshold', value=False)
+    checkbox_full_sol = mo.ui.checkbox(
+        label='All features with mu > threshold', value=False
+    )
 
     # advanced settings
     top_n_features_selector = mo.ui.number(
@@ -1047,9 +1066,15 @@ def _(df_processed, history, mo, sparsity_est):
 
     # display options
     checkbox_summary = mo.ui.checkbox(label='Summary', value=True, disabled=True)
-    checkbox_matrix = mo.ui.checkbox(label='Feature distribution across components', value=True)
-    checkbox_regression_l2 = mo.ui.checkbox(label='Regression with l2 regularization', value=True)
-    checkbox_regression_l1 = mo.ui.checkbox(label='Regression with l1 regularization', value=False)
+    checkbox_matrix = mo.ui.checkbox(
+        label='Feature distribution across components', value=True
+    )
+    checkbox_regression_l2 = mo.ui.checkbox(
+        label='Regression with l2 regularization', value=True
+    )
+    checkbox_regression_l1 = mo.ui.checkbox(
+        label='Regression with l1 regularization', value=False
+    )
 
     # description of solution types
     solution_recovery_help = mo.accordion(
@@ -1126,7 +1151,11 @@ def _(df_processed, history, mo, sparsity_est):
                 ]
             ),
             mo.accordion(
-                {'Advanced setting': mo.vstack([top_n_features_selector, min_mu_selector])}
+                {
+                    'Advanced setting': mo.vstack(
+                        [top_n_features_selector, min_mu_selector]
+                    )
+                }
             ),
             mo.md('<br>'),
             mo.md('### 4.2 Pick what is to be shown:'),
@@ -1215,7 +1244,8 @@ def _(
         mo.md('*Ready to recover solutions from components. Click button above.*'),
     )
     mo.stop(
-        (top_n_features_selector.value is None) or (top_n_features_selector.value < 1),
+        (top_n_features_selector.value is None)
+        or (top_n_features_selector.value < 1),
         mo.md("Please set 'top few features' to value 1 or more."),
     )
 
@@ -1243,7 +1273,9 @@ def _(
     # Put all the requested solution types into a single dictionary
     all_solutions = {}
     for _key, _outlier in sol_outliers.items():
-        all_solutions[f'Outlier features ({" = ".join(_key.split(sep="_"))})'] = _outlier
+        all_solutions[f'Outlier features ({" = ".join(_key.split(sep="_"))})'] = (
+            _outlier
+        )
     if checkbox_top_sol.value:
         all_solutions['Top features'] = sol_top
     if checkbox_full_sol.value:
@@ -1291,14 +1323,22 @@ def _(
 
     if save_results:
         # Save candidate solutions
-        msg_features_json = save_feature_lists_json(all_feature_sets, features_path_json)
-        msg_features_txt = save_feature_lists_txt(all_feature_sets, features_path_txt)
+        msg_features_json = save_feature_lists_json(
+            all_feature_sets, features_path_json
+        )
+        msg_features_txt = save_feature_lists_txt(
+            all_feature_sets, features_path_txt
+        )
 
         # Stack all the outputs in the correct order
         _displays = [
             mo.md(f'📁 **All recovered solutions saved to:** `{experiment_dir}`'),
-            mo.md(f'- {msg_features_txt.split("Candidate solutions saved to ")[1]}'),
-            mo.md(f'- {msg_features_json.split("Candidate solutions saved to ")[1]}'),
+            mo.md(
+                f'- {msg_features_txt.split("Candidate solutions saved to ")[1]}'
+            ),
+            mo.md(
+                f'- {msg_features_json.split("Candidate solutions saved to ")[1]}'
+            ),
             mo.md('---'),
             mo.md('<br><br>'),
         ]
@@ -1324,7 +1364,9 @@ def _(
 
         # Get quick validation with a simple regression
         if checkbox_regression_l2.value or checkbox_regression_l1.value:
-            regression_type = 'logistic' if task_type == 'classification' else 'linear'
+            regression_type = (
+                'logistic' if task_type == 'classification' else 'linear'
+            )
 
         # l2-regularized
         if checkbox_regression_l2.value:
@@ -1350,18 +1392,16 @@ def _(
 
     # Return all displays stacked vertically
     mo.vstack(_displays)
-    return all_feature_sets, all_solutions, task_type, unique_features_found
+    return all_feature_sets, all_solutions, task_type
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     ## **5. Modeling with candidate solutions**
 
     Evaluate discovered feature sets using nested cross-validation with scikit-learn models. This provides proper generalization performance estimates.
-    """
-    )
+    """)
     return
 
 
@@ -1370,7 +1410,9 @@ def _(all_solutions, mo):
     # Stop if solutions not recovered
     mo.stop(
         all_solutions is None,
-        mo.md('*Must recover solutions from components first. Click button above.*'),
+        mo.md(
+            '*Must recover solutions from components first. Click button above.*'
+        ),
     )
 
     # Select solution type for nested CV modeling
@@ -1395,7 +1437,7 @@ def _(all_solutions, mo):
                 - **Outer loop:** Splits data for performance evaluation
                 - **Inner loop:** Fits models with hyperparameter tuning (implemented only for linear/logistic regressions, other models use default hyperparameters for speed)
                 - **Result:** Metrics computed on held-out test data, aggregated over all outer folds
-                
+
                 This is the gold standard for evaluating predictive performance of discovered solutions, providing the most reliable assessment of their real-world utility.
                 """
             )
@@ -1412,13 +1454,7 @@ def _(all_solutions, mo):
 
 
 @app.cell
-def _(
-    _get_available_models,
-    all_solutions,
-    mo,
-    radio_solutions_cv,
-    task_type,
-):
+def _(all_solutions, mo, radio_solutions_cv, task_type):
     # Stop if solutions not recovered (task_type won't exist)
     mo.stop(
         all_solutions is None,
@@ -1530,7 +1566,7 @@ def _(
                 - Configuration: max_depth=10, min_samples_split=2
                 - Best for: interpretability, non-linear relationships
                 - Weakness: can overfit, less stable
-                
+
                 **Random forest**
                 - Ensemble of decision trees
                 - Configuration: 100 trees, no max depth limit
@@ -1587,7 +1623,7 @@ def _(
                 - Configuration: max_depth=10, min_samples_split=2
                 - Best for: interpretability, non-linear relationships
                 - Weakness: can overfit, less stable
-                
+
                 **Random forest**
                 - Ensemble of decision trees
                 - Configuration: 100 trees, no max depth limit
@@ -1622,10 +1658,15 @@ def _(
     model_selection_ui = mo.vstack(
         [
             mo.md('### 5.2 Select models to evaluate:'),
-            mo.md(f'*{task_type.capitalize()}: {len(available_models)} available models*'),
+            mo.md(
+                f'*{task_type.capitalize()}: {len(available_models)} available models*'
+            ),
             help_models,
         ]
-        + [model_checkboxes[nice_model_names[model_name]] for model_name in available_models]
+        + [
+            model_checkboxes[nice_model_names[model_name]]
+            for model_name in available_models
+        ]
     )
 
     cv_config_ui = mo.accordion(
@@ -1647,10 +1688,10 @@ def _(
         ]
     )
     return (
-        available_models,
         cv_folds_selector,
         cv_loo_checkbox,
         model_checkboxes,
+        nice_model_names,
         technical_model_names,
     )
 
@@ -1707,8 +1748,8 @@ def _(
     radio_solutions_cv,
     run_cv_btn,
     save_results,
-    selected_models,
     scaling_selector,
+    selected_models,
     stratification_col_selector,
     stratify_col,
     task_type,
@@ -1722,7 +1763,7 @@ def _(
     # Get the selected solution type
     selected_solution_type_cv = radio_solutions_cv.value
     selected_solution_cv = all_solutions[selected_solution_type_cv]
-    _solution_name = selected_solution_type_cv.replace(' ', '_').lower()
+    solution_name = selected_solution_type_cv.replace(' ', '_').lower()
 
     # Determine CV folds
     cv_folds = 'loo' if cv_loo_checkbox.value else cv_folds_selector.value
@@ -1731,7 +1772,11 @@ def _(
     if stratify_col is not None:
         _strat_info = f'Custom (column: {stratification_col_selector.value})'
     else:
-        _strat_info = 'Default: by target' if task_type == 'classification' else 'None'
+        _strat_info = (
+            'Default: by target' if task_type == 'classification' else 'None'
+        )
+
+    primary_metric = 'f1_score' if task_type == 'classification' else 'r2_score'
 
     _cv_displays = []
     _cv_displays.append(
@@ -1743,7 +1788,8 @@ def _(
             - Scaling: **{scaling_selector.value or 'None'}**
             - Outer CV type: **{'Leave-One-Out' if cv_folds == 'loo' else f'{cv_folds}-fold'}**
             - Stratification: **{_strat_info}**
-            
+            - Primary metric: **{primary_metric}**
+
             """
         )
     )
@@ -1755,8 +1801,6 @@ def _(
     # Evaluate with each selected model
     all_cv_results = {}
     for model_name in selected_models:
-        _cv_displays.append(mo.md(f'### Model: **{nice_model_names.get(model_name, model_name)}**'))
-
         # Run nested CV evaluation
         cv_results = evaluate_all_solutions(
             solutions=component_features_cv,
@@ -1773,38 +1817,23 @@ def _(
 
         all_cv_results[model_name] = cv_results
 
-        # Display results for this model
-        if not cv_results.empty:
-            _cv_displays.append(mo.ui.table(cv_results))
-
-            # Save results if enabled
-            if save_results:
-                _results_path = f'{experiment_dir}/modeling_{model_name}_{_solution_name}.csv'
-                cv_results.to_csv(_results_path)
-                _cv_displays.append(mo.md(f'📁 Saved to: `{_results_path.split("/")[-1]}`'))
-        else:
-            _cv_displays.append(mo.md('⚠️ No solutions could be evaluated (insufficient samples).'))
-
-        _cv_displays.append(mo.md('<br>'))
-
     # Model comparison if multiple models
-    if len(selected_models) > 1 and all(not df.empty for df in all_cv_results.values()):
+    if len(selected_models) > 1 and all(
+        not df.empty for df in all_cv_results.values()
+    ):
         # Create comparison table
         comparison_data = []
-        for solution_name in all_cv_results[selected_models[0]].index:
-            row = {'Solution': solution_name}
+        for _name in all_cv_results[selected_models[0]].index:
+            _row = {'Solution': _name}
             for model_name in selected_models:
-                if solution_name in all_cv_results[model_name].index:
+                if _name in all_cv_results[model_name].index:
                     # Get primary metric (store as float for styling)
-                    if 'f1_score' in all_cv_results[model_name].columns:
-                        metric_val = all_cv_results[model_name].loc[solution_name, 'f1_score']
-                        row[model_name] = metric_val
-                        primary_metric = 'f1_score'
-                    elif 'r2_score' in all_cv_results[model_name].columns:
-                        metric_val = all_cv_results[model_name].loc[solution_name, 'r2_score']
-                        row[model_name] = metric_val
-                        primary_metric = 'r2_score'
-            comparison_data.append(row)
+                    if primary_metric in all_cv_results[model_name].columns:
+                        metric_val = all_cv_results[model_name].loc[
+                            _name, primary_metric
+                        ]
+                        _row[model_name] = metric_val
+            comparison_data.append(_row)
 
         comparison_df = pd.DataFrame(comparison_data)
 
@@ -1822,29 +1851,31 @@ def _(
             b = int(255 - 105 * norm_val)  # 255 to 150 (lighter yellow)
             return f'background-color: rgb({r}, {g}, {b})'
 
-        # Get min/max for normalization
-        numeric_cols = [col for col in comparison_df.columns if col != 'Solution']
-        vmin = comparison_df[numeric_cols].min().min()
-        vmax = comparison_df[numeric_cols].max().max()
-
         # Apply styling
+        numeric_cols = [col for col in comparison_df.columns if col != 'Solution']
         styled_comparison = comparison_df.style.map(
-            lambda val: highlight_values(val, vmin, vmax), subset=numeric_cols
+            lambda val: highlight_values(val, 0, 1), subset=numeric_cols
         ).format({col: '{:.3f}' for col in numeric_cols})
 
         _cv_displays.append(mo.md('### 📊 5.4 Model comparison'))
         _cv_displays.append(
-            mo.md(f'Best performance for each solution across all models (by {primary_metric}):')
+            mo.md(
+                f'Performance across all models by {primary_metric}:'
+            )
         )
         # Render styled dataframe as HTML
         _cv_displays.append(mo.Html(styled_comparison.to_html()))
 
         # if comparison_df is not empty, save it to a file
         if not comparison_df.empty and save_results:
-            _comparison_path = f'{experiment_dir}/model_comparison_{_solution_name}.csv'
+            _comparison_path = (
+                f'{experiment_dir}/model_comparison_solutiontype={solution_name}.csv'
+            )
             comparison_df.to_csv(_comparison_path, index=False)
             _cv_displays.append(
-                mo.md(f'📁 Model comparison saved to: `{_comparison_path.split("/")[-1]}`')
+                mo.md(
+                    f'📁 Model comparison saved to: `{_comparison_path.split("/")[-1]}`'
+                )
             )
 
     _cv_displays.append(mo.md('<br>'))
@@ -1852,13 +1883,137 @@ def _(
     _cv_displays.append(mo.md('<br>'))
 
     mo.vstack(_cv_displays)
-    return
+    return all_cv_results, component_features_cv, primary_metric
 
 
 @app.cell
-def _():
+def _(
+    all_cv_results,
+    component_features_cv,
+    experiment_dir,
+    mo,
+    nice_model_names,
+    pd,
+    primary_metric,
+    save_results,
+    selected_models,
+    solution_name,
+):
+    _final_displays = []
+    final_data_for_file = []  # Separate list for file writing with raw data
+    
+    # for each component, write out its feature set and performance across models
+    _final_displays.append(mo.md('### 📊 5.5 Summary per component'))
+    for _name in all_cv_results[selected_models[0]].index:
+        _final_displays.append(mo.md('<br>'))
+        final_data_for_file.append('\n')
+        component_header = f'#### 🔹 Candidate solution from **{_name}**'
+        _final_displays.append(mo.md(component_header))
+        final_data_for_file.append(component_header.replace('####', '').replace('**', ''))
+    
+        # Get feature set for this component
+        features_in_component = component_features_cv.get(_name, [])
+        if features_in_component:
+            feature_text = f'**{len(features_in_component)} features:** {", ".join(features_in_component)}'
+            _final_displays.append(mo.md(feature_text))
+            final_data_for_file.append(feature_text.replace('**', ''))
+        else:
+            no_features_text = 'No features selected in this candidate solution.'
+            _final_displays.append(mo.md(no_features_text))
+            final_data_for_file.append(no_features_text)
+
+        # Show performance across models for this component
+        performance_data = []
+        for _model_name in selected_models:
+            if _name in all_cv_results[_model_name].index:
+                row_data = all_cv_results[_model_name].loc[_name, :].to_dict()
+                row_data['Model'] = nice_model_names.get(_model_name, _model_name)
+                performance_data.append(row_data)
+
+        if performance_data:
+            performance_df = pd.DataFrame(performance_data)
+            # Reorder columns to put Model first
+            cols = ['Model'] + [col for col in performance_df.columns if col != 'Model']
+            performance_df = performance_df[cols]
+            # Sort DataFrame before creating table
+            performance_df_sorted = performance_df.sort_values(by=primary_metric, ascending=False)
+            _final_displays.append(mo.ui.table(performance_df_sorted))
+            # Add raw dataframe to file data
+            final_data_for_file.append(performance_df_sorted)
+        else:
+            no_data_text = 'No performance data available for this candidate solution.'
+            _final_displays.append(mo.md(no_data_text))
+            final_data_for_file.append(no_data_text)
+        
+        if save_results:
+            # Save performance data for this candidate solution to a file
+            _component_path = f'{experiment_dir}/performance_{_name.replace(" ", "_").lower()}_solutiontype={solution_name}.csv'
+            pd.DataFrame(performance_df_sorted).to_csv(_component_path, index=False)
+            save_msg = f'📁 Performance metrics saved to: `{_component_path.split("/")[-1]}`'
+            _final_displays.append(mo.md(save_msg))
+            final_data_for_file.append(save_msg)
+
+    _final_displays.append(mo.md('<br>'))
+    _final_displays.append(mo.md('---'))
+    _final_displays.append(mo.md('<br>'))
+
+    mo.vstack(_final_displays)
+    return final_displays, final_data_for_file
+
+
+@app.cell
+def _(
+    all_cv_results,
+    experiment_dir,
+    final_data_for_file,
+    mo,
+    pd,
+    save_results,
+    solution_name,
+):
+    _cv_displays = []
+    if (all_cv_results is not None) and save_results:
+        _all_solutions_path = (
+            f'{experiment_dir}/all_models_solutiontype={solution_name}.txt'
+        )
+        # Write final_data_for_file to a text file
+        # Use the raw data we tracked separately
+        # Remove emojis for txt file compatibility
+        def remove_emojis(text):
+            """Remove common emojis used in the app"""
+            if isinstance(text, str):
+                return text.replace('🔹', '').replace('📁', '').replace('💾', '').replace('📊', '')
+            return text
+        
+        with open(_all_solutions_path, 'w') as f:
+            for item in final_data_for_file:
+                # If it's a DataFrame, convert to string
+                if isinstance(item, pd.DataFrame):
+                    f.write(item.to_string(index=False) + '\n\n')
+                # Otherwise it's a string - remove emojis
+                else:
+                    f.write(remove_emojis(str(item)) + '\n\n')
+
+
+        _cv_displays.append(
+            mo.md(
+                f'📁 All modeling results together saved to: `{_all_solutions_path.split("/")[-1]}`'
+            )
+        )
+        _cv_displays.append(mo.md('---'))
+        _cv_displays.append(mo.md('<br>'))
+
+    # Advise the user to save the report as HTML using the ... icon in the top right corner of the report
+    # to keep all results and visualizations together for future reference.
+
+    _cv_displays.append(
+        mo.md(
+            '### 💾 **Important:** Save this report as HTML using the (...) icon in the top right corner of the app.'
+        )
+    )
+    mo.vstack(_cv_displays)
     return
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run()
