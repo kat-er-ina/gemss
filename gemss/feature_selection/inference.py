@@ -343,7 +343,7 @@ class BayesianFeatureSelector:
          Parameters
         ----------
         log_callback : callable, optional
-            Function to call for logging every 100 iterations.
+            Function to call for logging every 500th iteration.
         regularize : bool, optional
             If True, use elbo_regularized during optimization (default: False) by penalizing overlap
             between solutions.
@@ -390,7 +390,7 @@ class BayesianFeatureSelector:
             alpha_val = self.mixture.get_alpha()
             history['alpha'].append(alpha_val.detach().cpu().clone().numpy())
 
-            nth_iteration = it % 100 == 0
+            nth_iteration = it % 500 == 0
             if log_callback and nth_iteration:
                 log_callback(it, elbo.item(), self.mixture)
             if verbose and nth_iteration and it > 0:
@@ -403,5 +403,8 @@ class BayesianFeatureSelector:
                     )
                 )
         if verbose:
-            myprint('Optimization complete.', use_markdown=True)
+            myprint(
+                f'Optimization complete: {self.n_iter} iterations in {time() - start_time:.0f}s',
+                use_markdown=True,
+            )
         return history
