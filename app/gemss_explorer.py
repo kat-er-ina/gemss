@@ -1454,7 +1454,7 @@ def _(all_solutions, mo):
 
 
 @app.cell
-def _(all_solutions, mo, radio_solutions_cv, task_type):
+def _(all_solutions, _get_available_models,mo, radio_solutions_cv, task_type):
     # Stop if solutions not recovered (task_type won't exist)
     mo.stop(
         all_solutions is None,
@@ -1958,7 +1958,7 @@ def _(
     _final_displays.append(mo.md('<br>'))
 
     mo.vstack(_final_displays)
-    return final_displays, final_data_for_file
+    return final_data_for_file
 
 
 @app.cell

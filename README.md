@@ -69,9 +69,8 @@ The repository is organized into core packages, interactive notebooks, batch exp
 gemss/
   technical_report.pdf       # Preprint paper on GEMSS
   app/                       # Interactive marimo app
-    gemss_explorer_noncommercial.py   # GEMSS explorer app with non-commercial TabPFN modeling add-on
-    gemss_explorer_unlimited.py       # GEMSS explorer app for unlimited use
-    results/                          # App outputs
+    gemss_explorer.py          # GEMSS explorer app
+    results/                   # App outputs
   data/                      # User datasets
   notebooks/                 # Interactive demos and analysis
     demo.ipynb               # End-to-end synthetic demo
@@ -177,8 +176,7 @@ GEMSS can be applied to both custom datasets and synthetic data for validation a
 The easiest way to use GEMSS is through the interactive marimo app:
 
 ```bash
-uv run marimo run app/gemss_explorer_unlimited.py      # Commercial use allowed
-uv run marimo run app/gemss_explorer_noncommercial.py  # Includes TabPFN modeling
+uv run marimo run app/gemss_explorer.py
 ```
 
 The app provides a complete guided workflow from data upload through solution recovery and evaluation.
@@ -254,5 +252,3 @@ Then run:
 ## License
 
 The GEMSS algorithm is licensed under the [MIT License](https://github.com/kat-er-ina/gemss/blob/main/LICENSE).
-
-The optional add-on for modeling, [TabPFN](https://huggingface.co/Prior-Labs/tabpfn_2_5), is used in compliance with its non-commercial [license](https://huggingface.co/Prior-Labs/tabpfn_2_5#licensing).

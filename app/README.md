@@ -41,11 +41,7 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 Finally, run the app from the root 'gemss' folder using `uv run`:
 
 ```bash
-# Unlimited version (commercial use allowed)
-uv run marimo run app/gemss_explorer_unlimited.py
-
-# Non-commercial version (with TabPFN modeling)
-uv run marimo run app/gemss_explorer_noncommercial.py
+uv run marimo run app/gemss_explorer.py
 ```
 
 The app will open in your default web browser at `http://localhost:2718`.
@@ -53,23 +49,16 @@ The app will open in your default web browser at `http://localhost:2718`.
 ⚠️ **For Windows users:** If you encounter errors, see the [troubleshooting guide](../README.md#2-set-up-the-environment) in the main README.
 
 
-## Available apps
+## The app
 
-### 1. GEMSS Explorer Unlimited
-**File:** `gemss_explorer_unlimited.py`
+**File:** `gemss_explorer.py`
 
-The full-featured GEMSS workflow for unlimited use, including commercial applications:
+The full-featured GEMSS workflow:
 - Data upload and preprocessing
 - Algorithm configuration and execution
 - Solution recovery and visualization
-- Simple regression validation (L1/L2)
-
-### 2. GEMSS Explorer Non-Commercial
-**File:** `gemss_explorer_noncommercial.py`
-
-Includes all features from the unlimited version plus advanced modeling with [TabPFN](https://huggingface.co/Prior-Labs/tabpfn_2_5) for comprehensive solution evaluation.
-
-⚠️ **Important:** Use of TabPFN requires agreement with its [license terms](https://huggingface.co/Prior-Labs/tabpfn_2_5#licensing).
+- Preliminary validation with simple regression (L1/L2)
+- Comprehensive solution evaluation with nested cross-validation using various scikit-learn models
 
 ## Using the apps
 
