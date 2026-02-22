@@ -179,7 +179,7 @@ The easiest way to use GEMSS is through the interactive marimo app:
 uv run marimo run app/gemss_explorer.py
 ```
 
-The app provides a complete guided workflow from data upload through solution recovery and evaluation.
+The app provides a complete guided workflow from data upload through solution recovery to downstream modeling.
 
 **For detailed documentation, data requirements, and workflow overview, see [app/README.md](app/README.md).**
 
@@ -187,7 +187,7 @@ The app provides a complete guided workflow from data upload through solution re
 
 For more control and customization, use the Jupyter notebooks:
 
-- [notebooks/demo.ipynb](notebooks/demo.ipynb) — complete walkthrough with synthetic data
+- [notebooks/demo.ipynb](notebooks/demo.ipynb) — a walkthrough with synthetic data
 - [notebooks/explore_custom_dataset.ipynb](notebooks/explore_custom_dataset.ipynb) — custom data workflow
 - [notebooks/README.md](notebooks/README.md) — detailed documentation
 
@@ -197,7 +197,7 @@ Launch notebooks with:
 uv run jupyter notebook notebooks/demo.ipynb
 ```
 
-## Proof-of-concept experiments
+## Validation experiments
 
 A comprehensive experimental framework validates GEMSS across diverse data scenarios, from clean baseline conditions to challenging high-dimensional and noisy settings. One can review and replicate these experiments.
 
@@ -206,12 +206,12 @@ There are 128 experiments organized in 7 tiers:
 * **Tier 1:** Baseline (18): clean data, n < p
 * **Tier 2:** High-dimensional (9): p ≥ 1000, n << p
 * **Tier 3:** Sample-rich (14): n ≥ p
-* **Tier 4:** Robustness (22): noise and missing data
+* **Tier 4:** Adversities (22): high noise and missing data
 * **Tier 5:** Jaccard penalty (28): diversity effects
 * **Tier 6:** Regression (29): continuous response
 * **Tier 7:** Class imbalance (8): unbalanced labels
 
-Experiments are grouped into **47 test cases** addressing specific research questions.
+Specific research questions are then answered by **47 cross-tier test cases**.
 
 ### Running experiments
 

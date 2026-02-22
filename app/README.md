@@ -1,9 +1,9 @@
 # GEMSS Explorer Apps
 
-Interactive [marimo](https://marimo.io/) applications are available for exploring multiple sparse solutions in your data using the GEMSS feature selection algorithm.
+Interactive, self-contained [marimo](https://marimo.io/) application is available for exploring multiple sparse solutions in your data using the GEMSS feature selection algorithm. The app also provides downstream modeling for rigorous evaluation of the candidate solutions.
 
 
-## Running the apps
+## Quick start
 
 ### 1. Clone this repository
 
@@ -15,7 +15,7 @@ git clone https://github.com/kat-er-ina/gemss.git
 cd gemss
 ```
 
-**If you don't have Git:**
+**If you don't use Git:**
 1. Go to the [repository page](https://github.com/kat-er-ina/gemss)
 2. Click the green "Code" button
 3. Select "Download ZIP"
@@ -24,7 +24,7 @@ cd gemss
 
 
 ### 2. Install uv
-If you do not have `uv` installed, run the following:
+`uv` will install everything the app needs for running. If you do not have it, run the following in your command line:
 
 **macOS/Linux:**
 ```bash
@@ -53,54 +53,60 @@ The app will open in your default web browser at `http://localhost:2718`.
 
 **File:** `gemss_explorer.py`
 
-The full-featured GEMSS workflow:
-- Data upload and preprocessing
-- Algorithm configuration and execution
-- Solution recovery and visualization
-- Preliminary validation with simple regression (L1/L2)
-- Comprehensive solution evaluation with nested cross-validation using various scikit-learn models
+The GEMSS workflow:
+- Data upload and basic preprocessing
+- Algorithm configuration, execution and visualization of its run
+- Solution recovery & preliminary validation
+- Comprehensive evaluation of predictive performance of a chosen solution type
 
-## Using the apps
+## Using the app
 
-The marimo framework provides several built-in features:
+The framework provides several built-in features:
 
-- **Export tables:** Click the download icon on any displayed table to export as CSV
-- **Interactive plots:** Use Plotly controls (hover for details, click-drag to zoom, double-click to reset, camera icon to download as PNG)
-- **Adjustable inputs:** All parameters are modified using interactive widgets - no coding required
-- **Responsive interface:** The app automatically updates relevant sections when you change inputs or click run buttons
 - **Browser-based:** Works entirely in your web browser
-- **Session state:** Your progress is maintained as long as the browser tab stays open
-
-For additional marimo features, see the [marimo documentation](https://docs.marimo.io/).
+- **Adjustable inputs:** All parameters are modified using interactive widgets - no coding required
+- **In-app guides:** Collapsible help panels to guide you through the setup and interpretaion of results
+- **Export report:** Save the full report as HTML for later analysis.
+- **Interactivity:** Control displayed plots, export tables..
 
 ## Data requirements
 
+The data uploaded to GEMSS explorer must have the standard format as a table with features and response as columns and samples in rows.
+
 - **Format:** CSV file
-- **Features:** Numeric columns (missing values supported)
+- **Features:** Numeric columns only (missing values supported)
 - **Structure:** Features in columns, samples in rows
 - **Target:** Must include an index column and a target/label column
 - **Task types:** Binary classification or regression
 - **Stratification (optional):** May include a column for custom cross-validation stratification (e.g., experimental batches, time periods, patient cohorts...)
 
-## Workflow overview
-
-1. **Configure outputs** — Set save directory and file names
-2. **Upload data** — Load your CSV and select index/target columns
-3. **Configure data** — Choose scaling method and optionally enable custom stratification for cross-validation
-4. **Configure algorithm** — Set desired number of components, sparsity, and optimization parameters
-5. **Run feature selection** — Execute Bayesian inference to discover multiple solutions
-6. **Assess convergence** — Review ELBO and feature trajectory plots
-7. **Recover solutions** — Extract sparse feature sets using different strategies
-8. **Preliminary solution evaluation** — Quickly validate with simple regression
-9. **Predictive modeling metrics** - Assess metrics of various predictive models based on candidate solutions
 
 ## Output files
 
-When saving is enabled, results are saved to `experiment_<ID>/` folder at a custom location:
-- `search_history_results.json` — Complete optimization history
-- `search_setup.json` — Algorithm configuration and constants
-- `all_candidate_solutions.json` — Recovered feature sets (JSON)
-- `all_candidate_solutions.txt` — Recovered feature sets (human-readable)
+Results are automatically saved to `experiment_<ID>/` folder at your specified location.
+
+### Feature selection outputs
+
+Generated after running the feature selection algorithm:
+
+- `search_history_results.json` — Complete optimization history (all parameter trajectories)
+- `search_setup.json` — Algorithm configuration and dataset constants
+- `all_candidate_solutions.json` — Recovered feature sets in JSON format (for possible further machine processing)
+- `all_candidate_solutions.txt` — Recovered feature sets (human-readable text)
+
+### Modeling outputs
+
+Generated after running cross-validated evaluation:
+
+- `model_comparison_solutiontype=<type>.csv` — Performance metrics across all models and components
+- `performance_<component_name>_solutiontype=<type>.csv` — Detailed per-model metrics for each component
+- `all_models_solutiontype=<type>.txt` — Comprehensive summary of all modeling results
+
+**Note:** `<type>` refers to the solution recovery strategy (e.g., `outliers_2.0`, `outliers_2.5`, `top`), and `<component_name>` is the specific component identifier (e.g., `component_0`, `component_1`).
+
+### Saving the complete report
+
+Since the algorithm is stochastic, it is recommended to save the entire interactive report for reproducibility. Use the **three-dot menu** (...) in the upper right corner of the app to export as HTML.
 
 ## Help
 
