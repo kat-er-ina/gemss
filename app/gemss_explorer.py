@@ -1356,7 +1356,7 @@ def _(
                 get_features_in_components_plot(
                     solutions=all_feature_sets[_type],
                     features_to_show=unique_features_found[_type],
-                ).update_layout(showlegend=False),
+                ),
             )
 
         # Regression or classification?

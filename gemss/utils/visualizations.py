@@ -469,9 +469,26 @@ def get_features_in_components_plot(
     max_width = 1400  # Maximum width to fit in most browser viewports
     final_width = min(calculated_width, max_width)
 
+    # Calculate height based on number of components and max feature name length
+    # X-axis labels (feature names) are at top, so longer names need more vertical space
+    max_feature_name_length = (
+        max(len(str(feat)) for feat in heatmap_data.columns) if len(heatmap_data.columns) > 0 else 0
+    )
+    n_components = len(heatmap_data.index)
+
+    # Base height for the plot area: ~60px per component
+    base_height = 200 + 60 * n_components
+
+    # Additional height for x-axis labels at top: ~2px per character, with reasonable limits
+    label_height = min(max_feature_name_length * 2, 400)  # Cap at 400px for very long names
+
+    final_height = base_height + label_height
+
     fig.update_layout(
         width=final_width,
+        height=final_height,
         showlegend=False,
+        coloraxis_showscale=False,  # Hide the colorbar for imshow plots
     )
     return fig
 
