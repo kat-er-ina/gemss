@@ -8,10 +8,6 @@ dist/
 build/
 *.egg-info/
 
-# Project specific
-*.html
-*.parquet
-
 # IDEs and editors
 .vscode/
 .idea/
@@ -25,11 +21,7 @@ notebooks/*.txt
 # Ignore logs
 scripts/results/logs/
 
-# Ignore data
-data/
-
 # Ignore private files and select folders
-private/
 notebooks/private/
 
 # Ignore running marimo files
