@@ -463,8 +463,14 @@ def get_features_in_components_plot(
         title='Features found in each component',
     )
     fig.update_xaxes(side='top')
+
+    # Calculate width with a reasonable maximum to prevent viewport overflow
+    calculated_width = 200 + 40 * len(heatmap_data.columns)
+    max_width = 1400  # Maximum width to fit in most browser viewports
+    final_width = min(calculated_width, max_width)
+
     fig.update_layout(
-        width=200 + 40 * len(heatmap_data.columns),
+        width=final_width,
         showlegend=False,
     )
     return fig

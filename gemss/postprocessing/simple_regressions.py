@@ -228,23 +228,23 @@ def solve_with_logistic_regression(
     coefficients = coefficients[coefficients != 0].sort_values(ascending=False)
 
     stats = {
-        'n_samples': len(y),
-        'class_distribution': {
-            'class_0': np.round(np.sum(y == 0) / len(y), 3),
-            'class_1': np.round(np.sum(y == 1) / len(y), 3),
-        },
-        'accuracy': np.round(accuracy_score(y, y_pred), 3),
-        'balanced_accuracy': np.round(balanced_accuracy_score(y, y_pred), 3),
-        'roc_auc': np.round(roc_auc_score(y, y_pred_prob), 3),
         'f1_score': np.round(f1_score(y, y_pred, average='weighted'), 3),
         'precision_class_0': np.round(precision_score(y, y_pred, pos_label=0, zero_division=0), 3),
         'precision_class_1': np.round(precision_score(y, y_pred, pos_label=1, zero_division=0), 3),
         'recall_class_0': np.round(np.sum((y_pred == 0) & (y == 0)) / np.sum(y == 0), 3),
         'recall_class_1': np.round(np.sum((y_pred == 1) & (y == 1)) / np.sum(y == 1), 3),
+        'roc_auc': np.round(roc_auc_score(y, y_pred_prob), 3),
+        'accuracy': np.round(accuracy_score(y, y_pred), 3),
+        'balanced_accuracy': np.round(balanced_accuracy_score(y, y_pred), 3),
         'confusion_matrix [TN, FP, FN, TP]': cm.ravel(),
+        'n_samples': len(y),
         'n_nonzero_coefficients': len(coefficients),
         'nonzero_coefficients': coefficients,
         'nonzero_feature_names': coefficients.index.tolist(),
+        'class_distribution': {
+            'class_0': np.round(np.sum(y == 0) / len(y), 3),
+            'class_1': np.round(np.sum(y == 1) / len(y), 3),
+        },
     }
 
     # Print results
@@ -404,7 +404,6 @@ def solve_with_linear_regression(
 
     # Calculate additional regression statistics
     stats = {
-        'n_samples': len(y),
         'r2_score': np.round(r2_score(y, y_pred), 3),
         'adjusted_r2': np.round(
             1 - (1 - r2_score(y, y_pred)) * (len(y) - 1) / (len(y) - len(coefficients) - 1),
@@ -418,6 +417,7 @@ def solve_with_linear_regression(
             if not np.any(y == 0)
             else np.nan
         ),
+        'n_samples': len(y),
         'n_nonzero_coefficients': len(coefficients),
         'nonzero_coefficients': coefficients,
         'nonzero_feature_names': coefficients.index.tolist(),

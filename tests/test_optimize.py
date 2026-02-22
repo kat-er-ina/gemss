@@ -82,7 +82,7 @@ def test_optimize_regularized_callback() -> None:
         n_components=2,
         X=X,
         y=y,
-        n_iter=101,
+        n_iter=501,
         batch_size=4,
         device='cpu',
     )
@@ -99,8 +99,8 @@ def test_optimize_regularized_callback() -> None:
         verbose=False,
     )
 
-    assert calls == [0, 100]
-    assert len(history['elbo']) == 101
+    assert calls == [0, 500]
+    assert len(history['elbo']) == 501
     assert np.isfinite(history['elbo']).all()
 
 

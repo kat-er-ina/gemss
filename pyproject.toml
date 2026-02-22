@@ -42,6 +42,7 @@ dependencies = [
     "tabpfn>=1.1.0",
     "torch>=2.0.0,<3.0.0",
     "tqdm>=4.65.0",
+    "xgboost>=3.2.0",
 ]
 
 [dependency-groups]

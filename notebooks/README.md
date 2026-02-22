@@ -9,7 +9,7 @@ This directory contains interactive Jupyter notebooks for exploring GEMSS capabi
 
 * **[demo.ipynb](demo.ipynb)** — Complete end-to-end demonstration of GEMSS on synthetic data with known ground truth. Covers data generation, algorithm execution, convergence diagnostics, solution extraction, and validation. **Start here** if you're new to GEMSS.
 
-* **[explore_custom_dataset.ipynb](explore_custom_dataset.ipynb)** — Apply GEMSS to your own dataset with unknown ground truth. Mirrors the `demo.ipynb` workflow adapted for custom data. Supports experiment persistence and reloading.
+* **[explore_custom_dataset.ipynb](explore_custom_dataset.ipynb)** — Apply GEMSS to your own dataset with unknown ground truth. Mirrors the `demo.ipynb` workflow adapted for custom data but without the downstream modeling. Supports experiment persistence and reloading.
 
 ### Downstream modeling notebooks
 
@@ -35,7 +35,7 @@ A typical GEMSS workflow consists of the following steps:
 4. **Diagnostics:** Assess convergence and algorithm performance.
 5. **Solution extraction:** Recover sparse feature sets ("candidate solutions") from the mixture model.
 6. **Persistence:** Save results for reproducibility and further analysis.
-7. **Validation & downstream modeling:** Evaluate solutions' predictive potential using simplified runs of logistic/linear regression or advanced models (e.g. TabPFN).
+7. **Validation & downstream modeling:** Evaluate solutions' predictive potential using simplified runs of logistic/linear regression or advanced models.
 
 The notebooks guide you through each of these steps with detailed examples and explanations.
 
@@ -168,32 +168,23 @@ solutions = recover_solutions(history, desired_sparsity=5)
 show_solution_summary(solutions)
 ```
 
-**Advanced diagnostics (work in progress):**
-```python
-from gemss.diagnostics.performance_tests import run_performance_diagnostics
-from gemss.diagnostics.recommendations import display_recommendations
-
-diagnostics = run_performance_diagnostics(history, desired_sparsity=5)
-display_recommendations(diagnostics=diagnostics, constants=C.as_dict())
-```
-
 ## Tips & Best Practices
 
 ### Parameter tuning
 
-* **Start small:** Begin with fewer iterations (~2000) to test configuration, then scale up
 * **Monitor convergence:** Use `show_algorithm_progress(history)` to verify the algorithm has converged
-* **Batch size:** Increase for datasets with many missing values (30-50% missing → batch_size ≥ 32)
+* **Batch size:** Increase for datasets with many missing values or other challenging conditions
 * **Diversity:** Enable regularization (`IS_REGULARIZED=True`) and tune `LAMBDA_JACCARD` if solutions are too similar
 
 ### Performance optimization
 
-* **Sparsity guidance:** Set `DESIRED_SPARSITY` close to your expected number of relevant features
+* **Sparsity guidance:** Set `DESIRED_SPARSITY` close to your expected number of relevant features. This is not a hard constraint, though.
 * **Number of solutions:** Start with `N_CANDIDATE_SOLUTIONS=3-5`, increase if you need more diversity
-* **Iterations:** Typical ranges: 3500-5000 for well-behaved problems, 7000+ for challenging datasets
+* **Iterations:** Typical ranges: 2500-4000.
 
 ### Common issues
 
+* **Too much convergecne:** Carefuly increase `VAR_SPIKE`.
 * **Non-convergence:** Increase `N_ITER`, decrease `LEARNING_RATE`, or adjust prior variances
 * **Similar solutions:** Increase `LAMBDA_JACCARD` or reduce prior variance ratio
 * **Empty solutions:** Decrease `MIN_MU_THRESHOLD` or adjust prior parameters
@@ -202,7 +193,7 @@ display_recommendations(diagnostics=diagnostics, constants=C.as_dict())
 
 ## Solution evaluation
 
-Validate discovered feature sets using lightweight regression baselines or advanced TabPFN evaluation.
+Validate discovered feature sets using lightweight regression baselines or full cross-validated models.
 
 ### Quick validation (linear/logistic regression)
 
@@ -218,6 +209,11 @@ results = solve_any_regression(
 ```
 
 Returns task-appropriate metrics (R², MSE, accuracy, F1, etc.). Cross-validation is performed to optimize the parameters but the validation is only run on the full training dataset.
+
+### Advanced evaluation of predictive performance
+
+We prepared the framework for rigorous, cross-validated modeling in `gemss.postprocessing.result_modeling.py`. 10 models by Scikit-learn and 1 XGBoost is available. For more information, see '`gemss.postprocessing.RESULT_MODELING_README.md`.
+
 
 ### Advanced evaluation with TabPFN
 
