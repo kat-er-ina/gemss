@@ -610,7 +610,7 @@ def _(df_processed, mo):
     adv_var_spike = mo.ui.number(
         0,
         10,
-        value=0.1,
+        value=0.12,
         step=0.005,
         label='Spike distribution variance',
     )
@@ -630,13 +630,13 @@ def _(df_processed, mo):
                 ### Basic parameters
 
                 - **Number of components:** How many distinct feature sets to discover. It is recommended to overshoot this number (2-3x), especially in adverse conditions.
-                - **Estimated sparsity:** Expected number of features per solution. This guides the algorithm's search.
+                - **Estimated sparsity:** Expected number of features per solution. This guides the algorithm's search. However, it is not a hard constraint (spike variance overrides it, see below).
 
                 ### Advanced optimization settings
 
-                - **Iterations:** More iterations improve convergence but take longer (typical: 3000-5000). Increase if ELBO hasn't converged or features' mu values are still changing.
+                - **Iterations:** More iterations improve convergence but take longer (typical: 3000 - 4000). Increase if ELBO hasn't converged or features' mu values are still changing.
+                - **Batch size:** *IMPORTANT.* Number of samples used in one SGD optimization step (typical: 16-64). Increase for datasets with missing data, noise, or class imbalance. Or for data with many samples. Increasing batch size proportionally increases run time but generally leads to faster convergence. Recommendation: have at least 4 samples of the minority class in one batch.
                 - **Learning rate:** Controls [SGD optimization](https://en.wikipedia.org/wiki/Stochastic_gradient_descent) step size (typical: 0.001-0.003). Decrease if training is unstable, increase if progress is too slow.
-                - **Batch size:** Number of samples used in one SGD optimization step (typical: 16-64). Increase for datasets with missing data, noise, or class imbalance. Increasing batch size proportionally increases run time. Recommendation: have at least 4 samples of the minority class in one batch.
                 - **Enforce diversity:** Penalizes average similarity ([Jaccard index](https://en.wikipedia.org/wiki/Jaccard_index)) of solutions to promote diverse feature combinations. Enable when you want to push more towards distinct explanatory mechanisms.
                 - **Lambda:** Strength of diversity penalty (typical: 0-2000). Higher values → more different solutions. Increase if solutions overlap too much.
 
@@ -654,10 +654,10 @@ def _(df_processed, mo):
                 Each feature is assigned to either the wide distribution (Slab) or the steep distribution (Spike).
 
                 - **Spike variance:**
-                    - Is the most important parameter for controlling convergence.
+                    - *This is the most important parameter for controlling convergence.*
                     - Controls sparsity strength (typical: 0.05-0.5).
-                    - Increase if all features converge to 0 (over-regularization).
-                    - Decrease carefully if too many features are selected (under-regularization).
+                    - Increase if all features converge to 0 too quickly/much (over-regularization).
+                    - Decrease if too many features are selected (under-regularization).
 
                 - **Slab variance:**
                     - Scale for non-zero features (typical: 50-200).
