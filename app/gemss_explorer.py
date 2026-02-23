@@ -1936,9 +1936,10 @@ def _(
             cols = ['Model'] + [col for col in performance_df.columns if col != 'Model']
             performance_df = performance_df[cols]
             # Sort DataFrame before creating table
+            # Set model name as index for prettier display - only in the app, not in the file data
             performance_df_sorted = performance_df.sort_values(by=primary_metric, ascending=False)
-            _final_displays.append(mo.ui.table(performance_df_sorted))
-            # Add raw dataframe to file data
+            performance_df_beautified = performance_df_sorted.set_index('Model')
+            _final_displays.append(mo.ui.table(performance_df_beautified))
             final_data_for_file.append(performance_df_sorted)
         else:
             no_data_text = 'No performance data available for this candidate solution.'
