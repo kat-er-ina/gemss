@@ -403,8 +403,23 @@ class BayesianFeatureSelector:
                     )
                 )
         if verbose:
+            final_elbo = history['elbo'][-1] if history['elbo'] else float('nan')
+            abs_final_elbo = abs(final_elbo)
+            # add subjective (empirical) interpretation of final ELBO values
+            if abs_final_elbo < 2000:
+                sentence = 'excellent performance'
+            elif abs_final_elbo < 3000:
+                sentence = 'good performance'
+            elif abs_final_elbo < 4000:
+                sentence = 'medium performance'
+            elif abs_final_elbo < 6000:
+                sentence = 'poor performance'
+            else:
+                sentence = 'very poor performance'
+            myprint('**Optimization finished:**', use_markdown=True)
+            myprint(f'- {self.n_iter} iterations in {time() - start_time:.0f}s', use_markdown=True)
             myprint(
-                f'Optimization complete: {self.n_iter} iterations in {time() - start_time:.0f}s',
+                f'- final objective function value = {final_elbo:.0f} (subjectively {sentence})',
                 use_markdown=True,
             )
         return history
