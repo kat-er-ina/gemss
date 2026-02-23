@@ -71,7 +71,8 @@ gemss/
   app/                       # Interactive marimo app
     gemss_explorer.py          # GEMSS explorer app
     results/                   # App outputs
-  data/                      # User datasets
+  data/                      # User datasets and preprocessed real-world examples
+    preprocessed_datasets/     # Ready-to-use benchmark datasets
   notebooks/                 # Interactive demos and analysis
     demo.ipynb               # End-to-end synthetic demo
     explore_custom_dataset.ipynb      # Custom data workflow
@@ -179,7 +180,7 @@ The easiest way to use GEMSS is through the interactive marimo app:
 uv run marimo run app/gemss_explorer.py
 ```
 
-The app provides a complete guided workflow from data upload through solution recovery to downstream modeling.
+The app provides a complete guided workflow from data upload through solution recovery to downstream modeling. Several curated datasets are located in the `data` directory for quick trial.
 
 **For detailed documentation, data requirements, and workflow overview, see [app/README.md](app/README.md).**
 
@@ -196,6 +197,17 @@ Launch notebooks with:
 ```bash
 uv run jupyter notebook notebooks/demo.ipynb
 ```
+
+### Ready-to-use datasets
+
+The `data/preprocessed_datasets/` folder contains real-world benchmark datasets ready for immediate use:
+
+- **MTBLS1** (diabetes): 132 samples, 222 metabolite features
+- **MTBLS2** (arabidopsis): 16 samples, 41 metabolite features (extremely low sample size)
+- **MTBLS12968** (PCOS/preterm): 149 samples, 488 features (multi-task)
+- **Colonoscopy** (lesion classification): 152 samples, 698 image-derived features
+
+These datasets work with both the GEMSS Explorer app and Jupyter notebooks. For details, see [data/README.md](data/README.md).
 
 ## Validation experiments
 
