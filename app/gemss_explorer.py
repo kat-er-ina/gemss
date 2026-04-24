@@ -388,6 +388,7 @@ def _(file_uploader, io, mo, pd):
                         label_col_selector,
                         mo.md('---'),
                         scaling_selector,
+                        allowed_missing_percentage_selector,
                         mo.md('---'),
                         use_custom_stratification,
                         stratification_col_selector,
