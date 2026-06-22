@@ -370,9 +370,9 @@ def _(file_uploader, io, mo, pd):
         )
         allowed_missing_percentage_selector = mo.ui.number(
             0,
-            50,
-            value=10,
-            step=5,
+            100,
+            value=20,
+            step=1,
             label='Missing data allowed in a feature [%]',
         )
 
