@@ -313,7 +313,7 @@ def _compute_regression_metrics(
     n_features: int,
 ) -> dict[str, Any]:
     """
-    Compute regression metrics for predictions (adapted from tabpfn_evaluation).
+    Compute regression metrics for predictions.
 
     Parameters
     ----------
@@ -450,8 +450,7 @@ def evaluate_with_nested_cv(
     - Outer loop: Splits data, evaluates generalization performance
     - Inner loop: Fits model with hyperparameter tuning (via CV in the model itself)
 
-    Metrics are computed on the aggregated predictions from all outer CV folds,
-    similar to the TabPFN evaluation approach.
+    Metrics are computed on the aggregated predictions from all outer CV folds.
 
     Parameters
     ----------
