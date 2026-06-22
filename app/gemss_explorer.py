@@ -31,10 +31,8 @@ def _():
     # Visualizations
     from gemss.utils.visualizations import (
         show_label_histogram,
-        show_final_alphas,
         show_features_in_components,
         get_algorithm_progress_plots,
-        get_final_alphas_plot,
         get_label_histogram_plot,
         get_label_piechart,
         get_features_in_components_plot,
@@ -77,7 +75,6 @@ def _():
         get_df_from_X,
         get_features_from_solutions,
         get_features_in_components_plot,
-        get_final_alphas_plot,
         get_label_histogram_plot,
         get_label_piechart,
         get_solution_summary_df,
@@ -370,9 +367,9 @@ def _(file_uploader, io, mo, pd):
         )
         allowed_missing_percentage_selector = mo.ui.number(
             0,
-            50,
-            value=10,
-            step=5,
+            100,
+            value=20,
+            step=1,
             label='Missing data allowed in a feature [%]',
         )
 
@@ -899,7 +896,6 @@ def _(
     adv_iter,
     feature_map,
     get_algorithm_progress_plots,
-    get_final_alphas_plot,
     history,
     mo,
     n_features,
@@ -919,13 +915,6 @@ def _(
             True if ((adv_iter.value > 4000) or (n_features > 80)) else False
         ),
     )
-
-    alphas_plots = get_final_alphas_plot(
-        history,
-        show_bar_plot=False,
-        show_pie_chart=True,
-    )
-    alpha_piechart = alphas_plots[0]
 
     # Elbo convergence help text
     elbo_help = mo.accordion(
@@ -972,23 +961,6 @@ def _(
         }
     )
 
-    # Alpha help text
-    alpha_help = mo.accordion(
-        {
-            ' 📖 Guide': mo.md(
-                """
-                The pie chart shows how the algorithm distributes probability mass across the components.
-                (Alphas represent the mixing weights in the [Gaussian mixture model](https://en.wikipedia.org/wiki/Mixture_model) that approximate the [posterior distribution](https://en.wikipedia.org/wiki/Posterior_probability).)
-
-                The alphas should correspond to the predictive potential of the components.
-
-                **What to look for:**
-                - **(Un)balanced distribution:** If you expect multiple solutions of comparable significance, alphas should be relatively balanced across components. If some components dominate, too many components may have been requested (i.e. the dataset supports fewer distinct solutions).
-                """
-            )
-        }
-    )
-
     mo.vstack(
         [
             mo.md('<br>'),
@@ -1008,10 +980,6 @@ def _(
                 for _plot in progress_plots_dict.keys()
                 if 'mu_' in _plot
             ],
-            mo.md('<br>'),
-            mo.md('### 3.3 Relative importances of components'),
-            alpha_help,
-            alpha_piechart.update_layout(height=450, width=450),
             mo.md('<br>'),
         ]
     )
@@ -1372,7 +1340,7 @@ def _(
         if checkbox_regression_l2.value:
             _displays.append(
                 mo.md(
-                    f'#### **Quick l2-regularized {regression_type} regression validation** for {_type} (testing = training data):'
+                    f'#### **Quick sanity check (NOT a model): l2-regularized {regression_type} regression** for {_type} (testing = training data):'
                 )
             )
             _displays.append(mo.ui.table(regression_metrics_l2[_type]))
@@ -1381,7 +1349,7 @@ def _(
         if checkbox_regression_l1.value:
             _displays.append(
                 mo.md(
-                    f'#### **Quick l1-regularized {regression_type} regression validation** for {_type} (testing = training data):'
+                    f'#### **Quick sanity check (NOT a model): l1-regularized {regression_type} regression** for {_type} (testing = training data):'
                 )
             )
             _displays.append(mo.ui.table(regression_metrics_l1[_type]))
@@ -1400,7 +1368,10 @@ def _(mo):
     mo.md(r"""
     ## **5. Modeling with candidate solutions**
 
-    Evaluate discovered feature sets using nested cross-validation with scikit-learn models. This provides proper generalization performance estimates.
+    Rigorously evaluate discovered feature sets by training predictive models and assessing their performance.
+    Use nested cross-validation and your selected stratification. 
+    
+    **This part may take significant time.**
     """)
     return
 
