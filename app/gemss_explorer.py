@@ -1340,7 +1340,7 @@ def _(
         if checkbox_regression_l2.value:
             _displays.append(
                 mo.md(
-                    f'#### **Quick l2-regularized {regression_type} regression validation** for {_type} (testing = training data):'
+                    f'#### **Quick sanity check (NOT a model): l2-regularized {regression_type} regression** for {_type} (testing = training data):'
                 )
             )
             _displays.append(mo.ui.table(regression_metrics_l2[_type]))
@@ -1349,7 +1349,7 @@ def _(
         if checkbox_regression_l1.value:
             _displays.append(
                 mo.md(
-                    f'#### **Quick l1-regularized {regression_type} regression validation** for {_type} (testing = training data):'
+                    f'#### **Quick sanity check (NOT a model): l1-regularized {regression_type} regression** for {_type} (testing = training data):'
                 )
             )
             _displays.append(mo.ui.table(regression_metrics_l1[_type]))
@@ -1368,7 +1368,10 @@ def _(mo):
     mo.md(r"""
     ## **5. Modeling with candidate solutions**
 
-    Evaluate discovered feature sets using nested cross-validation with scikit-learn models. This provides proper generalization performance estimates.
+    Rigorously evaluate discovered feature sets by training predictive models and assessing their performance.
+    Use nested cross-validation and your selected stratification. 
+    
+    **This part may take significant time.**
     """)
     return
 
