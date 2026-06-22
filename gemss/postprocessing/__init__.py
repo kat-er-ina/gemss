@@ -42,9 +42,3 @@ from gemss.postprocessing.simple_regressions import (
     solve_with_linear_regression,
     solve_with_logistic_regression,
 )
-from gemss.postprocessing.tabpfn_evaluation import (
-    Predictable,
-    classification_metrics,
-    regression_metrics,
-    tabpfn_evaluate,
-)

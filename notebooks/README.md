@@ -11,12 +11,6 @@ This directory contains interactive Jupyter notebooks for exploring GEMSS capabi
 
 * **[explore_custom_dataset.ipynb](explore_custom_dataset.ipynb)** — Apply GEMSS to your own dataset with unknown ground truth. Mirrors the `demo.ipynb` workflow adapted for custom data but without the downstream modeling. Supports experiment persistence and reloading.
 
-### Downstream modeling notebooks
-
-* **[tabpfn_evaluation_example.ipynb](tabpfn_evaluation_example.ipynb)** — Demonstrates advanced evaluation of discovered feature sets using TabPFN (a Transformer-based prior-data fitted network for tabular data).
-
-* **[tabpfn_evaluate_custom_dataset_results.ipynb](tabpfn_evaluate_custom_dataset_results.ipynb)** — Load saved GEMSS solutions and evaluate them with TabPFN on your custom dataset.
-
 ### Notebooks for experiment analysis
 
 The `analyze_experiment_results/` directory is dedicated to evaluation of extensive experiments that provide validation for the newly published GEMSS algorithm. The notebooks analyze the results provided in the `scripts/results`:
@@ -213,28 +207,3 @@ Returns task-appropriate metrics (R², MSE, accuracy, F1, etc.). Cross-validatio
 ### Advanced evaluation of predictive performance
 
 We prepared the framework for rigorous, cross-validated modeling in `gemss.postprocessing.result_modeling.py`. 10 models by Scikit-learn and 1 XGBoost is available. For more information, see '`gemss.postprocessing.RESULT_MODELING_README.md`.
-
-
-### Advanced evaluation with TabPFN
-
-The following notebooks provide tools for downstream evaluation of feature sets discovered by GEMSS:
-
-* [notebooks/tabpfn_evaluation_example.ipynb](notebooks/tabpfn_evaluation_example.ipynb) — Example TabPFN evaluation workflow.
-* [notebooks/tabpfn_evaluate_custom_dataset_results.ipynb](notebooks/tabpfn_evaluate_custom_dataset_results.ipynb) — Evaluate feature sets discovered by GEMSS on your custom data.
-
-The core functionality:
-
-```python
-from gemss.postprocessing.tabpfn_evaluation import tabpfn_evaluate
-
-results = tabpfn_evaluate(
-    X_selected, y,
-    apply_scaling="standard",
-    outer_cv_folds=3,
-    random_state=42
-)
-```
-
-Provides nested CV metrics.
-
-**Warning:** TabPFN is only usable on problems with small to medium number of features.

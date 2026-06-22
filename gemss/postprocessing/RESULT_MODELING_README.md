@@ -13,7 +13,7 @@ Unlike `simple_regressions` which evaluates on training data only, `result_model
 - **Leave-One-Out Support**: For small datasets
 - **Flexible Scaling**: StandardScaler, MinMaxScaler, or no scaling
 - **Auto Model Selection**: Automatically chooses appropriate model for task type
-- **Comprehensive Metrics**: Same metrics as `tabpfn_evaluation` and `simple_regressions`
+- **Comprehensive Metrics**: Same metrics as `simple_regressions`
 
 ## Main Functions
 
@@ -243,7 +243,6 @@ results = evaluate_all_solutions(
 | Module | Evaluation Method | Use Case |
 |--------|------------------|----------|
 | `simple_regressions` | Training data only | Quick exploratory analysis |
-| `tabpfn_evaluation` | Outer CV with TabPFN | When TabPFN is suitable |
 | `result_modeling` | Nested CV with sklearn | Robust generalization estimates |
 
 ## Integration with GEMSS Workflow

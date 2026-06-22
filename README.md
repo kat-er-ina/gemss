@@ -38,7 +38,7 @@ GEMSS provides a comprehensive framework for Bayesian feature selection with the
 * **Flexible priors:** Structured spike-and-slab (default), Student-t, vanilla spike-and-slab
 * **Variational inference:** PyTorch-based optimization
 * **Diversity regularization:** Optional Jaccard penalty for enforcing solution diversity
-* **Solution evaluation by predictive models:** Predictive modeling metrics for various algorithms from Scikit-learn, XGBoost and (optionally) TabPFN. Supports custom stratification.
+* **Solution evaluation by predictive models:** Predictive modeling metrics for various algorithms from Scikit-learn and XGBoost. Supports custom stratification.
 * **Visualization:** Interactive plots and comprehensive diagnostics
 * **Modular configuration:** JSON-based dataset/algorithm/postprocessing settings
 * **Batch experiments:** Parameter sweeps and tiered validation suites
@@ -76,8 +76,6 @@ gemss/
   notebooks/                 # Interactive demos and analysis
     demo.ipynb               # End-to-end synthetic demo
     explore_custom_dataset.ipynb      # Custom data workflow
-    tabpfn_evaluation_example.ipynb   # TabPFN evaluation demo
-    tabpfn_evaluate_custom_dataset_results.ipynb # Evaluate saved solutions with TabPFN
     analyze_experiment_results/       # Experiment analysis (development)
     results/                          # Artifacts from the notebook runs
   scripts/                   # Batch experiments
