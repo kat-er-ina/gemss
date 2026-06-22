@@ -1,4 +1,4 @@
-# GEMSS Explorer Apps
+# GEMSS Explorer App
 
 Interactive, self-contained [marimo](https://marimo.io/) application is available for exploring multiple sparse solutions in your data using the GEMSS feature selection algorithm. The app also provides downstream modeling for rigorous evaluation of the candidate solutions.
 
