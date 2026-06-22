@@ -1,8 +1,7 @@
-from typing import Any, Literal, Protocol
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
-import shap
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
@@ -125,43 +124,6 @@ def classification_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, 
     return metrics
 
 
-class Predictable(Protocol):
-    def predict(self, X: np.ndarray) -> np.ndarray: ...
-
-
-def _compute_shap_explanation(
-    model: Predictable,
-    X: np.ndarray,
-    feature_names: list[str] | None = None,
-) -> tuple[dict[str, float], np.ndarray]:
-    """
-    Compute SHAP values for a fitted model and feature matrix X.
-
-    Parameters
-    ----------
-    model : fitted estimator
-        Model that implements a `predict` method.
-    X : np.ndarray
-        Feature matrix.
-    feature_names : list of str, optional
-        Feature names; used for output.
-
-    Returns
-    -------
-    shap_importance : dict
-        Mean absolute SHAP values per feature.
-    shap_values : array
-        Raw SHAP values for each sample/feature.
-    """
-    explainer = shap.KernelExplainer(model.predict, X)
-    shap_values = explainer.shap_values(X)
-    mean_shap = np.mean(np.abs(shap_values), axis=0)
-    if feature_names is None:
-        feature_names = [f'feature_{i}' for i in range(X.shape[1])]
-    shap_importance = dict(zip(feature_names, mean_shap))
-    return shap_importance, shap_values
-
-
 def tabpfn_evaluate(
     X: pd.DataFrame | np.ndarray,
     y: pd.Series | np.ndarray,
@@ -170,13 +132,10 @@ def tabpfn_evaluate(
     tabpfn_kwargs: dict[str, Any] | None = None,
     random_state: int | None = None,
     verbose: bool = False,
-    explain: bool = False,
-    shap_sample_size: int | None = None,
 ) -> dict[str, Any]:
     """
     Evaluate TabPFN Classifier or Regressor using cross-validation. Optionally standardizes
-    features and computes SHAP (Shapley) explanations. Metrics are inspired by
-    gemss.diagnostics.simple_regressions.
+    features. Metrics are inspired by gemss.diagnostics.simple_regressions.
 
     Parameters
     ----------
@@ -197,17 +156,11 @@ def tabpfn_evaluate(
         Random seed.
     verbose : bool, optional
         If True, prints metrics per fold.
-    explain : bool, optional
-        If True, computes SHAP feature explanations for model trained on full data.
-        By default False.
-    shap_sample_size : int, optional
-        If set, subsample up to this many samples for SHAP explanations.
-        Ignored if explain is False.
 
     Returns
     -------
     result : dict
-        Dictionary with task, average scores, scores per fold, and optionally SHAP explanations.
+        Dictionary with task, average scores, and scores per fold.
     """
     task = detect_task(y)
     feature_names = None
@@ -277,22 +230,4 @@ def tabpfn_evaluate(
         )
 
     result = {'task': task, 'average_scores': avg_scores, 'fold_scores': all_scores}
-
-    if explain:
-        if verbose:
-            print('Computing SHAP explanations on model trained on full data...')
-        model.fit(X, y)
-        # Subsample for SHAP if requested
-        if shap_sample_size is not None and X.shape[0] > shap_sample_size:
-            idx = random_seed.choice(X.shape[0], shap_sample_size, replace=False)
-            background = X[idx, :]
-        else:
-            background = X
-        shap_importance, _ = _compute_shap_explanation(
-            model, background, feature_names=feature_names
-        )
-        result['shap_explanations'] = pd.Series(
-            shap_importance,
-            name='Shapley value',
-        ).sort_values(ascending=False)
     return result

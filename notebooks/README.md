@@ -231,12 +231,10 @@ results = tabpfn_evaluate(
     X_selected, y,
     apply_scaling="standard",
     outer_cv_folds=3,
-    explain=True,  # optional SHAP values computation (costly)
-    shap_sample_size=100  # cap SHAP sample size
     random_state=42
 )
 ```
 
-Provides nested CV metrics and optional SHAP feature importance.
+Provides nested CV metrics.
 
-**Warning:** TabPFN is only usable on problems with small to medium number of features. Also, SHAP can be very slow if the dimension exceeds but a few features.
+**Warning:** TabPFN is only usable on problems with small to medium number of features.
