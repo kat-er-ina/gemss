@@ -141,7 +141,8 @@ def preprocess_features(
         Whether to apply scaling to the features. Options are:
         - "standard": apply standard scaling.
         - "minmax": apply Min-Max scaling.
-        - "pareto": apply Pareto scaling (center by mean, divide by sqrt of std).
+        - "pareto": apply Pareto scaling (center by mean,
+                    divide by sqrt of std, then rescale to [0, 1]).
         - None: do not apply any scaling.
     verbose: bool, optional, default=True
         Whether to display informative messages during preprocessing.
@@ -233,7 +234,7 @@ def preprocess_features(
         X = scaler.fit_transform(df_copy.values)
         if verbose:
             myprint(
-                'Features have been scaled using ParetoScaler.',
+                'Features have been scaled using ParetoScaler (Pareto + [0,1] rescale).',
                 use_markdown=True,
             )
     else:
