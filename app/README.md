@@ -2,8 +2,15 @@
 
 Interactive, self-contained [marimo](https://marimo.io/) application is available for exploring multiple sparse solutions in your data using the GEMSS feature selection algorithm. The app also provides downstream modeling for rigorous evaluation of the candidate solutions.
 
+**Do not have data to try the app?** Download one of [preprocessed datasets](https://github.com/kat-er-ina/gemss/tree/main/data) used in our paper.
 
-## Quick start
+## Online version
+
+The quickest way to get started is to use the [online version](https://huggingface.co/spaces/kat-er-ina/gemss) hosted at HuggingFace. It does not save the results automatically but the full report of your experiment can be manually exported as HTML.
+
+## Cloned version - quick start
+
+If you need full control of the app, get the full open code by following the steps below.
 
 ### 1. Clone this repository
 
