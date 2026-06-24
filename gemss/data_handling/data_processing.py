@@ -12,6 +12,7 @@ from IPython.display import Markdown, display
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from gemss.config.constants import DATA_DIR
+from gemss.data_handling.pareto_scaler import ParetoScaler
 from gemss.utils.utils import myprint
 
 
@@ -113,7 +114,7 @@ def preprocess_features(
     dropna: Literal['response', 'all', 'none'] = 'response',
     allowed_missing_percentage: float | None = None,
     drop_non_numeric_features: bool = True,
-    apply_scaling: Literal['standard', 'minmax', None] = None,
+    apply_scaling: Literal['standard', 'minmax', 'pareto', None] = None,
     verbose: bool | None = True,
 ) -> tuple[np.ndarray, np.ndarray, dict[str, str]]:
     """
@@ -136,10 +137,12 @@ def preprocess_features(
     drop_non_numeric_features: bool, optional, default=True
         Whether to drop non-numeric features from the DataFrame.
         Default is True because the feature selector works only with numerical values.
-    apply_scaling: Literal["standard", "minmax", None] = None,
+    apply_scaling: Literal["standard", "minmax", "pareto", None] = None,
         Whether to apply scaling to the features. Options are:
         - "standard": apply standard scaling.
         - "minmax": apply Min-Max scaling.
+        - "pareto": apply Pareto scaling (center by mean,
+                    divide by sqrt of std, then rescale to [0, 1]).
         - None: do not apply any scaling.
     verbose: bool, optional, default=True
         Whether to display informative messages during preprocessing.
@@ -224,6 +227,14 @@ def preprocess_features(
         if verbose:
             myprint(
                 'Features have been scaled using MinMaxScaler.',
+                use_markdown=True,
+            )
+    elif apply_scaling == 'pareto':
+        scaler = ParetoScaler()
+        X = scaler.fit_transform(df_copy.values)
+        if verbose:
+            myprint(
+                'Features have been scaled using ParetoScaler (Pareto + [0,1] rescale).',
                 use_markdown=True,
             )
     else:

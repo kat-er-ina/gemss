@@ -14,3 +14,4 @@ from gemss.data_handling.generate_artificial_dataset import (
     generate_multi_solution_data,
     show_overview_of_generated_data,
 )
+from gemss.data_handling.pareto_scaler import ParetoScaler
