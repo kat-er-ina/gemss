@@ -7,6 +7,8 @@ This repository implements Bayesian sparse feature selection using variational i
 * [for offline use](https://github.com/kat-er-ina/gemss/tree/main/app) (editable, saves results)
 * Do not have data to try it out? Download one of [preprocessed datasets](https://github.com/kat-er-ina/gemss/tree/main/data)
 
+**Experiments aimed for publication** are located in [the GEMSS testing repository](https://github.com/kat-er-ina/gemss_testing).
+
 ## Motivation
 
 In many real-world problems, e.g. in life sciences, datasets with far more features than samples are common because collecting new data points is costly or impractical. In these situations, there are often several distinct, sparse combinations of features that can explain the observed outcomes, each corresponding to a different underlying mechanism or hypothesis. Moreover, in many cases, the quality of a combination of predictors can be assessed only ex-post by utilizing advanced domain knowledge.
