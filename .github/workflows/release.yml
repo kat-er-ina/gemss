@@ -91,17 +91,26 @@ jobs:
         id: psr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: uv run semantic-release version --no-changelog
+        run: |
+          set +e
+          uv run semantic-release version --no-changelog
+          SR_EXIT=$?
+          set -e
+          if [ $SR_EXIT -eq 0 ]; then
+            echo "released=true" >> $GITHUB_OUTPUT
+          else
+            echo "released=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build dist
+        if: steps.psr.outputs.released == 'true'
+        run: uv build
 
       - name: Set job outputs
         id: outputs
         run: |
           version=$(uv run python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
-          if [ -n "$(ls -A dist 2>/dev/null)" ]; then
-            echo "released=true" >> $GITHUB_OUTPUT
-          else
-            echo "released=false" >> $GITHUB_OUTPUT
-          fi
+          echo "released=${{ steps.psr.outputs.released }}" >> $GITHUB_OUTPUT
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "tag=v$version" >> $GITHUB_OUTPUT
 
