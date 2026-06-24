@@ -23,6 +23,7 @@ scripts/results/logs/
 
 # Ignore private files and select folders
 notebooks/private/
+private/
 
 # Ignore running marimo files
 app/__marimo__/*
