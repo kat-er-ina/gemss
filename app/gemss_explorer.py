@@ -206,9 +206,10 @@ def _(mo):
 
                 ### Data scaling
 
-                It is highly recommended to scale your data, unless they already have been.
+                Scale your data:
                 - Use the *minmax* scaling to simply squish all features' values to [0, 1] range.
                 - Use the *standard* scaling when you assume the samples are normally distributed. Each feature will then have mean 0 and standard deviation 1.
+                - Use the *pareto* scaling when you want to reduce the influence of large outliers but still keep the data centered around 0. Each feature will be centered by its mean and divided by the square root of its standard deviation. (Additionally, the values are rescaled to [0, 1] range for algorithmic reasons.)
 
                 ### The outputs
 
@@ -361,7 +362,7 @@ def _(file_uploader, io, mo, pd):
             value=df_raw.columns[-1] if not df_raw.empty else None,
         )
         scaling_selector = mo.ui.dropdown(
-            options=['standard', 'minmax', None],
+            options=['standard', 'minmax', 'pareto'],
             label='Scaling to use',
             value='standard',
         )
