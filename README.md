@@ -28,12 +28,6 @@ Instead of finding just one "best" set of features, GEMSS discovers **several mo
 - When there is domain knowledge to be mined (a human in the loop).
 
 
-### When NOT to use GEMSS
-
-- When the desired number of features you are looking for exceeds approximately 10-20.
-- Inside automated modeling pipelines.
-
-
 ## Features
 
 GEMSS provides a comprehensive framework for Bayesian feature selection with the following capabilities:
